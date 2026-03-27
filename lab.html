@@ -153,8 +153,8 @@
       const w = Math.round(cw * rand(...profile.wRatio));
       const xFn = xPositions[i % xPositions.length];
       const x = Math.max(MARGIN, Math.min(vw - w - MARGIN * 0.5, xFn(cw, w)));
-      const overlap = i === 0 ? 0 : Math.round(rand(0, 40));
-      const y = currentY - overlap;
+      const overlap = 0;
+      currentY = y + 500 + Math.round(rand(40, 100)); // espacement plus grand
 
       const el = document.createElement('div');
       el.className = 'lab-item';
