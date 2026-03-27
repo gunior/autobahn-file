@@ -154,7 +154,7 @@
       const xFn = xPositions[i % xPositions.length];
       const x = Math.max(MARGIN, Math.min(vw - w - MARGIN * 0.5, xFn(cw, w)));
       const overlap = 0;
-      currentY = y + 500 + Math.round(rand(40, 100)); // espacement plus grand
+      const y = currentY - overlap;
 
       const el = document.createElement('div');
       el.className = 'lab-item';
