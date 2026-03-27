@@ -1,13 +1,2 @@
-# netlify.toml
-# ─────────────────────────────────────────────────────────────────
-# À placer à la racine du projet, au même niveau que index.html
-#
-# À chaque déploiement Netlify :
-#   1. Node.js scanne le dossier lab/
-#   2. Génère lab/manifest.json avec la liste des images
-#   3. lab.html lit ce fichier et affiche les images automatiquement
-# ─────────────────────────────────────────────────────────────────
-
 [build]
   command = "node generate-manifest.js"
-  publish = "."
