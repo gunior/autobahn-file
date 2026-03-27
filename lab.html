@@ -133,65 +133,59 @@
 
   function buildLayout(items) {
     labCanvas.innerHTML = '';
-    loadedCount = 0;
-    totalItems = items.length;
 
     if (!items || items.length === 0) {
       labCanvas.innerHTML = `<div class="lab-empty">
-        <span class="en">No images yet — drop files in the <code>lab/</code> folder.</span>
-        <span class="fr">Aucune image — dépose des fichiers dans le dossier <code>lab/</code>.</span>
+        <span class="en">No images yet.</span>
+        <span class="fr">Aucune image.</span>
       </div>`;
       return;
     }
 
-    const vw = window.innerWidth;
-    const cw = vw - MARGIN * 2;
-    let currentY = 32;
-
-    items.forEach((item, i) => {
-      const profile = sizeProfiles[i % sizeProfiles.length];
-      const w = Math.round(cw * rand(...profile.wRatio));
-      const xFn = xPositions[i % xPositions.length];
-      const x = Math.max(MARGIN, Math.min(vw - w - MARGIN * 0.5, xFn(cw, w)));
-      const overlap = 0;
-      const y = currentY - overlap;
-
-      const el = document.createElement('div');
-      el.className = 'lab-item';
-      el.dataset.index = i;
-      el.style.cssText = `left:${x}px; top:${y}px; width:${w}px;`;
-
-      const placeholder = document.createElement('div');
-      placeholder.className = 'lab-placeholder';
-      el.appendChild(placeholder);
-
-      const img = document.createElement('img');
-      img.alt = '';
-
-      img.onload = () => {
-        placeholder.remove();
-        el.appendChild(img);
-        loadedCount++;
-        updateCanvasHeight();
-      };
-      img.onerror = () => {
-        placeholder.textContent = item.file || '—';
-        loadedCount++;
-        updateCanvasHeight();
-      };
+    // Précharge toutes les images pour connaître leurs dimensions
+    const promises = items.map(item => new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve({ item, img, w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve({ item, img: null });
       img.src = `./lab/${item.file}`;
+    }));
 
-      const cursor = document.getElementById('cursor');
-      if (cursor) {
-        el.addEventListener('mouseenter', () => cursor.classList.add('hovering'));
-        el.addEventListener('mouseleave', () => cursor.classList.remove('hovering'));
-      }
+    Promise.all(promises).then(results => {
+      const vw = window.innerWidth;
+      const cw = vw - MARGIN * 2;
+      let currentY = 32;
 
-      labCanvas.appendChild(el);
-      currentY = y + 300 + Math.round(rand(24, 64)); // hauteur provisoire
+      results.forEach((res, i) => {
+        if (!res.img) return;
+
+        const profile = sizeProfiles[i % sizeProfiles.length];
+        const w = Math.round(cw * rand(...profile.wRatio));
+        const h = Math.round(w * res.h / res.w); // ratio réel de l'image
+        const xFn = xPositions[i % xPositions.length];
+        const x = Math.max(MARGIN, Math.min(vw - w - MARGIN * 0.5, xFn(cw, w)));
+        const y = currentY;
+
+        const el = document.createElement('div');
+        el.className = 'lab-item';
+        el.style.cssText = `left:${x}px; top:${y}px; width:${w}px;`;
+
+        res.img.style.width = '100%';
+        res.img.style.height = 'auto';
+        el.appendChild(res.img);
+
+        const cursor = document.getElementById('cursor');
+        if (cursor) {
+          el.addEventListener('mouseenter', () => cursor.classList.add('hovering'));
+          el.addEventListener('mouseleave', () => cursor.classList.remove('hovering'));
+        }
+
+        labCanvas.appendChild(el);
+        currentY = y + h + Math.round(rand(40, 80));
+      });
+
+      labCanvas.style.height = (currentY + 80) + 'px';
+      observeItems();
     });
-
-    observeItems();
   }
 
   function updateCanvasHeight() {
