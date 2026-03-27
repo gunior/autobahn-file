@@ -132,8 +132,8 @@ nav {
 .lab-item.visible { opacity: 1; transform: translateY(0); }
 
 .lab-item img {
-  width: 100%; height: 100%;
-  object-fit: cover; display: block;
+  width: 100%; height: auto;
+  display: block;
   transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
 }
 .lab-item:hover img { transform: scale(1.03); }
@@ -289,7 +289,7 @@ function buildLayout(items) {
   items.forEach((item, i) => {
     const profile = sizeProfiles[i % sizeProfiles.length];
     const w = Math.round(cw * rand(...profile.wRatio));
-    const h = Math.round(w * rand(...profile.hRatio) / rand(...profile.wRatio));
+    const h = 0;
     const xFn = xPositions[i % xPositions.length];
     const x = Math.max(MARGIN, Math.min(vw - w - MARGIN * 0.5, xFn(cw, w)));
     const overlap = i === 0 ? 0 : Math.round(rand(0, 40));
@@ -297,7 +297,7 @@ function buildLayout(items) {
 
     const el = document.createElement('div');
     el.className = 'lab-item';
-    el.style.cssText = `left:${x}px; top:${y}px; width:${w}px; height:${h}px;`;
+    el.style.cssText = `left:${x}px; top:${y}px; width:${w}px;`;
 
     // Image avec placeholder pendant le chargement
     const img = document.createElement('img');
