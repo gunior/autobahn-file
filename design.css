@@ -1,0 +1,313 @@
+/* ============================================================
+   AUTOBAHN — DESIGN SYSTEM
+   Modifiez ce fichier → mis à jour sur toutes les pages
+   ============================================================ */
+
+/* ── IMPORTS POLICES ── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Inter:wght@400;500&display=swap');
+
+/* ============================================================
+   LOGO
+   Pour changer le logo texte : modifiez --logo-text
+   Pour passer à une image SVG : utilisez nav.js (voir commentaire)
+   ============================================================ */
+:root {
+  --logo-text:    "Autobahn —";   /* ← CHANGEZ ICI pour le texte du logo */
+  --logo-size:    13px;
+  --logo-spacing: 0.06em;
+}
+
+/* ============================================================
+   TYPOGRAPHIE
+   ============================================================ */
+:root {
+  /* Familles */
+  --f-display: 'Inter', sans-serif;
+  --f-mono:    'Courier New', Courier, monospace;
+  --f-sans:    'DM Sans', system-ui, sans-serif;
+
+  /* Tailles */
+  --fs-hero:     clamp(48px, 7vw, 20px);   /* Titre principal (h1 page index) */
+  --fs-title:    clamp(32px, 4vw, 56px);   /* Titres de pages */
+  --fs-subtitle: 18px;                      /* Sous-titres / descriptions */
+  --fs-body:     15px;                      /* Corps de texte */
+  --fs-label:    11px;                      /* Labels, nav links */
+  --fs-micro:    10px;                      /* Micro-labels, lang switch */
+
+  /* Graisses */
+  --fw-light:    300;
+  --fw-regular:  400;
+  --fw-medium:   500;
+
+  /* Interlignage */
+  --lh-tight:    1.1;
+  --lh-normal:   1.6;
+  --lh-loose:    1.8;
+
+  /* Espacement lettres */
+  --ls-tight:    0.02em;
+  --ls-normal:   0.06em;
+  --ls-wide:     0.1em;
+  --ls-xwide:    0.15em;
+}
+
+/* ============================================================
+   COULEURS — MODE CLAIR
+   ============================================================ */
+:root {
+  --c-bg:        #f5f4f0;
+  --c-surface:   #e8e6e0;
+  --c-ink:       #1a1a18;
+  --c-slate:     #6b6860;
+  --c-ash:       #c8c5bc;
+  --c-accent:    #0038FF;
+  --c-border:    rgba(26, 26, 24, 0.12);
+  --nav-bg:      rgba(245, 244, 240, 0.92);
+}
+
+/* ── MODE SOMBRE ── */
+[data-theme="dark"] {
+  --c-bg:        #141412;
+  --c-surface:   #1e1e1c;
+  --c-ink:       rgba(245, 244, 240, 0.92);
+  --c-slate:     rgba(245, 244, 240, 0.5);
+  --c-ash:       rgba(245, 244, 240, 0.25);
+  --c-border:    rgba(245, 244, 240, 0.1);
+  --nav-bg:      rgba(20, 20, 18, 0.92);
+}
+
+/* ============================================================
+   ESPACEMENTS
+   ============================================================ */
+:root {
+  --space-xs:  8px;
+  --space-sm:  16px;
+  --space-md:  32px;
+  --space-lg:  48px;
+  --space-xl:  80px;
+  --space-2xl: 120px;
+}
+
+/* ============================================================
+   ÉLÉMENTS GRAPHIQUES / EFFETS
+   ============================================================ */
+:root {
+  --border-weight:   0.5px;
+  --radius-sm:       4px;
+  --radius-md:       8px;
+  --nav-blur:        blur(12px);
+  --transition:      0.3s ease;
+  --transition-theme: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--f-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  cursor: none;
+  transition: var(--transition-theme);
+}
+
+/* ============================================================
+   CURSEUR PERSONNALISÉ
+   ============================================================ */
+.cursor {
+  width: 8px;
+  height: 8px;
+  background: var(--c-ink);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  transition: width 0.2s, height 0.2s, background 0.2s;
+}
+.cursor.hovering {
+  width: 44px;
+  height: 44px;
+  background: var(--c-accent);
+}
+
+/* ============================================================
+   NAVIGATION (commune à toutes les pages)
+   ============================================================ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px var(--space-lg);
+  background: var(--nav-bg);
+  backdrop-filter: var(--nav-blur);
+  -webkit-backdrop-filter: var(--nav-blur);
+  border-bottom: var(--border-weight) solid var(--c-border);
+  transition: var(--transition-theme);
+}
+
+.nav-logo {
+  font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.06em;
+  color: white;
+  text-decoration: none;
+  mix-blend-mode: difference;
+  position: relative;
+  z-index: 101;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.nav-links {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.nav-links a {
+  font-family: var(--f-mono);
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--c-slate);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover   { color: var(--c-ink); }
+.nav-links a.active  { color: var(--c-ink); border-bottom: 1px solid var(--c-ink); }
+
+/* ── Sélecteur de langue ── */
+.lang-switch {
+  display: flex;
+  border: var(--border-weight) solid var(--c-border);
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+.lang-btn {
+  font-family: var(--f-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--c-slate);
+  background: none;
+  border: none;
+  padding: 6px 13px;
+  cursor: none;
+  border-right: var(--border-weight) solid var(--c-border);
+  transition: background 0.2s, color 0.2s;
+}
+.lang-btn:last-child      { border-right: none; }
+.lang-btn.active          { background: var(--c-ink); color: var(--c-bg); }
+.lang-btn:hover:not(.active) { color: var(--c-ink); }
+
+/* ── Toggle dark mode ── */
+.theme-toggle {
+  width: 36px;
+  height: 20px;
+  background: var(--c-surface);
+  border: var(--border-weight) solid var(--c-border);
+  border-radius: 10px;
+  position: relative;
+  cursor: none;
+  transition: background 0.3s, border-color 0.3s;
+  flex-shrink: 0;
+}
+.theme-toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--c-slate);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s;
+}
+[data-theme="dark"] .theme-toggle::after {
+  transform: translateX(16px);
+  background: var(--c-ash);
+}
+
+/* ============================================================
+   SECTIONS DE PAGE — CLASSES RÉUTILISABLES
+   ============================================================ */
+
+/* En-tête de page (lab, contact, etc.) */
+.page-header {
+  padding: calc(var(--space-2xl) + var(--space-lg)) var(--space-lg) var(--space-xl);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-md);
+  border-bottom: var(--border-weight) solid var(--c-border);
+}
+
+.section-label {
+  font-family: var(--f-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-xwide);
+  text-transform: uppercase;
+  color: var(--c-ash);
+  margin-bottom: 12px;
+}
+
+.page-title {
+  font-family: var(--f-display);
+  font-size: var(--fs-title);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
+  color: var(--c-ink);
+}
+
+.page-desc {
+  font-family: var(--f-sans);
+  font-size: var(--fs-subtitle);
+  font-weight: var(--fw-light);
+  color: var(--c-slate);
+  line-height: var(--lh-loose);
+  max-width: 420px;
+}
+
+/* ── Footer ── */
+footer {
+  border-top: var(--border-weight) solid var(--c-border);
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-xl);
+  transition: border-color 0.4s;
+}
+.footer-copy,
+.footer-tag {
+  font-family: var(--f-mono);
+  font-size: var(--fs-label);
+  color: var(--c-ash);
+  letter-spacing: var(--ls-normal);
+}
+
+/* ============================================================
+   GESTION BILINGUE (FR / EN)
+   ============================================================ */
+.fr, .en          { display: none; }
+body.lang-fr .fr  { display: inline; }
+body.lang-en .en  { display: inline; }
+span.fr, span.en  { display: none; }
+body.lang-fr span.fr { display: inline; }
+body.lang-en span.en { display: inline; }

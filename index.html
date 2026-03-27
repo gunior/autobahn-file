@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autobahn — Design, Technologie & Image en mouvement</title>
+  <link rel="stylesheet" href="./design.css">
+  <style>
+
+    /* ── PAGE INDEX : fond vidéo plein écran ── */
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: #0d0d0c;
+      color: var(--c-offwhite, #f5f4f0);
+    }
+
+    /* ── VIDÉO SHOWREEL — fond fixe derrière tout ── */
+    #showreel {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+    #showreel.loaded { opacity: 1; }
+
+    /* ── VIGNETTE — assombrit les bords pour lisibilité ── */
+    #vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.55) 100%),
+        linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 65%, rgba(0,0,0,0.55) 100%);
+    }
+
+    /* ── NAV : adaptée au fond sombre ── */
+    nav {
+      background: rgba(0, 0, 0, 0.2) !important;
+      border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+      z-index: 10;
+    }
+    nav .nav-logo,
+    nav .nav-links a,
+    nav .lang-btn { color: rgba(245, 244, 240, 0.85); }
+    nav .nav-links a:hover,
+    nav .nav-links a.active { color: #fff; border-bottom-color: #fff; }
+    nav .lang-btn.active { background: rgba(245,244,240,0.9); color: #1a1a18; }
+    nav .lang-switch,
+    nav .lang-btn { border-color: rgba(255,255,255,0.18); }
+    nav .theme-toggle {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    /* ── HERO — tout le contenu flottant ── */
+    .hero {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      grid-template-columns: 1fr auto;
+      pointer-events: none;
+    }
+
+    /* Discipline — centré au milieu de l'écran */
+    .hero-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .hero-discipline {
+      font-family: var(--f-mono);
+      font-size: var(--fs-micro, 10px);
+      letter-spacing: var(--ls-xwide, 0.15em);
+      text-transform: uppercase;
+      color: rgba(245, 244, 240, 0.5);
+    }
+
+    /* Liens sociaux — colonne à droite, centrée verticalement */
+    .hero-side {
+      position: absolute;
+      right: var(--space-lg, 48px);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      pointer-events: all;
+    }
+    .side-link {
+      font-family: var(--f-mono);
+      font-size: var(--fs-micro, 10px);
+      letter-spacing: var(--ls-wide, 0.1em);
+      text-transform: uppercase;
+      color: rgba(245, 244, 240, 0.5);
+      text-decoration: none;
+      writing-mode: vertical-rl;
+      transition: color 0.2s;
+    }
+    .side-link:hover { color: #fff; }
+    .accent-dot {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: rgba(245, 244, 240, 0.3);
+    }
+
+    /* Titre principal — bas gauche */
+    .hero-title-wrap {
+      position: absolute;
+      bottom: calc(var(--space-xl, 80px) + 40px);
+      left: var(--space-lg, 48px);
+      pointer-events: none;
+    }
+    .hero-title {
+      font-family: var(--f-display);
+      font-size: var(--fs-hero, clamp(48px, 7vw, 96px));
+      font-weight: var(--fw-medium, 400);
+      line-height: var(--lh-tight, 1.1);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    .hero-title-line {
+      display: block;
+      overflow: hidden;
+    }
+    .hero-title-line span {
+      display: block;
+      animation: reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .hero-title-line:nth-child(1) span { animation-delay: 0.1s; }
+    .hero-title-line:nth-child(2) span { animation-delay: 0.22s; }
+    .hero-title-line:nth-child(3) span { animation-delay: 0.34s; }
+    @keyframes reveal {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);   opacity: 1; }
+    }
+
+    /* Méta — bas de page */
+    .hero-meta {
+      position: absolute;
+      bottom: var(--space-md, 32px);
+      left: var(--space-lg, 48px);
+      right: var(--space-lg, 48px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 0.5px solid rgba(245, 244, 240, 0.15);
+      padding-top: var(--space-sm, 16px);
+    }
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .meta-item {
+      font-family: var(--f-mono);
+      font-size: var(--fs-micro, 10px);
+      letter-spacing: var(--ls-wide, 0.1em);
+      text-transform: uppercase;
+      color: rgba(245, 244, 240, 0.4);
+    }
+    .meta-dot {
+      width: 2px; height: 2px;
+      border-radius: 50%;
+      background: rgba(245, 244, 240, 0.3);
+    }
+
+    /* Showreel CTA */
+    .showreel-cta {
+      font-family: var(--f-mono);
+      font-size: var(--fs-micro, 10px);
+      letter-spacing: var(--ls-wide, 0.1em);
+      text-transform: uppercase;
+      color: rgba(245, 244, 240, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: color 0.2s;
+      pointer-events: all;
+    }
+    .showreel-cta:hover { color: rgba(245, 244, 240, 0.85); }
+    .showreel-cta::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.7); }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Fond vidéo showreel -->
+  <video id="showreel" autoplay muted loop playsinline>
+    <source src="./creators/guillaume/creator-showreel-guillaume.mp4" type="video/mp4">
+  </video>
+
+  <!-- Vignette -->
+  <div id="vignette"></div>
+
+  <!-- Navigation (injectée par nav.js) -->
+  <nav></nav>
+
+  <!-- Hero -->
+  <section class="hero">
+
+    
+
+    <div class="hero-side">
+      <a class="side-link" href="#" target="_blank" rel="noopener">Instagram</a>
+      <div class="accent-dot"></div>
+      <a class="side-link" href="#" target="_blank" rel="noopener">Vimeo</a>
+    </div>
+
+    <div class="hero-title-wrap">
+      <h1 class="hero-title">
+        <span class="hero-title-line en"><span>A multidisciplinary creative studio</span></span>
+        <span class="hero-title-line en"><span>shaping visual experiences.</span></span>
+        <span class="hero-title-line fr"><span>Un studio créatif multidisciplinaire</span></span>
+        <span class="hero-title-line fr"><span>façonnant des expériences visuelles.</span></span>
+      </h1>
+    </div>
+
+    <div class="hero-meta">
+      <div class="meta-row">
+        <span class="meta-item">Nantes, FR</span>
+        <span class="meta-dot"></span>
+        <span class="meta-item">
+          <span class="en">Est. 2021</span>
+          <span class="fr">Fondé en 2021</span>
+        </span>
+        <span class="meta-dot"></span>
+        <span class="meta-item">
+          <span class="en">6 creators</span>
+          <span class="fr">6 créateurs</span>
+        </span>
+      </div>
+      <a class="showreel-cta" href="./creators/guillaume/creator-showreel-guillaume.mp4" target="_blank">
+        <span class="en">Showreel 2025</span>
+        <span class="fr">Showreel 2025</span>
+      </a>
+    </div>
+
+  </section>
+
+  <!-- Navigation partagée -->
+  <script src="./nav.js"></script>
+
+  <script>
+    // Fade-in de la vidéo une fois chargée
+    const vid = document.getElementById('showreel');
+    vid.addEventListener('canplaythrough', () => vid.classList.add('loaded'));
+    // Fallback si déjà en cache
+    if (vid.readyState >= 3) vid.classList.add('loaded');
+  </script>
+
+</body>
+</html>
