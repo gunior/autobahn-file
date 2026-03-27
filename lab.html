@@ -50,47 +50,6 @@ body {
 }
 .cursor.hovering { width: 44px; height: 44px; background: var(--c-accent); }
 
-/* ── NAV ── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 28px 48px;
-  background: var(--nav-bg);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  border-bottom: 0.5px solid var(--c-border);
-  transition: var(--transition-theme);
-}
-
-.nav-right { display: flex; align-items: center; gap: 32px; }
-.nav-links { display: flex; gap: 32px; }
-.nav-links a {
-  font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--c-slate); text-decoration: none; transition: color 0.2s;
-}
-.nav-links a:hover { color: var(--c-ink); }
-.nav-links a.active { color: var(--c-ink); border-bottom: 1px solid var(--c-ink); }
-.lang-switch { display: flex; border: 0.5px solid var(--c-border); overflow: hidden; transition: border-color 0.3s; }
-.lang-btn {
-  font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--c-slate); background: none; border: none; padding: 6px 13px; cursor: none;
-  border-right: 0.5px solid var(--c-border); transition: background 0.2s, color 0.2s;
-}
-.lang-btn:last-child { border-right: none; }
-.lang-btn.active { background: var(--c-ink); color: var(--c-bg); }
-.lang-btn:hover:not(.active) { color: var(--c-ink); }
-.theme-toggle {
-  width: 36px; height: 20px; background: var(--c-surface);
-  border: 0.5px solid var(--c-border); border-radius: 10px;
-  position: relative; cursor: none;
-  transition: background 0.3s, border-color 0.3s; flex-shrink: 0;
-}
-.theme-toggle::after {
-  content: ''; position: absolute; top: 3px; left: 3px;
-  width: 12px; height: 12px; border-radius: 50%; background: var(--c-slate);
-  transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94), background 0.3s;
-}
-[data-theme="dark"] .theme-toggle::after { transform: translateX(16px); background: var(--c-ink); }
-
 /* ── PAGE HEADER ── */
 .page-header {
   padding: 120px 48px 48px;
