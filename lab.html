@@ -62,9 +62,12 @@ nav {
 }
 .nav-logo {
   font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.06em;
-  color: var(--c-ink); text-decoration: none;
+  color: white;
+  text-decoration: none;
   display: flex; align-items: center;
-  transition: color 0.3s;
+  mix-blend-mode: difference;
+  position: relative;
+  z-index: 101;
 }
 .nav-right { display: flex; align-items: center; gap: 32px; }
 .nav-links { display: flex; gap: 32px; }
@@ -312,6 +315,14 @@ function buildLayout(items) {
     img.onload = () => {
       placeholder.remove();
       el.appendChild(img);
+      // Recalcule la hauteur du canvas après chargement
+      const allItems = labCanvas.querySelectorAll('.lab-item');
+      let maxBottom = 0;
+      allItems.forEach(item => {
+        const bottom = item.offsetTop + item.offsetHeight;
+        if (bottom > maxBottom) maxBottom = bottom;
+      });
+      labCanvas.style.height = (maxBottom + 80) + 'px';
     };
     img.onerror = () => {
       // Garde le placeholder si l'image est introuvable
