@@ -1,4 +1,7 @@
 {
-  "buildCommand": "node generate-manifest.js",
-  "outputDirectory": "."
+  "buildCommand": "node build.js",
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/cms/(.*)", "destination": "/404" }
+  ]
 }

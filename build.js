@@ -1,0 +1,118 @@
+/**
+ * AUTOBAHN — Script de build Vercel
+ * ─────────────────────────────────
+ * 1. Récupère les créateurs depuis Sanity et génère creators.json
+ * 2. Génère le manifest du Lab (images + vidéos)
+ */
+
+const https = require('https');
+const fs    = require('fs');
+const path  = require('path');
+
+const PROJECT_ID = process.env.SANITY_PROJECT_ID;
+const DATASET    = process.env.SANITY_DATASET || 'production';
+
+/* ══════════════════════════════════════════════════════
+   1. SANITY — Fetch creators
+══════════════════════════════════════════════════════ */
+
+const GROQ = `*[_type == "creator"] | order(order asc) {
+  name, role, bio,
+  "photo":     photo.asset->url,
+  "heroPhoto": heroPhoto.asset->url,
+  "showreel":  showreel.asset->url,
+  "hoverBg":   hoverBg.asset->url,
+  tools, disciplines, skills, links,
+  projects[] {
+    name, type, url,
+    "thumb": thumb.asset->url
+  }
+}`;
+
+function fetchCreators() {
+  return new Promise((resolve, reject) => {
+    if (!PROJECT_ID) {
+      console.warn('⚠  SANITY_PROJECT_ID manquant — creators.json non généré');
+      resolve(null);
+      return;
+    }
+
+    const url = `https://${PROJECT_ID}.apicdn.sanity.io/v2024-01-01/data/query/${DATASET}?query=${encodeURIComponent(GROQ)}`;
+
+    https.get(url, (res) => {
+      let raw = '';
+      res.on('data', chunk => raw += chunk);
+      res.on('end', () => {
+        try {
+          const data = JSON.parse(raw);
+          if (data.error) { reject(new Error(data.error.description)); return; }
+          resolve(data.result || []);
+        } catch (e) { reject(e); }
+      });
+    }).on('error', reject);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   2. LAB — Manifest images + vidéos
+══════════════════════════════════════════════════════ */
+
+function generateLabManifest() {
+  const labDir  = path.join(__dirname, 'lab');
+  const outFile = path.join(labDir, 'manifest.json');
+
+  if (!fs.existsSync(labDir)) {
+    console.log('ℹ  Dossier lab/ absent — manifest ignoré');
+    return;
+  }
+
+  const imageExts = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif']);
+  const videoExts = new Set(['.mp4', '.webm']);
+
+  // Normalise les noms de fichiers en minuscules
+  fs.readdirSync(labDir).forEach(f => {
+    const lower = f.toLowerCase();
+    if (f !== lower) fs.renameSync(path.join(labDir, f), path.join(labDir, lower));
+  });
+
+  const files = fs.readdirSync(labDir)
+    .filter(f => {
+      const ext = path.extname(f).toLowerCase();
+      return imageExts.has(ext) || videoExts.has(ext);
+    })
+    .map(f => ({
+      file: f,
+      type: videoExts.has(path.extname(f).toLowerCase()) ? 'video' : 'image',
+    }));
+
+  fs.writeFileSync(outFile, JSON.stringify(files, null, 2));
+
+  const imgs = files.filter(f => f.type === 'image').length;
+  const vids = files.filter(f => f.type === 'video').length;
+  console.log(`✓  Lab manifest — ${files.length} items (${imgs} images, ${vids} vidéos)`);
+}
+
+/* ══════════════════════════════════════════════════════
+   MAIN
+══════════════════════════════════════════════════════ */
+
+async function build() {
+  console.log('── Build Autobahn ──────────────────────────');
+
+  // Lab manifest
+  generateLabManifest();
+
+  // Creators depuis Sanity
+  const creators = await fetchCreators();
+  if (creators !== null) {
+    fs.writeFileSync('creators.json', JSON.stringify(creators, null, 2));
+    console.log(`✓  Creators — ${creators.length} profils récupérés depuis Sanity`);
+  }
+
+  console.log('── Build terminé ───────────────────────────');
+}
+
+build().catch(err => {
+  console.error('✗  Build error:', err.message);
+  process.exit(1);
+});
