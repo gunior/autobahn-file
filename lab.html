@@ -36,18 +36,20 @@
 
     /* ── Lab item ── */
     .lab-item {
-      position: absolute; cursor: none; overflow: hidden;
+      position: absolute; ; overflow: hidden;
       opacity: 0; transform: translateY(20px);
       transition: opacity 0.6s ease, transform 0.6s ease;
     }
     .lab-item.visible { opacity: 1; transform: translateY(0); }
 
-    .lab-item img {
+    .lab-item img,
+    .lab-item video {
       width: 100%; height: auto;
       display: block;
       transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
     }
-    .lab-item:hover img { transform: scale(1.03); }
+    .lab-item:hover img,
+    .lab-item:hover video { transform: scale(1.03); }
 
     .lab-placeholder {
       width: 100%; height: 200px;
@@ -136,18 +138,35 @@
 
     if (!items || items.length === 0) {
       labCanvas.innerHTML = `<div class="lab-empty">
-        <span class="en">No images yet.</span>
-        <span class="fr">Aucune image.</span>
+        <span class="en">No content yet.</span>
+        <span class="fr">Aucun contenu.</span>
       </div>`;
       return;
     }
 
-    // Précharge toutes les images pour connaître leurs dimensions
+    // Précharge tous les items (images et vidéos) pour connaître leurs dimensions
     const promises = items.map(item => new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => resolve({ item, img, w: img.naturalWidth, h: img.naturalHeight });
-      img.onerror = () => resolve({ item, img: null });
-      img.src = `./lab/${item.file}`;
+      if (item.type === 'video') {
+        const vid = document.createElement('video');
+        vid.muted     = true;
+        vid.loop      = true;
+        vid.playsInline = true;
+        vid.preload   = 'metadata';
+        // Fallback 16:9 si les métadonnées ne se chargent pas dans les 3s
+        const timeout = setTimeout(() => resolve({ item, el: vid, w: 1920, h: 1080 }), 3000);
+        vid.addEventListener('loadedmetadata', () => {
+          clearTimeout(timeout);
+          resolve({ item, el: vid, w: vid.videoWidth || 1920, h: vid.videoHeight || 1080 });
+        }, { once: true });
+        vid.addEventListener('error', () => { clearTimeout(timeout); resolve({ item, el: null }); }, { once: true });
+        vid.src = `./lab/${item.file}`;
+      } else {
+        const img = new Image();
+        img.loading = 'lazy';
+        img.onload  = () => resolve({ item, el: img,  w: img.naturalWidth,  h: img.naturalHeight });
+        img.onerror = () => resolve({ item, el: null });
+        img.src = `./lab/${item.file}`;
+      }
     }));
 
     Promise.all(promises).then(results => {
@@ -156,28 +175,22 @@
       let currentY = 32;
 
       results.forEach((res, i) => {
-        if (!res.img) return;
+        if (!res.el) return;
 
         const profile = sizeProfiles[i % sizeProfiles.length];
         const w = Math.round(cw * rand(...profile.wRatio));
-        const h = Math.round(w * res.h / res.w); // ratio réel de l'image
+        const h = Math.round(w * res.h / res.w);
         const xFn = xPositions[i % xPositions.length];
         const x = Math.max(MARGIN, Math.min(vw - w - MARGIN * 0.5, xFn(cw, w)));
         const y = currentY;
 
         const el = document.createElement('div');
-        el.className = 'lab-item';
+        el.className = 'lab-item' + (res.item.type === 'video' ? ' lab-video-item' : '');
         el.style.cssText = `left:${x}px; top:${y}px; width:${w}px;`;
 
-        res.img.style.width = '100%';
-        res.img.style.height = 'auto';
-        el.appendChild(res.img);
-
-        const cursor = document.getElementById('cursor');
-        if (cursor) {
-          el.addEventListener('mouseenter', () => cursor.classList.add('hovering'));
-          el.addEventListener('mouseleave', () => cursor.classList.remove('hovering'));
-        }
+        res.el.style.width  = '100%';
+        res.el.style.height = 'auto';
+        el.appendChild(res.el);
 
         labCanvas.appendChild(el);
         currentY = y + h + Math.round(rand(40, 80));
@@ -199,15 +212,30 @@
   }
 
   function observeItems() {
-    const observer = new IntersectionObserver(entries => {
+    // Fade-in à l'entrée dans le viewport
+    const fadeObserver = new IntersectionObserver(entries => {
       entries.forEach(e => {
         if (e.isIntersecting) {
           e.target.classList.add('visible');
-          observer.unobserve(e.target);
+          fadeObserver.unobserve(e.target);
         }
       });
     }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
-    document.querySelectorAll('.lab-item').forEach(el => observer.observe(el));
+
+    // Play/pause automatique des vidéos selon visibilité
+    const videoObserver = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        const vid = e.target.querySelector('video');
+        if (!vid) return;
+        if (e.isIntersecting) { vid.play().catch(() => {}); }
+        else                  { vid.pause(); }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.lab-item').forEach(el => {
+      fadeObserver.observe(el);
+      if (el.classList.contains('lab-video-item')) videoObserver.observe(el);
+    });
   }
 
   fetch('./lab/manifest.json')
@@ -219,8 +247,8 @@
     .catch(() => {
       labCanvas.innerHTML = `
         <div class="lab-empty">
-          <span class="en">Drop images in the <code>lab/</code> folder, then deploy to Netlify.</span>
-          <span class="fr">Dépose des images dans le dossier <code>lab/</code>, puis déploie sur Netlify.</span>
+          <span class="en">Drop images or videos in the <code>lab/</code> folder, then deploy to Netlify.</span>
+          <span class="fr">Dépose des images ou vidéos dans le dossier <code>lab/</code>, puis déploie sur Netlify.</span>
         </div>`;
     });
 

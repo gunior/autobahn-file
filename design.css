@@ -4,7 +4,18 @@
    ============================================================ */
 
 /* ── IMPORTS POLICES ── */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Inter:wght@400;500&display=swap');
+@font-face {
+  font-family: 'Geist';
+  src: url('./assets/fonts/webfonts/geist-cyrillic-300-normal.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('./assets/fonts/webfonts/geist-cyrillic-800-normal.woff2') format('woff2');
+  font-weight: 800;
+  font-display: swap;
+}
 
 /* ============================================================
    LOGO
@@ -12,39 +23,35 @@
    Pour passer à une image SVG : utilisez nav.js (voir commentaire)
    ============================================================ */
 :root {
-  --logo-text:    "Autobahn —";   /* ← CHANGEZ ICI pour le texte du logo */
+  --logo-text:    "Autobahn —";
   --logo-size:    13px;
   --logo-spacing: 0.06em;
+  --nav-height: 80px;
 }
 
 /* ============================================================
    TYPOGRAPHIE
    ============================================================ */
 :root {
-  /* Familles */
-  --f-display: 'Inter', sans-serif;
+  --f-display: 'Geist', sans-serif;
   --f-mono:    'Courier New', Courier, monospace;
   --f-sans:    'DM Sans', system-ui, sans-serif;
 
-  /* Tailles */
-  --fs-hero:     clamp(48px, 7vw, 20px);   /* Titre principal (h1 page index) */
-  --fs-title:    clamp(32px, 4vw, 56px);   /* Titres de pages */
-  --fs-subtitle: 18px;                      /* Sous-titres / descriptions */
-  --fs-body:     15px;                      /* Corps de texte */
-  --fs-label:    11px;                      /* Labels, nav links */
-  --fs-micro:    10px;                      /* Micro-labels, lang switch */
+  --fs-hero:     clamp(48px, 7vw, 96px);
+  --fs-title:    clamp(32px, 4vw, 56px);
+  --fs-subtitle: 18px;
+  --fs-body:     15px;
+  --fs-label:    11px;
+  --fs-micro:    10px;
 
-  /* Graisses */
   --fw-light:    300;
   --fw-regular:  400;
   --fw-medium:   500;
 
-  /* Interlignage */
   --lh-tight:    1.1;
   --lh-normal:   1.6;
   --lh-loose:    1.8;
 
-  /* Espacement lettres */
   --ls-tight:    0.02em;
   --ls-normal:   0.06em;
   --ls-wide:     0.1em;
@@ -120,30 +127,13 @@ body {
   font-family: var(--f-sans);
   font-size: var(--fs-body);
   line-height: var(--lh-normal);
-  cursor: none;
+  cursor: url('./assets/cursor-hand.png') 9 0, auto;
   transition: var(--transition-theme);
 }
 
-/* ============================================================
-   CURSEUR PERSONNALISÉ
-   ============================================================ */
-.cursor {
-  width: 8px;
-  height: 8px;
-  background: var(--c-ink);
-  border-radius: 50%;
-  position: fixed;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  z-index: 9999;
-  transition: width 0.2s, height 0.2s, background 0.2s;
+a, button, [role="button"], input, select, textarea, label {
+  cursor: url('./assets/cursor-hand-hover.png') 9 0, auto;
 }
-.cursor.hovering {
-  width: 44px;
-  height: 44px;
-  background: var(--c-accent);
-}
-
 /* ============================================================
    NAVIGATION (commune à toutes les pages)
    ============================================================ */
@@ -153,7 +143,7 @@ nav {
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 28px var(--space-lg);
   background: var(--nav-bg);
   backdrop-filter: var(--nav-blur);
@@ -163,15 +153,32 @@ nav {
 }
 
 .nav-logo {
-  font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.06em;
-  color: white;
+  position: fixed;
+  top: 0;
+  left: var(--space-lg);
+  height: var(--nav-height);
+  font-family: var(--f-mono);
+  display: flex;
+  font-size: 13px;
+  align-items: center;
+  color: #ffffff;
   text-decoration: none;
   mix-blend-mode: difference;
-  position: relative;
   z-index: 101;
+  line-height: 1;
 }
 
 .nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.nav-controls {
+  position: absolute;
+  right: var(--space-lg);
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: var(--space-md);
@@ -183,16 +190,17 @@ nav {
 }
 
 .nav-links a {
-  font-family: var(--f-mono);
+  font-family: 'Geist', sans-serif !important;
+  font-weight: 300 !important;
   font-size: var(--fs-label);
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;
   color: var(--c-slate);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color 0.2s, font-weight 0.2s;
 }
-.nav-links a:hover   { color: var(--c-ink); }
-.nav-links a.active  { color: var(--c-ink); border-bottom: 1px solid var(--c-ink); }
+.nav-links a:hover  { color: var(--c-ink); }
+.nav-links a.active { color: var(--c-ink); font-weight: 800 !important; border-bottom: 1px solid var(--c-ink); }
 
 /* ── Sélecteur de langue ── */
 .lang-switch {
@@ -210,7 +218,6 @@ nav {
   background: none;
   border: none;
   padding: 6px 13px;
-  cursor: none;
   border-right: var(--border-weight) solid var(--c-border);
   transition: background 0.2s, color 0.2s;
 }
@@ -226,7 +233,6 @@ nav {
   border: var(--border-weight) solid var(--c-border);
   border-radius: 10px;
   position: relative;
-  cursor: none;
   transition: background 0.3s, border-color 0.3s;
   flex-shrink: 0;
 }
@@ -247,8 +253,6 @@ nav {
 /* ============================================================
    SECTIONS DE PAGE — CLASSES RÉUTILISABLES
    ============================================================ */
-
-/* En-tête de page (lab, contact, etc.) */
 .page-header {
   padding: calc(var(--space-2xl) + var(--space-lg)) var(--space-lg) var(--space-xl);
   display: flex;

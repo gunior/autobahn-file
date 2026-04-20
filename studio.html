@@ -1,374 +1,274 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="fr" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Studio — Autobahn</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
-<style>
-/* ── THEME TOKENS ── */
-:root {
-  --c-bg:       #f5f4f0;
-  --c-surface:  #e8e6e0;
-  --c-ink:      #1a1a18;
-  --c-ash:      #c8c5bc;
-  --c-slate:    #6b6860;
-  --c-accent:   #0038FF;
-  --c-border:   rgba(26,26,24,0.12);
-  --nav-bg:     rgba(245,244,240,0.92);
-  --f-display:  'Inter', sans-serif;
-  --f-mono:     'Courier New', Courier, monospace;
-  --f-sans:     'DM Sans', system-ui, sans-serif;
-  --transition-theme: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
-}
-[data-theme="dark"] {
-  --c-bg:       #111110;
-  --c-surface:  #1e1e1c;
-  --c-ink:      #f5f4f0;
-  --c-ash:      #4a4844;
-  --c-slate:    #8a8880;
-  --c-border:   rgba(245,244,240,0.1);
-  --nav-bg:     rgba(17,17,16,0.92);
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studio — Autobahn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./design.css">
+  <style>
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width: 100%; height: 100%; overflow: hidden; }
-body {
-  background: var(--c-bg); color: var(--c-ink);
-  font-family: var(--f-sans); cursor: none;
-  transition: var(--transition-theme);
-}
+    html, body { width: 100%; height: 100%; overflow: hidden; }
 
-/* ── CURSOR ── */
-.cursor {
-  width: 8px; height: 8px; background: var(--c-ink); border-radius: 50%;
-  position: fixed; z-index: 9999; pointer-events: none;
-  transform: translate(-50%, -50%);
-  transition: width .25s cubic-bezier(.25,.46,.45,.94),
-              height .25s cubic-bezier(.25,.46,.45,.94), background .2s;
-}
-.cursor.hovering { width: 44px; height: 44px; background: var(--c-accent); }
+    body { background: #0d0d0c; color: rgba(245,244,240,0.92); }
 
-/* ── NAV ── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 28px 48px;
-  /* Nav transparente sur le carousel plein écran */
-  background: transparent;
-  transition: var(--transition-theme);
-}
-.nav-logo {
-  font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.06em;
-  color: rgba(245,244,240,0.9); text-decoration: none;
-}
-.nav-right { display: flex; align-items: center; gap: 32px; }
-.nav-links { display: flex; gap: 32px; }
-.nav-links a {
-  font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: rgba(245,244,240,0.45); text-decoration: none; transition: color 0.2s;
-}
-.nav-links a:hover { color: rgba(245,244,240,0.9); }
-.nav-links a.active { color: rgba(245,244,240,0.9); border-bottom: 1px solid rgba(245,244,240,0.9); }
+    /* ══ NAV — transparente, toujours sur fond sombre ══ */
+    nav {
+      background: transparent !important;
+      border-bottom-color: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
 
-.lang-switch { display: flex; border: 0.5px solid rgba(245,244,240,0.2); overflow: hidden; }
-.lang-btn {
-  font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
-  color: rgba(245,244,240,0.35); background: none; border: none; padding: 6px 13px; cursor: none;
-  border-right: 0.5px solid rgba(245,244,240,0.2); transition: background 0.2s, color 0.2s;
-}
-.lang-btn:last-child { border-right: none; }
-.lang-btn.active { background: rgba(245,244,240,0.12); color: rgba(245,244,240,0.9); }
-.lang-btn:hover:not(.active) { color: rgba(245,244,240,0.7); }
+    /* Logo et liens toujours en clair sur cette page */
+    .nav-logo {
+      color: rgba(245,244,240,0.9) !important;
+      mix-blend-mode: normal !important;
+    }
+    .nav-links a              { color: rgba(245,244,240,0.4) !important; }
+    .nav-links a:hover        { color: rgba(245,244,240,0.9) !important; }
+    .nav-links a.active       { color: rgba(245,244,240,0.9) !important; border-bottom-color: rgba(245,244,240,0.9) !important; }
+    .lang-switch              { border-color: rgba(245,244,240,0.2) !important; }
+    .lang-btn                 { color: rgba(245,244,240,0.35) !important; border-color: rgba(245,244,240,0.2) !important; }
+    .lang-btn.active          { background: rgba(245,244,240,0.12) !important; color: rgba(245,244,240,0.9) !important; }
+    .lang-btn:hover:not(.active) { color: rgba(245,244,240,0.7) !important; }
+    .theme-toggle             { background: rgba(245,244,240,0.1) !important; border-color: rgba(245,244,240,0.2) !important; }
+    .theme-toggle::after      { background: rgba(245,244,240,0.4) !important; }
+    [data-theme="dark"] .theme-toggle::after { background: rgba(245,244,240,0.85) !important; }
 
-/* ── THEME TOGGLE ── */
-/* Sur cette page fond sombre (carousel), le toggle est toujours sur fond sombre */
-.theme-toggle {
-  width: 36px; height: 20px;
-  background: rgba(245,244,240,0.1);
-  border: 0.5px solid rgba(245,244,240,0.2);
-  border-radius: 10px;
-  position: relative; cursor: none;
-  transition: background 0.3s, border-color 0.3s;
-  flex-shrink: 0;
-}
-.theme-toggle::after {
-  content: '';
-  position: absolute; top: 3px; left: 3px;
-  width: 12px; height: 12px; border-radius: 50%;
-  background: rgba(245,244,240,0.4);
-  transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94), background 0.3s;
-}
-[data-theme="dark"] .theme-toggle::after {
-  transform: translateX(16px);
-  background: rgba(245,244,240,0.85);
-}
+    /* ══ CAROUSEL ══ */
+    .carousel { position: fixed; inset: 0; z-index: 0; }
+    .slide {
+      position: absolute; inset: 0;
+      background: #0d0d0c;
+      opacity: 0;
+      transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .slide.active { opacity: 1; }
+    .slide-bg {
+      width: 100%; height: 100%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    /* Placeholder si pas encore de photo */
+    .slide-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: rgba(245,244,240,0.06);
+    }
+    .slide:nth-child(1) .slide-placeholder { background: #0f0e0d; }
+    .slide:nth-child(2) .slide-placeholder { background: #111210; }
+    .slide:nth-child(3) .slide-placeholder { background: #0d0f0e; }
+    .slide:nth-child(4) .slide-placeholder { background: #100d0f; }
 
-/* ── CAROUSEL ── */
-.carousel { position: fixed; inset: 0; z-index: 0; }
-.slide {
-  position: absolute; inset: 0;
-  background: #0d0d0c;
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0;
-  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.slide.active { opacity: 1; }
-.slide-placeholder {
-  width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: rgba(245,244,240,0.06); position: relative;
-  /*
-    Pour une vraie photo :
-    background: url('studio-01.jpg') center/cover no-repeat;
-    et supprimer le texte placeholder
-  */
-}
-.slide:nth-child(1) .slide-placeholder { background: #0f0e0d; }
-.slide:nth-child(2) .slide-placeholder { background: #111210; }
-.slide:nth-child(3) .slide-placeholder { background: #0d0f0e; }
-.slide:nth-child(4) .slide-placeholder { background: #100d0f; }
+    .slide-overlay {
+      position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(to top,
+        rgba(13,13,12,0.85) 0%,
+        rgba(13,13,12,0.3)  45%,
+        rgba(13,13,12,0.15) 100%
+      );
+    }
 
-.slide-overlay {
-  position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(to top,
-    rgba(13,13,12,0.82) 0%,
-    rgba(13,13,12,0.3)  45%,
-    rgba(13,13,12,0.15) 100%
-  );
-}
+    /* ══ BIO BLOCK ══ */
+    .bio-block {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+      padding: 0 var(--space-lg) 52px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);
+      align-items: flex-end;
+    }
+    .bio-label {
+      font-family: var(--f-mono); font-size: var(--fs-micro); letter-spacing: var(--ls-xwide);
+      text-transform: uppercase; color: rgba(245,244,240,0.3); margin-bottom: 16px;
+    }
+    .bio-title {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(32px, 4vw, 56px);
+      font-weight: 300; line-height: 0.95; letter-spacing: -0.03em;
+      color: rgba(245,244,240,0.95); margin-bottom: 20px;
+    }
+    .bio-text {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 14px; line-height: 1.75;
+      color: rgba(245,244,240,0.45); max-width: 480px;
+    }
+    .bio-right { display: flex; flex-direction: column; align-items: flex-end; gap: 24px; padding-bottom: 4px; }
+    .bio-stats { display: flex; gap: 40px; }
+    .stat { text-align: right; }
+    .stat-n {
+      font-family: var(--f-mono); font-size: 32px;
+      color: rgba(245,244,240,0.12); letter-spacing: -0.02em; line-height: 1;
+    }
+    .stat-l {
+      font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: rgba(245,244,240,0.2); margin-top: 4px;
+    }
 
-/* ── BIO BLOCK ── */
-.bio-block {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
-  padding: 0 48px 52px;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: flex-end;
-}
-.bio-label {
-  font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: rgba(245,244,240,0.3); margin-bottom: 16px;
-}
-.bio-title {
-  font-family: var(--f-display);
-  font-size: clamp(32px, 4vw, 56px);
-  font-weight: 400; line-height: 0.95; letter-spacing: -0.03em;
-  color: rgba(245,244,240,0.95); margin-bottom: 20px;
-}
-.bio-text { font-size: 14px; line-height: 1.75; color: rgba(245,244,240,0.5); max-width: 480px; }
-.bio-right { display: flex; flex-direction: column; align-items: flex-end; gap: 24px; padding-bottom: 4px; }
-.bio-stats { display: flex; gap: 40px; }
-.stat { text-align: right; }
-.stat-n {
-  font-family: var(--f-mono); font-size: 32px; font-weight: 400;
-  color: rgba(245,244,240,0.15); letter-spacing: -0.02em; line-height: 1;
-}
-.stat-l {
-  font-family: var(--f-mono); font-size: 9px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: rgba(245,244,240,0.2); margin-top: 4px;
-}
+    /* ══ PROGRESS BAR ══ */
+    .progress-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+      height: 1px; background: rgba(245,244,240,0.08);
+    }
+    .progress-fill { height: 100%; background: rgba(245,244,240,0.3); width: 0%; }
 
-/* ── PROGRESS BAR ── */
-.progress-bar {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
-  height: 2px; background: rgba(245,244,240,0.08);
-}
-.progress-fill { height: 100%; background: rgba(245,244,240,0.3); width: 0%; }
+    /* ══ COUNTER + DOTS ══ */
+    .slide-counter {
+      position: fixed; right: var(--space-lg); top: 50%; transform: translateY(-50%);
+      z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .counter-current { font-family: var(--f-mono); font-size: 12px; color: rgba(245,244,240,0.7); }
+    .counter-sep     { width: 0.5px; height: 32px; background: rgba(245,244,240,0.15); }
+    .counter-total   { font-family: var(--f-mono); font-size: 12px; color: rgba(245,244,240,0.2); }
+    .dots { display: flex; gap: 8px; align-items: center; }
+    .dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: rgba(245,244,240,0.2); ;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .dot.active { background: rgba(245,244,240,0.8); transform: scale(1.4); }
 
-/* ── COUNTER + DOTS ── */
-.slide-counter {
-  position: fixed; right: 48px; top: 50%; transform: translateY(-50%);
-  z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 10px;
-}
-.counter-current { font-family: var(--f-mono); font-size: 12px; color: rgba(245,244,240,0.7); }
-.counter-sep { width: 0.5px; height: 32px; background: rgba(245,244,240,0.15); }
-.counter-total { font-family: var(--f-mono); font-size: 12px; color: rgba(245,244,240,0.2); }
-.dots { display: flex; gap: 8px; align-items: center; }
-.dot {
-  width: 4px; height: 4px; border-radius: 50%;
-  background: rgba(245,244,240,0.2); cursor: none;
-  transition: background 0.3s, transform 0.3s;
-}
-.dot.active { background: rgba(245,244,240,0.8); transform: scale(1.4); }
+    /* ══ CURSOR sur fond sombre ══ */
+    .cursor { background: #ffffff; }
 
-/* ── LANGUE ── */
-.fr { display: none; } .en { display: inline; }
-body.lang-fr .fr { display: inline; } body.lang-fr .en { display: none; }
-body.lang-en .fr { display: none; } body.lang-en .en { display: inline; }
-span.fr, span.en { display: inline; }
-body.lang-fr span.fr { display: inline; } body.lang-fr span.en { display: none; }
-body.lang-en span.en { display: inline; } body.lang-en span.fr { display: none; }
-</style>
+  </style>
 </head>
-<body class="lang-fr">
+<body>
 
-<div class="cursor" id="cursor"></div>
+  <nav></nav>
 
-<nav>
-  <a href="index.html" class="nav-logo">Autobahn —</a>
-  <div class="nav-right">
-    <div class="nav-links">
-      <a href="creators.html"><span class="en">Creators</span><span class="fr">Créateurs</span></a>
-      <a href="lab.html">Lab</a>
-      <a href="studio.html" class="active">Studio</a>
-      <a href="contact.html">Contact</a>
-    </div>
-    <div class="lang-switch">
-      <button class="lang-btn" id="btnEN" onclick="setLang('en')">EN</button>
-      <button class="lang-btn active" id="btnFR" onclick="setLang('fr')">FR</button>
-    </div>
-    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"></button>
-  </div>
-</nav>
+  <div class="carousel" id="carousel"></div>
 
-<div class="carousel" id="carousel">
-  <div class="slide active">
-    <div class="slide-placeholder">Photo studio — 01</div>
-    <div class="slide-overlay"></div>
+  <div class="slide-counter">
+    <span class="counter-current" id="counterCurrent">01</span>
+    <div class="counter-sep"></div>
+    <span class="counter-total" id="counterTotal">--</span>
   </div>
-  <div class="slide">
-    <div class="slide-placeholder">Photo studio — 02</div>
-    <div class="slide-overlay"></div>
-  </div>
-  <div class="slide">
-    <div class="slide-placeholder">Photo studio — 03</div>
-    <div class="slide-overlay"></div>
-  </div>
-  <div class="slide">
-    <div class="slide-placeholder">Photo studio — 04</div>
-    <div class="slide-overlay"></div>
-  </div>
-</div>
 
-<div class="slide-counter">
-  <span class="counter-current" id="counterCurrent">01</span>
-  <div class="counter-sep"></div>
-  <span class="counter-total" id="counterTotal">04</span>
-</div>
-
-<div class="bio-block">
-  <div class="bio-left">
-    <div class="bio-label">
-      <span class="en">About the studio</span>
-      <span class="fr">À propos du studio</span>
-    </div>
-    <div class="bio-title">
-      <span class="en">A studio built differently.</span>
-      <span class="fr">Un studio pensé autrement.</span>
-    </div>
-    <p class="bio-text">
-      <span class="en">We are a multidisciplinary creative collective based in Paris — motion designers, VFX artists, sound designers and graphic designers sharing one space, one ambition. Each creator brings their own practice. Together, we shape visual experiences for future-facing brands.</span>
-      <span class="fr">Nous sommes un collectif créatif multidisciplinaire basé à Paris — motion designers, artistes VFX, sound designers et graphistes partageant un même espace, une même ambition. Chaque créateur apporte sa propre pratique. Ensemble, nous façonnons des expériences visuelles pour des marques tournées vers l'avenir.</span>
-    </p>
-  </div>
-  <div class="bio-right">
-    <div class="bio-stats">
-      <div class="stat">
-        <div class="stat-n">06</div>
-        <div class="stat-l"><span class="en">Creators</span><span class="fr">Créateurs</span></div>
+  <div class="bio-block">
+    <div class="bio-left">
+      <div class="bio-label">
+        <span class="en">About the studio</span>
+        <span class="fr">À propos du studio</span>
       </div>
-      <div class="stat">
-        <div class="stat-n">3+</div>
-        <div class="stat-l"><span class="en">Years</span><span class="fr">Années</span></div>
+      <div class="bio-title">
+        <span class="en">A studio built differently.</span>
+        <span class="fr">Un studio pensé autrement.</span>
       </div>
-      <div class="stat">
-        <div class="stat-n">5</div>
-        <div class="stat-l"><span class="en">Disciplines</span><span class="fr">Disciplines</span></div>
-      </div>
+      <p class="bio-text">
+        <span class="en">We are a multidisciplinary creative collective — motion designers, VFX artists, sound designers and graphic designers sharing one space, one ambition. Each creator brings their own practice. Together, we shape visual experiences for future-facing brands.</span>
+        <span class="fr">Nous sommes un collectif créatif multidisciplinaire — motion designers, artistes VFX, sound designers et graphistes partageant un même espace, une même ambition. Chaque créateur apporte sa propre pratique. Ensemble, nous façonnons des expériences visuelles pour des marques tournées vers l'avenir.</span>
+      </p>
     </div>
-    <div class="dots" id="dots"></div>
+    <div class="bio-right">
+      <div class="bio-stats">
+        <div class="stat">
+          <div class="stat-n">06</div>
+          <div class="stat-l"><span class="en">Creators</span><span class="fr">Créateurs</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-n">3+</div>
+          <div class="stat-l"><span class="en">Years</span><span class="fr">Années</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-n">5</div>
+          <div class="stat-l"><span class="en">Disciplines</span><span class="fr">Disciplines</span></div>
+        </div>
+      </div>
+      <div class="dots" id="dots"></div>
+    </div>
   </div>
-</div>
 
-<div class="progress-bar">
-  <div class="progress-fill" id="progressFill"></div>
-</div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
 
-<script>
-const cursor = document.getElementById('cursor');
-document.addEventListener('mousemove', e => {
-  cursor.style.left = e.clientX + 'px';
-  cursor.style.top  = e.clientY + 'px';
-});
-function addHover(el) {
-  el.addEventListener('mouseenter', () => cursor.classList.add('hovering'));
-  el.addEventListener('mouseleave', () => cursor.classList.remove('hovering'));
-}
-document.querySelectorAll('a, button').forEach(addHover);
+  <script src="./nav.js"></script>
+  <script>
+  /* ── Carousel depuis manifest ── */
+  const carousel = document.getElementById('carousel');
+  const DURATION = 10000;
+  let slides = [];
+  let current = 0;
+  let startTime = null;
+  let rafId = null;
+  const fill = document.getElementById('progressFill');
 
-/* ── Dark mode ── */
-const html = document.documentElement;
-const themeToggle = document.getElementById('themeToggle');
-const stored = localStorage.getItem('autobahn-theme') || 'light';
-html.setAttribute('data-theme', stored);
-themeToggle.addEventListener('click', () => {
-  const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('autobahn-theme', next);
-});
+  function buildSlides(images) {
+    carousel.innerHTML = '';
+    slides = [];
+    images.forEach((src, i) => {
+      const slide = document.createElement('div');
+      slide.className = 'slide' + (i === 0 ? ' active' : '');
+      if (src) {
+        slide.innerHTML = `<div class="slide-bg" style="background-image:url('${src}')"></div><div class="slide-overlay"></div>`;
+      } else {
+        slide.innerHTML = `<div class="slide-placeholder">Photo studio — ${String(i+1).padStart(2,'0')}</div><div class="slide-overlay"></div>`;
+      }
+      carousel.appendChild(slide);
+      slides.push(slide);
+    });
 
-/* ── Langue ── */
-function setLang(lang) {
-  document.body.className = 'lang-' + lang;
-  document.getElementById('btnEN').classList.toggle('active', lang === 'en');
-  document.getElementById('btnFR').classList.toggle('active', lang === 'fr');
-  localStorage.setItem('autobahn-lang', lang);
-}
-const savedLang = localStorage.getItem('autobahn-lang');
-if (savedLang) setLang(savedLang);
+    document.getElementById('counterTotal').textContent = String(slides.length).padStart(2, '0');
+    buildDots();
+    resetProgress();
+  }
 
-/* ── Carousel ── */
-const slides = document.querySelectorAll('.slide');
-const total = slides.length;
-const DURATION = 10000;
-let current = 0;
-let startTime = null;
-let rafId = null;
+  function buildDots() {
+    const dotsEl = document.getElementById('dots');
+    dotsEl.innerHTML = '';
+    slides.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === 0 ? ' active' : '');
+      d.addEventListener('click', () => goTo(i));
+      dotsEl.appendChild(d);
+    });
+  }
 
-document.getElementById('counterTotal').textContent = String(total).padStart(2, '0');
+  function updateDots(idx) {
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+  }
 
-const dotsEl = document.getElementById('dots');
-slides.forEach((_, i) => {
-  const d = document.createElement('div');
-  d.className = 'dot' + (i === 0 ? ' active' : '');
-  d.addEventListener('click', () => goTo(i));
-  addHover(d);
-  dotsEl.appendChild(d);
-});
+  function goTo(idx) {
+    slides[current].classList.remove('active');
+    current = (idx + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    document.getElementById('counterCurrent').textContent = String(current + 1).padStart(2, '0');
+    updateDots(current);
+    resetProgress();
+  }
 
-function updateDots(idx) {
-  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === idx));
-}
+  function resetProgress() {
+    fill.style.transition = 'none';
+    fill.style.width = '0%';
+    cancelAnimationFrame(rafId);
+    startTime = performance.now();
+    animateProgress();
+  }
 
-function goTo(idx) {
-  slides[current].classList.remove('active');
-  current = (idx + total) % total;
-  slides[current].classList.add('active');
-  document.getElementById('counterCurrent').textContent = String(current + 1).padStart(2, '0');
-  updateDots(current);
-  resetProgress();
-}
+  function animateProgress() {
+    const elapsed = performance.now() - startTime;
+    const pct = Math.min((elapsed / DURATION) * 100, 100);
+    fill.style.width = pct + '%';
+    if (pct < 100) { rafId = requestAnimationFrame(animateProgress); }
+    else { goTo(current + 1); }
+  }
 
-const fill = document.getElementById('progressFill');
-
-function resetProgress() {
-  fill.style.transition = 'none';
-  fill.style.width = '0%';
-  cancelAnimationFrame(rafId);
-  startTime = performance.now();
-  animateProgress();
-}
-
-function animateProgress() {
-  const elapsed = performance.now() - startTime;
-  const pct = Math.min((elapsed / DURATION) * 100, 100);
-  fill.style.width = pct + '%';
-  if (pct < 100) { rafId = requestAnimationFrame(animateProgress); }
-  else { goTo(current + 1); }
-}
-
-resetProgress();
-</script>
+  /* Charge le manifest si dispo, sinon 4 placeholders */
+  fetch('./studio/manifest.json')
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data && data.images && data.images.length > 0) {
+        buildSlides(data.images.map(f => `./studio/${f}`));
+      } else {
+        buildSlides([null, null, null, null]);
+      }
+    })
+    .catch(() => buildSlides([null, null, null, null]));
+  </script>
 </body>
 </html>
