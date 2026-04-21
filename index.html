@@ -179,31 +179,13 @@
       background: rgba(245, 244, 240, 0.3);
     }
 
-    /* Showreel CTA */
-    .showreel-cta {
-      font-family: var(--f-mono);
-      font-size: var(--fs-micro, 10px);
-      letter-spacing: var(--ls-wide, 0.1em);
-      text-transform: uppercase;
-      color: rgba(245, 244, 240, 0.4);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      transition: color 0.2s;
-      pointer-events: all;
-    }
-    .showreel-cta:hover { color: rgba(245, 244, 240, 0.85); }
-    .showreel-cta::before {
-      content: '';
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: currentColor;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.4; transform: scale(0.7); }
+    /* Logo meta */
+    .meta-logo {
+      height: 10px;
+      width: auto;
+      display: block;
+      filter: brightness(0) invert(1);
+      opacity: 0.4;
     }
 
   </style>
@@ -226,12 +208,6 @@
 
     
 
-    <div class="hero-side">
-      <a class="side-link" href="#" target="_blank" rel="noopener">Instagram</a>
-      <div class="accent-dot"></div>
-      <a class="side-link" href="#" target="_blank" rel="noopener">Vimeo</a>
-    </div>
-
     <div class="hero-title-wrap">
       <h1 class="hero-title">
         <span class="hero-title-line en"><span>A multidisciplinary creative studio</span></span>
@@ -251,14 +227,11 @@
         </span>
         <span class="meta-dot"></span>
         <span class="meta-item">
-          <span class="en">6 creators</span>
-          <span class="fr">6 créateurs</span>
+          <span class="en"><span id="creatorCount">—</span> creators</span>
+          <span class="fr"><span id="creatorCountFr">—</span> créateurs</span>
         </span>
       </div>
-      <a class="showreel-cta" href="./creators/guillaume/creator-showreel-guillaume.mp4" target="_blank">
-        <span class="en">Showreel 2025</span>
-        <span class="fr">Showreel 2025</span>
-      </a>
+      <img src="./assets/Asset5.png" class="meta-logo" alt="Autobahn">
     </div>
 
   </section>
@@ -270,8 +243,17 @@
     // Fade-in de la vidéo une fois chargée
     const vid = document.getElementById('showreel');
     vid.addEventListener('canplaythrough', () => vid.classList.add('loaded'));
-    // Fallback si déjà en cache
     if (vid.readyState >= 3) vid.classList.add('loaded');
+
+    // Compteur créateurs dynamique
+    fetch('./creators.json')
+      .then(r => r.ok ? r.json() : [])
+      .then(list => {
+        const n = list.length || '—';
+        document.getElementById('creatorCount').textContent = n;
+        document.getElementById('creatorCountFr').textContent = n;
+      })
+      .catch(() => {});
   </script>
 
 </body>
