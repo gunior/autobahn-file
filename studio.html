@@ -259,11 +259,11 @@
   }
 
   /* Charge le manifest si dispo, sinon 4 placeholders */
-  fetch('./studio/manifest.json')
+  fetch('./photos-studio/manifest.json')
     .then(r => r.ok ? r.json() : null)
     .then(data => {
       if (data && data.images && data.images.length > 0) {
-        buildSlides(data.images.map(f => `./studio/${f}`));
+        buildSlides(data.images.map(f => `./photos-studio/${f}`));
       } else {
         buildSlides([null, null, null, null]);
       }

@@ -3,6 +3,7 @@
  * ─────────────────────────────────
  * 1. Récupère les créateurs depuis Sanity et génère creators.json
  * 2. Génère le manifest du Lab (images + vidéos)
+ * 3. Génère le manifest du Studio (photos carousel)
  */
 
 const https = require('https');
@@ -93,6 +94,29 @@ function generateLabManifest() {
 }
 
 /* ══════════════════════════════════════════════════════
+   3. STUDIO — Manifest photos carousel
+══════════════════════════════════════════════════════ */
+
+function generateStudioManifest() {
+  const studioDir = path.join(__dirname, 'photos-studio');
+  const outFile   = path.join(studioDir, 'manifest.json');
+
+  if (!fs.existsSync(studioDir)) {
+    console.log('ℹ  Dossier photos-studio/ absent — manifest ignoré');
+    return;
+  }
+
+  const imageExts = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif']);
+
+  const images = fs.readdirSync(studioDir)
+    .filter(f => imageExts.has(path.extname(f).toLowerCase()))
+    .sort();
+
+  fs.writeFileSync(outFile, JSON.stringify({ images }, null, 2));
+  console.log(`✓  Studio manifest — ${images.length} photos`);
+}
+
+/* ══════════════════════════════════════════════════════
    MAIN
 ══════════════════════════════════════════════════════ */
 
@@ -101,6 +125,9 @@ async function build() {
 
   // Lab manifest
   generateLabManifest();
+
+  // Studio manifest
+  generateStudioManifest();
 
   // Creators depuis Sanity
   const creators = await fetchCreators();
