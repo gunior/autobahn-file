@@ -85,6 +85,7 @@
       letter-spacing: -0.05em; line-height: 1;
       pointer-events: none; white-space: nowrap; user-select: none;
       transition: color 0.6s ease, opacity 0.4s ease;
+      opacity: 0;
     }
     body:not(.video-active) #portraitsTitle              { color: #1A2ED5; }
     html[data-theme="dark"] body:not(.video-active) #portraitsTitle { color: #E8FF47; }
@@ -597,6 +598,7 @@
     size -= 2;
     document.body.removeChild(clone);
     el.style.fontSize = size + 'px';
+    el.style.opacity = '1';
   }
   document.fonts.ready.then(fitTitle);
   window.addEventListener('resize', fitTitle);
