@@ -162,7 +162,6 @@
         vid.src = `./lab/${item.file}`;
       } else {
         const img = new Image();
-        img.loading = 'lazy';
         img.onload  = () => resolve({ item, el: img,  w: img.naturalWidth,  h: img.naturalHeight });
         img.onerror = () => resolve({ item, el: null });
         img.src = `./lab/${item.file}`;
