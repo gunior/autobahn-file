@@ -1,0 +1,221 @@
+[
+  {
+    "fields": [
+      {
+        "description": "Position dans la liste (1 = premier)",
+        "name": "order",
+        "type": "number",
+        "title": "Ordre d'affichage"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "description": "Ex : ESTRADE Guillaume",
+        "name": "name",
+        "type": "string",
+        "title": "Nom complet"
+      },
+      {
+        "description": "Ex : Motion Designer & Director",
+        "name": "role",
+        "type": "string",
+        "title": "Rôle"
+      },
+      {
+        "rows": 4,
+        "description": "Courte description de ta pratique (2-3 phrases)",
+        "name": "bio",
+        "type": "text"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "description": "Portrait carré ou format libre — apparaît dans la liste des créateurs",
+        "name": "photo",
+        "type": "image",
+        "title": "Photo de profil"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "description": "Image grand format affichée en haut de la page profil (format paysage recommandé)",
+        "name": "heroPhoto",
+        "type": "image",
+        "title": "Photo bannière"
+      },
+      {
+        "options": {
+          "accept": "video/*"
+        },
+        "description": "Vidéo de fond au survol de ta carte. WebM recommandé, max 720p.",
+        "name": "showreel",
+        "type": "file",
+        "title": "Showreel (vidéo)"
+      },
+      {
+        "options": {
+          "hotspot": true
+        },
+        "description": "Alternative au showreel vidéo (pour créateurs son/musique sans vidéo)",
+        "name": "hoverBg",
+        "type": "image",
+        "title": "Image de fond au survol"
+      },
+      {
+        "options": {
+          "layout": "tags"
+        },
+        "description": "Ex : motion, 3D, vfx...",
+        "of": [
+          {
+            "type": "string"
+          }
+        ],
+        "name": "disciplines",
+        "type": "array"
+      },
+      {
+        "options": {
+          "layout": "tags"
+        },
+        "of": [
+          {
+            "type": "string"
+          }
+        ],
+        "name": "skills",
+        "type": "array",
+        "title": "Compétences détaillées"
+      },
+      {
+        "options": {
+          "layout": "tags"
+        },
+        "description": "Ex : After Effects, Cinema 4D...",
+        "of": [
+          {
+            "type": "string"
+          }
+        ],
+        "name": "tools",
+        "type": "array",
+        "title": "Outils & logiciels"
+      },
+      {
+        "of": [
+          {
+            "fields": [
+              {
+                "description": "Ex : Instagram, Vimeo, Behance...",
+                "name": "label",
+                "type": "string"
+              },
+              {
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "uri",
+                        "constraint": {
+                          "options": {
+                            "scheme": [
+                              "/^http$/",
+                              "/^https$/"
+                            ],
+                            "allowRelative": false,
+                            "relativeOnly": false,
+                            "allowCredentials": false
+                          }
+                        }
+                      }
+                    ],
+                    "level": "error"
+                  }
+                ],
+                "name": "url",
+                "type": "url",
+                "title": "URL"
+              }
+            ],
+            "type": "object",
+            "name": "link"
+          }
+        ],
+        "name": "links",
+        "type": "array",
+        "title": "Liens sociaux / portfolio"
+      },
+      {
+        "of": [
+          {
+            "fields": [
+              {
+                "name": "name",
+                "type": "string",
+                "title": "Titre du projet"
+              },
+              {
+                "description": "Ex : Motion / Brand, VFX / Compositing...",
+                "name": "type",
+                "type": "string"
+              },
+              {
+                "validation": [
+                  {
+                    "rules": [
+                      {
+                        "flag": "uri",
+                        "constraint": {
+                          "options": {
+                            "scheme": [
+                              "/^http$/",
+                              "/^https$/"
+                            ],
+                            "allowRelative": false,
+                            "relativeOnly": false,
+                            "allowCredentials": false
+                          }
+                        }
+                      }
+                    ],
+                    "level": "error"
+                  }
+                ],
+                "name": "url",
+                "type": "url",
+                "title": "Lien (optionnel)"
+              },
+              {
+                "options": {
+                  "hotspot": true
+                },
+                "name": "thumb",
+                "type": "image",
+                "title": "Miniature"
+              }
+            ],
+            "type": "object",
+            "name": "project"
+          }
+        ],
+        "name": "projects",
+        "type": "array",
+        "title": "Projets sélectionnés"
+      }
+    ],
+    "name": "creator",
+    "type": "document",
+    "title": "Créateur"
+  }
+]
