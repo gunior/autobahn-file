@@ -22,6 +22,10 @@
    Pour changer le logo texte : modifiez --logo-text
    Pour passer à une image SVG : utilisez nav.js (voir commentaire)
    ============================================================ */
+html {
+  scrollbar-gutter: stable;
+}
+
 :root {
   --logo-text:    "Autobahn —";
   --logo-size:    13px;
