@@ -53,6 +53,10 @@
       background-position: center;
       background-repeat: no-repeat;
     }
+    @keyframes zoomSlow {
+      from { transform: scale(1); }
+      to   { transform: scale(1.07); }
+    }
     /* Placeholder si pas encore de photo */
     .slide-placeholder {
       width: 100%; height: 100%;
@@ -165,20 +169,6 @@
       </p>
     </div>
     <div class="bio-right">
-      <div class="bio-stats">
-        <div class="stat">
-          <div class="stat-n">06</div>
-          <div class="stat-l"><span class="en">Creators</span><span class="fr">Créateurs</span></div>
-        </div>
-        <div class="stat">
-          <div class="stat-n">3+</div>
-          <div class="stat-l"><span class="en">Years</span><span class="fr">Années</span></div>
-        </div>
-        <div class="stat">
-          <div class="stat-n">5</div>
-          <div class="stat-l"><span class="en">Disciplines</span><span class="fr">Disciplines</span></div>
-        </div>
-      </div>
       <div class="dots" id="dots"></div>
     </div>
   </div>
@@ -198,6 +188,13 @@
   let rafId = null;
   const fill = document.getElementById('progressFill');
 
+  function startZoom(bg) {
+    if (!bg) return;
+    bg.style.animation = 'none';
+    bg.offsetHeight; // force reflow
+    bg.style.animation = 'zoomSlow 10s ease-out forwards';
+  }
+
   function buildSlides(images) {
     carousel.innerHTML = '';
     slides = [];
@@ -212,6 +209,8 @@
       carousel.appendChild(slide);
       slides.push(slide);
     });
+    // Démarre le zoom sur le premier slide
+    startZoom(slides[0]?.querySelector('.slide-bg'));
 
     document.getElementById('counterTotal').textContent = String(slides.length).padStart(2, '0');
     buildDots();
@@ -237,6 +236,8 @@
     slides[current].classList.remove('active');
     current = (idx + slides.length) % slides.length;
     slides[current].classList.add('active');
+    // Redémarre le zoom sur le nouveau slide
+    startZoom(slides[current].querySelector('.slide-bg'));
     document.getElementById('counterCurrent').textContent = String(current + 1).padStart(2, '0');
     updateDots(current);
     resetProgress();
