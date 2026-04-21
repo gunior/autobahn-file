@@ -4,8 +4,6 @@ lab/manifest.json
 # Showreels creators — hébergés en externe (trop lourds pour GitHub)
 creators/**/*.mp4
 
-# Vidéo homepage — hébergée en externe
-videos/mini-vid.mp4
 
 # OS
 .DS_Store
