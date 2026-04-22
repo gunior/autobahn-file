@@ -1012,38 +1012,47 @@
     /* ── Touch : swipe = scroll roue, tap = ouvrir profil ── */
     let touchStartY = 0, touchLastY = 0, touchStartTime = 0;
     let touchMoved  = false;
+    let allowPTR    = false; // pull-to-refresh autorisé uniquement en zone haute
 
     document.addEventListener('touchstart', (e) => {
+      /* Ne pas intercepter le scroll de la page profil */
+      if (profilePage.classList.contains('open')) return;
       if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
-      touchStartY   = e.touches[0].clientY;
-      touchLastY    = touchStartY;
+      touchStartY    = e.touches[0].clientY;
+      touchLastY     = touchStartY;
       touchStartTime = Date.now();
-      touchMoved    = false;
+      touchMoved     = false;
+      /* Zone haute (15% de l'écran) → laisse le pull-to-refresh navigateur */
+      allowPTR = touchStartY < window.innerHeight * 0.15;
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
+      if (profilePage.classList.contains('open')) return;
+      /* Hors zone haute : bloque pull-to-refresh et scroll natif */
+      if (!allowPTR) e.preventDefault();
       const y  = e.touches[0].clientY;
       const dy = touchLastY - y;
       touchLastY = y;
       if (Math.abs(y - touchStartY) > 8) touchMoved = true;
-      if (touchMoved) {
+      if (touchMoved && !allowPTR) {
         virtualScroll = Math.max(0, Math.min((N - 1) * SCROLL_PER, virtualScroll + dy));
         renderWheel(virtualScroll);
       }
-    }, { passive: true });
+    }, { passive: false }); /* passive:false requis pour e.preventDefault() */
 
     document.addEventListener('touchend', (e) => {
+      if (profilePage.classList.contains('open')) return;
       if (!touchMoved) {
         /* Tap : trouve la carte sous le doigt et ouvre le profil */
-        const x   = e.changedTouches[0].clientX;
-        const y   = e.changedTouches[0].clientY;
-        const hit = document.elementFromPoint(x, y);
+        const x    = e.changedTouches[0].clientX;
+        const y    = e.changedTouches[0].clientY;
+        const hit  = document.elementFromPoint(x, y);
         const card = hit?.closest?.('.wheel-card');
         if (card) {
           const idx = cardEls.indexOf(card);
           if (idx >= 0) openProfile(creators[idx]);
         }
-      } else {
+      } else if (!allowPTR) {
         /* Swipe : ajoute un peu de momentum puis snape */
         const elapsed  = Math.max(1, Date.now() - touchStartTime);
         const velocity = (touchStartY - touchLastY) / elapsed;

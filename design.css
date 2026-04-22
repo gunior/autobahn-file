@@ -462,7 +462,16 @@ body.lang-en span.en { display: inline; }
   .nav-controls { display: none !important; }
   .nav-hamburger { display: flex; }
 
-  /* Logo mobile géré dans nav.js (content: url() non supporté sur Safari iOS) */
+  /* Logo : force en blanc pour que mix-blend-mode:difference fonctionne sur tout fond */
+  .nav-logo img { filter: brightness(0) invert(1); }
+
+  /* Nav : fond et blur supprimés sur mobile (logo + burger sont fixed indépendants) */
+  nav {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-bottom: none !important;
+  }
 
   /* Menu plein écran */
   #mobileMenu { display: flex; }
