@@ -265,17 +265,7 @@
       letter-spacing: 0.1em; text-transform: uppercase;
       color: rgba(255,255,255,0.3);
     }
-    /* Zone de scroll (capture touch/molette, côté gauche) */
-    #mobileScrollZone {
-      position: fixed;
-      top: 0; left: 0;
-      width: 58vw; height: 100%;
-      z-index: 20;
-      overflow-y: scroll;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-    }
-    #mobileScrollZone::-webkit-scrollbar { display: none; }
+    /* Le scroll est capturé via touch events JS directement sur le document */
 
     /* Info créateur — droite */
     .mobile-creator-info {
@@ -909,14 +899,6 @@
     infoEl.id = 'mobileCreatorInfo';
     document.body.appendChild(infoEl);
 
-    /* ── Zone de scroll (gauche 58vw) ── */
-    const scrollZone  = document.createElement('div');
-    scrollZone.id     = 'mobileScrollZone';
-    const scrollInner = document.createElement('div');
-    scrollInner.style.height = (N * SCROLL_PER + window.innerHeight) + 'px';
-    scrollZone.appendChild(scrollInner);
-    document.body.appendChild(scrollZone);
-
     /* ── Cartes ── */
     const cardEls = creators.map((c, i) => {
       const el = document.createElement('div');
@@ -998,28 +980,80 @@
       activateCreator(getActiveIndex(scrollTop));
     }
 
-    /* ── Snap engine ── */
+    /* ── Virtual scroll (iOS-safe, pas de scroll DOM) ── */
+    let virtualScroll = 0;
     let targetCardIdx = 0;
     let snapRaf       = null;
 
     function smoothScrollTo(targetPx) {
       if (snapRaf) cancelAnimationFrame(snapRaf);
-      const startPx = scrollZone.scrollTop;
+      const startPx = virtualScroll;
       const diff    = targetPx - startPx;
       if (Math.abs(diff) < 0.5) return;
       const dur = 420, t0 = performance.now();
       function step(now) {
         const p    = Math.min(1, (now - t0) / dur);
         const ease = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3) / 2;
-        scrollZone.scrollTop = startPx + diff * ease;
-        renderWheel(scrollZone.scrollTop);
+        virtualScroll = startPx + diff * ease;
+        renderWheel(virtualScroll);
         if (p < 1) snapRaf = requestAnimationFrame(step);
         else        snapRaf = null;
       }
       snapRaf = requestAnimationFrame(step);
     }
 
-    /* ── Molette : 1 cran = 1 carte ── */
+    function snapToNearest() {
+      const nearest = Math.max(0, Math.min(N - 1,
+                        Math.round(virtualScroll / SCROLL_PER)));
+      targetCardIdx = nearest;
+      smoothScrollTo(nearest * SCROLL_PER);
+    }
+
+    /* ── Touch : swipe = scroll roue, tap = ouvrir profil ── */
+    let touchStartY = 0, touchLastY = 0, touchStartTime = 0;
+    let touchMoved  = false;
+
+    document.addEventListener('touchstart', (e) => {
+      if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
+      touchStartY   = e.touches[0].clientY;
+      touchLastY    = touchStartY;
+      touchStartTime = Date.now();
+      touchMoved    = false;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      const y  = e.touches[0].clientY;
+      const dy = touchLastY - y;
+      touchLastY = y;
+      if (Math.abs(y - touchStartY) > 8) touchMoved = true;
+      if (touchMoved) {
+        virtualScroll = Math.max(0, Math.min((N - 1) * SCROLL_PER, virtualScroll + dy));
+        renderWheel(virtualScroll);
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      if (!touchMoved) {
+        /* Tap : trouve la carte sous le doigt et ouvre le profil */
+        const x   = e.changedTouches[0].clientX;
+        const y   = e.changedTouches[0].clientY;
+        const hit = document.elementFromPoint(x, y);
+        const card = hit?.closest?.('.wheel-card');
+        if (card) {
+          const idx = cardEls.indexOf(card);
+          if (idx >= 0) openProfile(creators[idx]);
+        }
+      } else {
+        /* Swipe : ajoute un peu de momentum puis snape */
+        const elapsed  = Math.max(1, Date.now() - touchStartTime);
+        const velocity = (touchStartY - touchLastY) / elapsed;
+        virtualScroll  = Math.max(0, Math.min((N - 1) * SCROLL_PER,
+                           virtualScroll + velocity * 80));
+        snapToNearest();
+      }
+    }, { passive: true });
+
+    /* ── Molette souris : 1 cran = 1 carte (test desktop) ── */
     document.addEventListener('wheel', (e) => {
       e.preventDefault();
       const dir = e.deltaY > 0 ? 1 : e.deltaY < 0 ? -1 : 0;
@@ -1027,19 +1061,6 @@
       targetCardIdx = Math.max(0, Math.min(N - 1, targetCardIdx + dir));
       smoothScrollTo(targetCardIdx * SCROLL_PER);
     }, { passive: false });
-
-    /* ── Touch scroll + snap à l'arrêt ── */
-    let snapTimer = null;
-    scrollZone.addEventListener('scroll', () => {
-      if (!snapRaf) renderWheel(scrollZone.scrollTop);
-      clearTimeout(snapTimer);
-      snapTimer = setTimeout(() => {
-        const nearest = Math.max(0, Math.min(N - 1,
-                          Math.round(scrollZone.scrollTop / SCROLL_PER)));
-        targetCardIdx = nearest;
-        smoothScrollTo(nearest * SCROLL_PER);
-      }, 150);
-    }, { passive: true });
 
     renderWheel(0);
   }

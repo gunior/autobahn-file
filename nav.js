@@ -56,11 +56,14 @@
     <span></span><span></span>
   </button>`;
 
-  /* ── Logo desktop (mix-blend-mode:difference) ── */
+  /* ── Logo (mobile → Asset5, desktop → Asset8, mix-blend-mode:difference) ── */
+  const isMobile   = window.innerWidth <= 768;
+  const logoSrc    = isMobile ? LOGO_IMAGE_MOBILE : LOGO_IMAGE_SRC;
+  const logoHeight = isMobile ? 14 : 10;
   const logoEl = document.createElement('a');
   logoEl.href = 'index.html';
   logoEl.className = 'nav-logo';
-  logoEl.innerHTML = `<img src="${LOGO_IMAGE_SRC}" alt="${LOGO_IMAGE_ALT}" height="10" style="display:block">`;
+  logoEl.innerHTML = `<img src="${logoSrc}" alt="${LOGO_IMAGE_ALT}" height="${logoHeight}" style="display:block">`;
   document.body.prepend(logoEl);
 
   /* ── Menu mobile plein écran ── */

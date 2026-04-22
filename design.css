@@ -168,7 +168,7 @@ nav {
   color: #ffffff;
   text-decoration: none;
   mix-blend-mode: difference;
-  z-index: 101;
+  z-index: 210; /* au-dessus du menu mobile (200) */
   line-height: 1;
 }
 
@@ -331,12 +331,13 @@ body.lang-en span.en { display: inline; }
   justify-content: center;
   gap: 6px;
   padding: 8px;
-  position: absolute;
+  position: fixed; /* fixed = hors du stacking context du nav */
   right: var(--space-lg);
-  top: 50%;
+  top: calc(var(--nav-height) / 2);
   transform: translateY(-50%);
-  z-index: 102;
-  color: inherit;
+  z-index: 210; /* au-dessus du menu mobile (200) */
+  color: #fff;
+  mix-blend-mode: difference; /* toujours visible sur fond clair ou sombre */
 }
 .nav-hamburger span {
   display: block;
@@ -461,8 +462,7 @@ body.lang-en span.en { display: inline; }
   .nav-controls { display: none !important; }
   .nav-hamburger { display: flex; }
 
-  /* Logo mobile — Asset5.png */
-  .nav-logo img { content: url('./assets/Asset5.png'); height: 14px; }
+  /* Logo mobile géré dans nav.js (content: url() non supporté sur Safari iOS) */
 
   /* Menu plein écran */
   #mobileMenu { display: flex; }
