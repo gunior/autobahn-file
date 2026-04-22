@@ -109,7 +109,7 @@
 
   <script>
   /* ── Layout engine ── */
-  const MARGIN = 48;
+  const MARGIN = window.innerWidth < 768 ? 16 : 48;
   const sizeProfiles = [
     { wRatio: [0.55, 0.72] },
     { wRatio: [0.28, 0.38] },

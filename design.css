@@ -319,3 +319,88 @@ body.lang-en .en  { display: inline; }
 span.fr, span.en  { display: none; }
 body.lang-fr span.fr { display: inline; }
 body.lang-en span.en { display: inline; }
+
+/* ============================================================
+   HAMBURGER NAV (caché sur desktop)
+   ============================================================ */
+.nav-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 102;
+}
+.nav-hamburger span {
+  display: block;
+  width: 22px;
+  height: 1.5px;
+  background: currentColor;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+/* ============================================================
+   RESPONSIVE — MOBILE (≤ 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* Variables */
+  :root {
+    --space-lg:  20px;
+    --space-xl:  48px;
+    --space-2xl: 64px;
+    --nav-height: 60px;
+  }
+
+  /* Nav */
+  nav { padding: 16px var(--space-lg); }
+
+  .nav-hamburger { display: flex; }
+
+  .nav-links {
+    display: none;
+    position: fixed;
+    top: var(--nav-height);
+    left: 0; right: 0;
+    background: var(--nav-bg);
+    backdrop-filter: var(--nav-blur);
+    -webkit-backdrop-filter: var(--nav-blur);
+    border-bottom: var(--border-weight) solid var(--c-border);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px var(--space-lg);
+    gap: 20px;
+    z-index: 99;
+  }
+  .nav-links.open { display: flex; }
+  .nav-links a { font-size: 14px; }
+
+  .nav-controls { gap: 12px; }
+
+  /* Page header */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: calc(var(--nav-height) + 32px) var(--space-lg) var(--space-md);
+  }
+  .page-desc {
+    max-width: 100%;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  /* Footer */
+  footer {
+    flex-direction: column;
+    gap: 6px;
+    padding: var(--space-md) var(--space-lg);
+  }
+}

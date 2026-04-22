@@ -139,6 +139,18 @@
     /* ══ CURSOR sur fond sombre ══ */
     .cursor { background: #ffffff; }
 
+  @media (max-width: 768px) {
+    .bio-block {
+      grid-template-columns: 1fr;
+      padding: 0 var(--space-lg, 20px) 36px;
+      gap: 20px;
+    }
+    .bio-title { font-size: clamp(24px, 7vw, 40px); }
+    .bio-text  { font-size: 13px; }
+    .bio-right { align-items: flex-start; }
+    .slide-counter { display: none; }
+  }
+
   </style>
 </head>
 <body>

@@ -188,6 +188,28 @@
       opacity: 0.4;
     }
 
+
+  @media (max-width: 768px) {
+    .hero-title-wrap {
+      bottom: 90px;
+      left: var(--space-lg, 20px);
+      right: var(--space-lg, 20px);
+    }
+    .hero-title {
+      font-size: clamp(32px, 9vw, 56px);
+    }
+    .hero-meta {
+      left: var(--space-lg, 20px);
+      right: var(--space-lg, 20px);
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      padding-top: 12px;
+    }
+    .meta-row { flex-wrap: wrap; gap: 8px; }
+    .meta-logo { height: 8px; }
+  }
+
   </style>
 </head>
 <body>

@@ -52,7 +52,10 @@
   if (!navEl) return;
 
   navEl.innerHTML = `
-  <div class="nav-links">${linksHTML}</div>
+  <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="navLinks">${linksHTML}</div>
   <div class="nav-controls">
     <div class="lang-switch">
       <button class="lang-btn" id="btnEN" onclick="setLang('en')">EN</button>
@@ -60,6 +63,23 @@
     </div>
     ${themeToggleHTML}
   </div>`;
+
+  // Hamburger toggle
+  const hamburger = document.getElementById('navHamburger');
+  const navLinks  = document.getElementById('navLinks');
+  if (hamburger && navLinks) {
+    hamburger.addEventListener('click', () => {
+      const open = navLinks.classList.toggle('open');
+      hamburger.classList.toggle('open', open);
+    });
+    // Ferme le menu au clic sur un lien
+    navLinks.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        hamburger.classList.remove('open');
+      });
+    });
+  }
 
   /* Logo injecté hors de la nav pour que mix-blend-mode:difference
      se blende contre le fond de page et non contre le flou de la nav */

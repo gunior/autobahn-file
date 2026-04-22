@@ -237,6 +237,26 @@
     footer { border-top: var(--border-weight) solid var(--c-border); padding: var(--space-md) var(--space-lg); display: flex; justify-content: space-between; transition: border-color 0.4s; }
     .footer-copy, .footer-tag { font-family: var(--f-mono); font-size: var(--fs-label); color: var(--c-ash); letter-spacing: var(--ls-normal); }
 
+  @media (max-width: 768px) {
+    /* Coverflow cards — slightly larger on mobile for touch */
+    .cf-card { width: 56px; height: 74px; margin: 0 2px; }
+    .cf-card:hover { transform: translateY(-10px) scale(1.7); margin: 0 28px; }
+    .coverflow-wrap { padding-bottom: 20px; }
+
+    /* Title */
+    #portraitsTitle { font-size: clamp(40px, 14vw, 80px) !important; white-space: normal; text-align: center; }
+    .page-subtitle { font-size: 12px; padding: 0 16px; }
+
+    /* Profile page */
+    .profile-content { padding: 32px var(--space-lg, 20px) 60px; }
+    .profile-header  { grid-template-columns: 1fr; gap: 24px; margin-bottom: 40px; padding-bottom: 32px; }
+    .profile-name    { font-size: clamp(28px, 8vw, 48px); }
+    .profile-hero    { aspect-ratio: 4/3; }
+    .portfolio-grid  { grid-template-columns: 1fr; gap: 12px; }
+    .profile-nav     { padding: 16px var(--space-lg, 20px); }
+    footer           { flex-direction: column; gap: 6px; }
+  }
+
   </style>
 </head>
 <body>
