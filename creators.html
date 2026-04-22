@@ -243,49 +243,39 @@
     #portraitsTitle { display: none !important; }
     .page-subtitle  { display: none !important; }
 
-    /* ── Wheel mobile ── */
-    .mobile-wheel {
-      position: fixed;
-      top: 0; bottom: 0; left: 0;
-      width: 52vw;
-      overflow-y: scroll;
-      scroll-snap-type: y mandatory;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      z-index: 5;
+    /* ── Wheel polaire mobile ── */
+    #mobileWheelContainer {
+      position: fixed; inset: 0; z-index: 5;
+      pointer-events: none;
     }
-    .mobile-wheel::-webkit-scrollbar { display: none; }
-
-    .mobile-wheel-slide {
-      height: 100vh;
-      scroll-snap-align: center;
-      display: flex;
-      align-items: center;
-      padding-left: 28px;
-    }
-
-    .mobile-card {
-      width: 108px;
-      height: 142px;
-      border-radius: 3px;
-      overflow: hidden;
-      flex-shrink: 0;
-      transform-origin: 0% 50%;
+    .wheel-card {
+      position: absolute;
+      width: 100px; height: 132px;
+      border-radius: 3px; overflow: hidden;
+      pointer-events: all; cursor: pointer;
       will-change: transform, opacity;
-      cursor: pointer;
+      backface-visibility: hidden;
     }
-    .mobile-card img {
+    .wheel-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .wheel-card-placeholder {
       width: 100%; height: 100%;
-      object-fit: cover; display: block;
-    }
-    .mobile-card-placeholder {
-      width: 100%; height: 100%;
-      background: rgba(26,26,24,0.15);
+      background: rgba(255,255,255,0.08);
       display: flex; align-items: center; justify-content: center;
-      font-family: var(--f-mono); font-size: 9px;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: rgba(26,26,24,0.3);
+      font-family: monospace; font-size: 9px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
     }
+    /* Zone de scroll (capture touch/molette, côté gauche) */
+    #mobileScrollZone {
+      position: fixed;
+      top: 0; left: 0;
+      width: 58vw; height: 100%;
+      z-index: 20;
+      overflow-y: scroll;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    #mobileScrollZone::-webkit-scrollbar { display: none; }
 
     /* Info créateur — droite */
     .mobile-creator-info {
@@ -894,92 +884,164 @@
     if (e.key === 'Escape' && profilePage.classList.contains('open')) closeProfile();
   });
 
-  /* ══ WHEEL MOBILE ══════════════════════════════════════════════ */
+  /* ══ WHEEL MOBILE — roue polaire ══════════════════════════════ */
   function buildMobileWheel(creators) {
     document.body.classList.add('video-active');
 
-    const wheelEl = document.createElement('div');
-    wheelEl.className = 'mobile-wheel';
+    const N          = creators.length;
+    const CARD_W     = 100, CARD_H = 132;
+    const R          = 185;
+    const getCX      = () => -85;
+    const getCY      = () => window.innerHeight * 0.5;
+    const ANGLE_STEP = 360 / N;
+    const SCROLL_PER = 110;
+    const THRESHOLD_IN  = 0.90;
+    const THRESHOLD_OUT = 0.10;
 
+    /* ── Conteneur des cartes ── */
+    const wheelContainer = document.createElement('div');
+    wheelContainer.id = 'mobileWheelContainer';
+    document.body.appendChild(wheelContainer);
+
+    /* ── Panneau info créateur ── */
     const infoEl = document.createElement('div');
     infoEl.className = 'mobile-creator-info';
     infoEl.id = 'mobileCreatorInfo';
     document.body.appendChild(infoEl);
 
-    creators.forEach((c, i) => {
-      const slide = document.createElement('div');
-      slide.className = 'mobile-wheel-slide';
-      slide.dataset.index = i;
+    /* ── Zone de scroll (gauche 58vw) ── */
+    const scrollZone  = document.createElement('div');
+    scrollZone.id     = 'mobileScrollZone';
+    const scrollInner = document.createElement('div');
+    scrollInner.style.height = (N * SCROLL_PER + window.innerHeight) + 'px';
+    scrollZone.appendChild(scrollInner);
+    document.body.appendChild(scrollZone);
 
-      const card = document.createElement('div');
-      card.className = 'mobile-card';
-
+    /* ── Cartes ── */
+    const cardEls = creators.map((c, i) => {
+      const el = document.createElement('div');
+      el.className = 'wheel-card';
       if (c.photo) {
         const img = document.createElement('img');
         img.src = c.photo; img.alt = c.name || '';
-        card.appendChild(img);
+        el.appendChild(img);
       } else {
         const ph = document.createElement('div');
-        ph.className = 'mobile-card-placeholder';
+        ph.className = 'wheel-card-placeholder';
         ph.textContent = (c.name || '').split(' ').pop();
-        card.appendChild(ph);
+        el.appendChild(ph);
       }
-
-      card.addEventListener('click', () => openProfile(c));
-      slide.appendChild(card);
-      wheelEl.appendChild(slide);
+      el.addEventListener('click', () => openProfile(c));
+      wheelContainer.appendChild(el);
+      return el;
     });
 
-    document.body.appendChild(wheelEl);
+    /* ── État ── */
+    let currentActive = -1;
 
-    let activeIndex = -1;
-    const slides = Array.from(wheelEl.querySelectorAll('.mobile-wheel-slide'));
-
-    function updateWheel() {
-      const scrollTop = wheelEl.scrollTop;
-      const viewH    = wheelEl.clientHeight;
-      const centerY  = scrollTop + viewH / 2;
-
-      let closestIdx = 0, closestDist = Infinity;
-
-      slides.forEach((slide, i) => {
-        const slideCenter = slide.offsetTop + slide.offsetHeight / 2;
-        const dist = Math.abs(slideCenter - centerY);
-        if (dist < closestDist) { closestDist = dist; closestIdx = i; }
-
-        const normalized = (slideCenter - centerY) / viewH; // -1 → 1
-        const rotation   = normalized * -22;                 // degrés, effet roue
-        const scale      = Math.max(0.65, 1 - Math.abs(normalized) * 0.38);
-        const opacity    = Math.max(0.25, 1 - Math.abs(normalized) * 0.65);
-        const tx         = Math.abs(normalized) * 8;
-
-        const card = slide.querySelector('.mobile-card');
-        if (card) {
-          card.style.transform = `rotate(${rotation}deg) scale(${scale}) translateX(${tx}px)`;
-          card.style.opacity   = opacity;
-          card.style.boxShadow = dist < viewH * 0.15
-            ? '0 16px 48px rgba(0,0,0,0.45)'
-            : 'none';
-        }
-      });
-
-      if (closestIdx !== activeIndex) {
-        activeIndex = closestIdx;
-        const c = creators[activeIndex];
-        setBackground(c);
-
-        const last = (c.name || '').split(' ').pop();
-        const first = (c.name || '').replace(last, '').trim();
-        infoEl.innerHTML = `
-          <div class="mobile-creator-name">${first}<br>${last}</div>
-          <div class="mobile-creator-role">${c.role || ''}</div>
-          <div class="mobile-tap-hint en">Tap to view</div>
-          <div class="mobile-tap-hint fr">Appuie pour voir</div>`;
-      }
+    function activateCreator(i) {
+      if (i === currentActive) return;
+      currentActive = i;
+      const c = creators[i];
+      setBackground(c);
+      const parts = (c.name || '').trim().split(' ');
+      const last  = parts[parts.length - 1];
+      const first = parts.slice(0, -1).join(' ');
+      infoEl.innerHTML = `
+        <div class="mobile-creator-name">${first ? first + '<br>' : ''}${last}</div>
+        <div class="mobile-creator-role">${c.role || ''}</div>
+        <div class="mobile-tap-hint">— tap to open</div>`;
     }
 
-    wheelEl.addEventListener('scroll', updateWheel, { passive: true });
-    setTimeout(updateWheel, 80);
+    /* ── Hystérésis 90% ── */
+    function getActiveIndex(scrollTop) {
+      const floatIdx = scrollTop / SCROLL_PER;
+      const base     = Math.floor(floatIdx);
+      const baseIdx  = base % N;
+      const nextIdx  = (base + 1) % N;
+      const progress = floatIdx - base;
+      if (progress >= THRESHOLD_IN)  return nextIdx;
+      if (progress <= THRESHOLD_OUT) return baseIdx;
+      if (currentActive === baseIdx || currentActive === nextIdx) return currentActive;
+      return baseIdx;
+    }
+
+    /* ── Rendu roue ── */
+    function renderWheel(scrollTop) {
+      const cx       = getCX();
+      const cy       = getCY();
+      const rotation = (scrollTop / SCROLL_PER) * ANGLE_STEP;
+
+      cardEls.forEach((el, i) => {
+        const theta = (i * ANGLE_STEP - rotation) * Math.PI / 180;
+        const px    = cx + R * Math.cos(theta);
+        const py    = cy + R * Math.sin(theta);
+        const cosT  = Math.cos(theta);
+
+        if (cosT < -0.15) {
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+          return;
+        }
+        const t       = Math.max(0, cosT);
+        const scale   = 0.55 + 0.45 * t;
+        const opacity = 0.2  + 0.8  * t;
+        const tiltDeg = Math.sin(theta) * -14;
+
+        el.style.transform     = `translate(${px - CARD_W/2}px, ${py - CARD_H/2}px) scale(${scale}) rotate(${tiltDeg}deg)`;
+        el.style.opacity       = opacity;
+        el.style.zIndex        = Math.round(t * 200);
+        el.style.pointerEvents = 'all';
+        el.style.boxShadow     = cosT > 0.9 ? '0 12px 40px rgba(0,0,0,0.55)' : 'none';
+      });
+
+      activateCreator(getActiveIndex(scrollTop));
+    }
+
+    /* ── Snap engine ── */
+    let targetCardIdx = 0;
+    let snapRaf       = null;
+
+    function smoothScrollTo(targetPx) {
+      if (snapRaf) cancelAnimationFrame(snapRaf);
+      const startPx = scrollZone.scrollTop;
+      const diff    = targetPx - startPx;
+      if (Math.abs(diff) < 0.5) return;
+      const dur = 420, t0 = performance.now();
+      function step(now) {
+        const p    = Math.min(1, (now - t0) / dur);
+        const ease = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3) / 2;
+        scrollZone.scrollTop = startPx + diff * ease;
+        renderWheel(scrollZone.scrollTop);
+        if (p < 1) snapRaf = requestAnimationFrame(step);
+        else        snapRaf = null;
+      }
+      snapRaf = requestAnimationFrame(step);
+    }
+
+    /* ── Molette : 1 cran = 1 carte ── */
+    document.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const dir = e.deltaY > 0 ? 1 : e.deltaY < 0 ? -1 : 0;
+      if (dir === 0) return;
+      targetCardIdx = Math.max(0, Math.min(N - 1, targetCardIdx + dir));
+      smoothScrollTo(targetCardIdx * SCROLL_PER);
+    }, { passive: false });
+
+    /* ── Touch scroll + snap à l'arrêt ── */
+    let snapTimer = null;
+    scrollZone.addEventListener('scroll', () => {
+      if (!snapRaf) renderWheel(scrollZone.scrollTop);
+      clearTimeout(snapTimer);
+      snapTimer = setTimeout(() => {
+        const nearest = Math.max(0, Math.min(N - 1,
+                          Math.round(scrollZone.scrollTop / SCROLL_PER)));
+        targetCardIdx = nearest;
+        smoothScrollTo(nearest * SCROLL_PER);
+      }, 150);
+    }, { passive: true });
+
+    renderWheel(0);
   }
 
   /* ══ CHARGEMENT DES CRÉATEURS depuis creators.json (généré par build.js) ══ */
