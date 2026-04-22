@@ -1,20 +1,14 @@
 /* ============================================================
    AUTOBAHN — nav.js
    Navigation partagée, injectée automatiquement sur toutes les pages.
-
-   POUR CHANGER LE LOGO :
-     → Texte seul  : modifiez LOGO_TEXT ci-dessous
-     → Image SVG   : passez LOGO_USE_IMAGE à true et renseignez LOGO_IMAGE_SRC
    ============================================================ */
 
 (function () {
 
   /* ── CONFIGURATION LOGO ──────────────────────────────────── */
-  const LOGO_TEXT       = 'Autobahn —';
-  const LOGO_USE_IMAGE  = true;
-  const LOGO_IMAGE_SRC  = './assets/Asset8.png';
-  const LOGO_IMAGE_ALT  = 'Autobahn';
-  const LOGO_IMAGE_H    = 10;
+  const LOGO_IMAGE_SRC    = './assets/Asset8.png';   // desktop
+  const LOGO_IMAGE_MOBILE = './assets/Asset5.png';   // mobile
+  const LOGO_IMAGE_ALT    = 'Autobahn';
 
   /* ── PAGES & LIENS ───────────────────────────────────────── */
   const LINKS = [
@@ -32,10 +26,6 @@
   ────────────────────────────────────────────────────────── */
   const page = window.location.pathname.split('/').pop() || 'index.html';
 
-  const logoHTML = LOGO_USE_IMAGE
-    ? `<img src="${LOGO_IMAGE_SRC}" alt="${LOGO_IMAGE_ALT}" height="${LOGO_IMAGE_H}" style="display:block">`
-    : LOGO_TEXT;
-
   const linksHTML = LINKS.map(l => {
     const active = page === l.href ? 'class="active"' : '';
     return `<a href="${l.href}" ${active}>
@@ -44,17 +34,16 @@
     </a>`;
   }).join('');
 
-  const themeToggleHTML = NO_THEME_TOGGLE.includes(page)
-    ? ''
-    : `<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"></button>`;
+  const showTheme = !NO_THEME_TOGGLE.includes(page);
+
+  const themeToggleHTML = showTheme
+    ? `<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"></button>`
+    : '';
 
   const navEl = document.querySelector('nav');
   if (!navEl) return;
 
   navEl.innerHTML = `
-  <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
   <div class="nav-links" id="navLinks">${linksHTML}</div>
   <div class="nav-controls">
     <div class="lang-switch">
@@ -62,32 +51,74 @@
       <button class="lang-btn" id="btnFR" onclick="setLang('fr')">FR</button>
     </div>
     ${themeToggleHTML}
-  </div>`;
+  </div>
+  <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
+    <span></span><span></span>
+  </button>`;
 
-  // Hamburger toggle
-  const hamburger = document.getElementById('navHamburger');
-  const navLinks  = document.getElementById('navLinks');
-  if (hamburger && navLinks) {
-    hamburger.addEventListener('click', () => {
-      const open = navLinks.classList.toggle('open');
-      hamburger.classList.toggle('open', open);
-    });
-    // Ferme le menu au clic sur un lien
-    navLinks.querySelectorAll('a').forEach(a => {
-      a.addEventListener('click', () => {
-        navLinks.classList.remove('open');
-        hamburger.classList.remove('open');
-      });
-    });
-  }
-
-  /* Logo injecté hors de la nav pour que mix-blend-mode:difference
-     se blende contre le fond de page et non contre le flou de la nav */
+  /* ── Logo desktop (mix-blend-mode:difference) ── */
   const logoEl = document.createElement('a');
   logoEl.href = 'index.html';
   logoEl.className = 'nav-logo';
-  logoEl.innerHTML = logoHTML;
+  logoEl.innerHTML = `<img src="${LOGO_IMAGE_SRC}" alt="${LOGO_IMAGE_ALT}" height="10" style="display:block">`;
   document.body.prepend(logoEl);
+
+  /* ── Menu mobile plein écran ── */
+  const mobileMenuLinks = LINKS.map(l => {
+    const active = page === l.href ? 'mobile-active' : '';
+    return `<a href="${l.href}" class="${active}">
+      <span class="en">${l.en}</span>
+      <span class="fr">${l.fr}</span>
+    </a>`;
+  }).join('');
+
+  const mobileThemeRow = showTheme ? `
+    <button class="mobile-theme-btn" id="mobileThemeToggle">
+      <span class="mobile-theme-label en">Theme</span>
+      <span class="mobile-theme-label fr">Thème</span>
+      <span class="mobile-theme-icon" id="mobileThemeIcon">○</span>
+    </button>` : '';
+
+  const mobileMenuEl = document.createElement('div');
+  mobileMenuEl.id = 'mobileMenu';
+  mobileMenuEl.innerHTML = `
+    <nav class="mobile-nav-links">${mobileMenuLinks}</nav>
+    <div class="mobile-menu-bottom">
+      <div class="mobile-lang">
+        <button class="mobile-lang-btn" id="mBtnEN" onclick="setLang('en')">EN</button>
+        <span class="mobile-lang-sep">/</span>
+        <button class="mobile-lang-btn" id="mBtnFR" onclick="setLang('fr')">FR</button>
+      </div>
+      ${mobileThemeRow}
+    </div>`;
+  document.body.appendChild(mobileMenuEl);
+
+  /* ── Hamburger toggle ── */
+  const hamburger  = document.getElementById('navHamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+
+  function openMenu() {
+    mobileMenu.classList.add('open');
+    hamburger.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMenu() {
+    mobileMenu.classList.remove('open');
+    hamburger.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  hamburger.addEventListener('click', () => {
+    mobileMenu.classList.contains('open') ? closeMenu() : openMenu();
+  });
+
+  mobileMenuEl.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', closeMenu);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeMenu();
+  });
 
   /* ──────────────────────────────────────────────────────────
      DARK MODE
@@ -96,14 +127,21 @@
   const stored = localStorage.getItem('autobahn-theme') || 'light';
   html.setAttribute('data-theme', stored);
 
-  const toggle = document.getElementById('themeToggle');
-  if (toggle) {
-    toggle.addEventListener('click', () => {
-      const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('autobahn-theme', next);
-    });
+  function updateThemeIcon() {
+    const icon = document.getElementById('mobileThemeIcon');
+    if (icon) icon.textContent = html.getAttribute('data-theme') === 'dark' ? '●' : '○';
   }
+  updateThemeIcon();
+
+  function toggleTheme() {
+    const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('autobahn-theme', next);
+    updateThemeIcon();
+  }
+
+  document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+  document.getElementById('mobileThemeToggle')?.addEventListener('click', toggleTheme);
 
   /* ──────────────────────────────────────────────────────────
      LANGUE
@@ -112,8 +150,10 @@
     document.body.className = document.body.className
       .replace(/\blang-\w+\b/, '')
       .trim() + ' lang-' + lang;
-    document.getElementById('btnEN')?.classList.toggle('active', lang === 'en');
-    document.getElementById('btnFR')?.classList.toggle('active', lang === 'fr');
+    ['btnEN','btnFR','mBtnEN','mBtnFR'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.classList.toggle('active', btn.id.toLowerCase().includes(lang));
+    });
     localStorage.setItem('autobahn-lang', lang);
   };
 
