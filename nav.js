@@ -56,8 +56,14 @@
     <span></span><span></span>
   </button>`;
 
-  /* ── Logo (mobile → Asset5, desktop → Asset8, mix-blend-mode:difference) ── */
-  const isMobile   = window.innerWidth <= 768;
+  /* ── Sur mobile : nav transparente (logo + burger sont fixed indépendants) ── */
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    navEl.style.setProperty('background',           'transparent', 'important');
+    navEl.style.setProperty('backdrop-filter',      'none',        'important');
+    navEl.style.setProperty('-webkit-backdrop-filter', 'none',     'important');
+    navEl.style.setProperty('border-bottom',        'none',        'important');
+  }
   const logoSrc    = isMobile ? LOGO_IMAGE_MOBILE : LOGO_IMAGE_SRC;
   const logoHeight = isMobile ? 14 : 10;
   const logoEl = document.createElement('a');

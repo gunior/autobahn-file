@@ -267,6 +267,14 @@
     vid.addEventListener('canplaythrough', () => vid.classList.add('loaded'));
     if (vid.readyState >= 3) vid.classList.add('loaded');
 
+    // iOS Safari suspend parfois la vidéo après quelques secondes → on la relance
+    vid.addEventListener('pause', () => {
+      if (!document.hidden) vid.play().catch(() => {});
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) vid.play().catch(() => {});
+    });
+
     // Compteur créateurs dynamique
     fetch('./creators.json')
       .then(r => r.ok ? r.json() : [])
