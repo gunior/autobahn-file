@@ -144,7 +144,7 @@ a, button, [role="button"], input, select, textarea, label {
 nav {
   position: fixed;
   top: 0; left: 0; right: 0;
-  z-index: 100;
+  z-index: 410;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -168,7 +168,7 @@ nav {
   color: #ffffff;
   text-decoration: none;
   mix-blend-mode: difference;
-  z-index: 210; /* au-dessus du menu mobile (200) */
+  z-index: 410; /* au-dessus du menu mobile (200) ET de la page profil (400) */
   line-height: 1;
 }
 
@@ -388,13 +388,17 @@ body.lang-en span.en { display: inline; }
   font-size: clamp(40px, 11vw, 72px);
   line-height: 1.1;
   letter-spacing: -0.03em;
-  color: var(--c-ash);
+  color: var(--c-ink);
+  opacity: 0.38;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color 0.2s, opacity 0.2s;
   display: block;
 }
 .mobile-nav-links a:hover,
-.mobile-nav-links a.mobile-active { color: var(--c-ink); }
+.mobile-nav-links a.mobile-active { opacity: 1; }
+[data-theme="dark"] .mobile-nav-links a { color: var(--c-ink); opacity: 0.38; }
+[data-theme="dark"] .mobile-nav-links a:hover,
+[data-theme="dark"] .mobile-nav-links a.mobile-active { opacity: 1; }
 
 .mobile-menu-bottom {
   display: flex;

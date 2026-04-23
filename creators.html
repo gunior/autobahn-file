@@ -156,12 +156,6 @@
       transition: transform 0.55s cubic-bezier(0.77,0,0.175,1), opacity 0.4s, background 0.4s;
     }
     .profile-page.open { transform: translateY(0); opacity: 1; pointer-events: all; }
-    .profile-nav { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 24px var(--space-lg); background: var(--c-bg); border-bottom: var(--border-weight) solid var(--c-border); transition: var(--transition-theme); }
-    .profile-back { font-family: 'Inter', sans-serif; font-weight: 600; font-size: var(--fs-label); letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-slate); background: none; border: none; display: flex; align-items: center; gap: 8px; transition: color 0.2s; }
-    .profile-back:hover { color: var(--c-ink); }
-    .back-arrow { display: inline-block; transition: transform 0.2s; }
-    .profile-back:hover .back-arrow { transform: translateX(-4px); }
-    .profile-nav-name { font-family: 'Inter', sans-serif; font-weight: 300; font-size: 13px; color: var(--c-ink); }
 
     .profile-hero {
       width: 100%; aspect-ratio: 21/9; overflow: hidden;
@@ -340,7 +334,6 @@
     .profile-name    { font-size: clamp(28px, 8vw, 48px); }
     .profile-hero    { aspect-ratio: 4/3; }
     .portfolio-grid  { grid-template-columns: 1fr; gap: 12px; }
-    .profile-nav     { padding: 16px 20px; }
     footer           { flex-direction: column; gap: 6px; }
   }
 
@@ -369,10 +362,6 @@
   </button>
 
   <div class="profile-page" id="profilePage">
-    <div class="profile-nav">
-      <div class="profile-nav-name" id="profileNavName"></div>
-      <button class="theme-toggle" id="profileThemeToggle"></button>
-    </div>
     <div class="profile-hero" id="profileHero"></div>
     <div class="profile-content">
       <div class="profile-header">
@@ -785,7 +774,6 @@
   let heroVideoEl = null;
 
   function openProfile(c) {
-    document.getElementById('profileNavName').textContent = c.name.split(' ').pop();
     document.getElementById('profileName').textContent    = c.name;
     document.getElementById('profileRole').textContent    = c.role;
     document.getElementById('profileBio').textContent     = c.bio;
@@ -900,11 +888,6 @@
   }
 
   document.getElementById('profileCloseBtn').addEventListener('click', closeProfile);
-  document.getElementById('profileThemeToggle').addEventListener('click', () => {
-    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('autobahn-theme', next);
-  });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && profilePage.classList.contains('open')) closeProfile();
   });
