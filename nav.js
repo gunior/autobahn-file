@@ -12,7 +12,7 @@
 
   /* ── PAGES & LIENS ───────────────────────────────────────── */
   const LINKS = [
-    { href: 'creators.html', en: 'Team', fr: 'Team' },
+    { href: 'creators.html', en: 'Team', fr: 'Tchim' },
     { href: 'lab.html',      en: 'Lab',      fr: 'Lab'       },
     { href: 'studio.html',   en: 'Studio',   fr: 'Studio'    },
     { href: 'contact.html',  en: 'Contact',  fr: 'Contact'   },

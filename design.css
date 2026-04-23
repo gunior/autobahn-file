@@ -171,6 +171,7 @@ nav {
   z-index: 410; /* au-dessus du menu mobile (200) ET de la page profil (400) */
   line-height: 1;
 }
+.nav-logo img { filter: brightness(0) invert(1); }
 
 .nav-right {
   display: flex;
