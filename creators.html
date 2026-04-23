@@ -122,6 +122,33 @@
     .cf-name { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 7px; color: #f5f4f0; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cf-role { font-family: 'Inter', sans-serif; font-weight: 300; font-size: 6px; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(245,244,240,0.45); margin-top: 1px; }
 
+    /* ── Bouton × fermer profil ── */
+    .profile-close-btn {
+      position: fixed;
+      top: calc(var(--nav-height) + 14px);
+      right: var(--space-lg);
+      z-index: 410;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--c-ink);
+      border: none;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: url('./assets/cursor-hand-hover.png') 9 0, auto;
+      transition: background 0.2s, opacity 0.3s;
+      opacity: 0;
+    }
+    .profile-close-btn.visible {
+      display: flex;
+      opacity: 1;
+    }
+    .profile-close-btn svg {
+      width: 14px; height: 14px;
+      stroke: var(--c-bg);
+    }
+    .profile-close-btn:hover { background: var(--c-slate); }
+
     .profile-page {
       position: fixed; inset: 0; z-index: 400;
       background: var(--c-bg); overflow-y: auto;
@@ -331,12 +358,18 @@
     <span class="fr">Des compétences distinctes, un espace commun. Chaque créateur apporte sa propre pratique — motion, VFX, son et identité visuelle.</span>
   </div>
 
-  <h1 id="portraitsTitle">Creators.</h1>
+  <h1 id="portraitsTitle">Team.</h1>
   <div class="coverflow-wrap" id="cfWrap"></div>
+
+  <!-- Bouton fermer profil — × circulaire, toujours en haut à droite -->
+  <button class="profile-close-btn" id="profileCloseBtn" aria-label="Fermer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
 
   <div class="profile-page" id="profilePage">
     <div class="profile-nav">
-      <button class="profile-back" id="profileBack"><span class="back-arrow">←</span><span>Creators</span></button>
       <div class="profile-nav-name" id="profileNavName"></div>
       <button class="theme-toggle" id="profileThemeToggle"></button>
     </div>
@@ -854,6 +887,7 @@
     }).join('');
 
     profilePage.classList.add('open');
+    document.getElementById('profileCloseBtn').classList.add('visible');
     profilePage.scrollTop = 0;
     document.body.style.overflow = 'auto';
   }
@@ -861,10 +895,11 @@
   function closeProfile() {
     if (heroVideoEl) { heroVideoEl.pause(); heroVideoEl.currentTime = 0; heroVideoEl = null; }
     profilePage.classList.remove('open');
+    document.getElementById('profileCloseBtn').classList.remove('visible');
     document.body.style.overflow = 'hidden';
   }
 
-  document.getElementById('profileBack').addEventListener('click', closeProfile);
+  document.getElementById('profileCloseBtn').addEventListener('click', closeProfile);
   document.getElementById('profileThemeToggle').addEventListener('click', () => {
     const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', next);
