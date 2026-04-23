@@ -169,6 +169,53 @@
       color: var(--c-ash); letter-spacing: var(--ls-normal);
     }
 
+    /* ══ MOBILE ══ */
+    @media (max-width: 768px) {
+      main {
+        grid-template-columns: 1fr;
+        padding-top: var(--nav-height);
+      }
+
+      .contact-left {
+        padding: 40px var(--space-lg) 48px;
+        border-right: none;
+        border-bottom: var(--border-weight) solid var(--c-border);
+      }
+
+      .contact-title {
+        font-size: clamp(36px, 11vw, 56px);
+        margin-bottom: 24px;
+      }
+
+      .contact-intro {
+        font-size: 13px;
+        margin-bottom: 40px;
+        max-width: 100%;
+      }
+
+      .contact-right {
+        padding: 40px var(--space-lg) 48px;
+      }
+
+      .form-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+      }
+
+      .submit-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      footer {
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .footer-tag { display: none; }
+    }
+
   </style>
 </head>
 <body>
