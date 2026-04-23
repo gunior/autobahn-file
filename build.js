@@ -55,22 +55,67 @@ function fetchCreators() {
 }
 
 /* ══════════════════════════════════════════════════════
-   2. LAB — Manifest images + vidéos
+   2. LAB — Récupère les médias depuis Sanity
+      (fallback sur les fichiers locaux si Sanity indispo)
 ══════════════════════════════════════════════════════ */
 
-function generateLabManifest() {
+const GROQ_LAB = `*[_type == "lab"][0] {
+  items[] {
+    mediaType,
+    "imageUrl": image.asset->url,
+    "videoUrl": video.asset->url
+  }
+}`;
+
+function fetchLabItems() {
+  return new Promise((resolve, reject) => {
+    if (!PROJECT_ID) { resolve(null); return; }
+
+    const url = `https://${PROJECT_ID}.apicdn.sanity.io/v2024-01-01/data/query/${DATASET}?query=${encodeURIComponent(GROQ_LAB)}`;
+
+    https.get(url, (res) => {
+      let raw = '';
+      res.on('data', chunk => raw += chunk);
+      res.on('end', () => {
+        try {
+          const data = JSON.parse(raw);
+          if (data.error) { reject(new Error(data.error.description)); return; }
+          resolve(data.result || null);
+        } catch (e) { reject(e); }
+      });
+    }).on('error', reject);
+  });
+}
+
+async function generateLabManifest() {
   const labDir  = path.join(__dirname, 'lab');
   const outFile = path.join(labDir, 'manifest.json');
 
-  if (!fs.existsSync(labDir)) {
-    console.log('ℹ  Dossier lab/ absent — manifest ignoré');
+  if (!fs.existsSync(labDir)) fs.mkdirSync(labDir, { recursive: true });
+
+  /* ── Essaie d'abord Sanity ── */
+  let sanityDoc = null;
+  try { sanityDoc = await fetchLabItems(); } catch (e) { /* fallback local */ }
+
+  if (sanityDoc && Array.isArray(sanityDoc.items) && sanityDoc.items.length > 0) {
+    const items = sanityDoc.items
+      .filter(i => (i.mediaType === 'image' && i.imageUrl) || (i.mediaType === 'video' && i.videoUrl))
+      .map(i => ({
+        url:  i.mediaType === 'image' ? i.imageUrl : i.videoUrl,
+        type: i.mediaType,
+      }));
+
+    fs.writeFileSync(outFile, JSON.stringify(items, null, 2));
+    const imgs = items.filter(i => i.type === 'image').length;
+    const vids = items.filter(i => i.type === 'video').length;
+    console.log(`✓  Lab manifest (Sanity) — ${items.length} items (${imgs} images, ${vids} vidéos)`);
     return;
   }
 
+  /* ── Fallback : fichiers locaux dans lab/ ── */
   const imageExts = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif']);
   const videoExts = new Set(['.mp4', '.webm']);
 
-  // Normalise les noms de fichiers en minuscules
   fs.readdirSync(labDir).forEach(f => {
     const lower = f.toLowerCase();
     if (f !== lower) fs.renameSync(path.join(labDir, f), path.join(labDir, lower));
@@ -87,10 +132,9 @@ function generateLabManifest() {
     }));
 
   fs.writeFileSync(outFile, JSON.stringify(files, null, 2));
-
   const imgs = files.filter(f => f.type === 'image').length;
   const vids = files.filter(f => f.type === 'video').length;
-  console.log(`✓  Lab manifest — ${files.length} items (${imgs} images, ${vids} vidéos)`);
+  console.log(`✓  Lab manifest (local) — ${files.length} items (${imgs} images, ${vids} vidéos)`);
 }
 
 /* ══════════════════════════════════════════════════════

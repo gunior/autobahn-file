@@ -207,12 +207,12 @@
           resolve({ item, el: vid, w: vid.videoWidth || 1920, h: vid.videoHeight || 1080 });
         }, { once: true });
         vid.addEventListener('error', () => { clearTimeout(timeout); resolve({ item, el: null }); }, { once: true });
-        vid.src = `./lab/${item.file}`;
+        vid.src = item.url || `./lab/${item.file}`;
       } else {
         const img = new Image();
         img.onload  = () => resolve({ item, el: img,  w: img.naturalWidth,  h: img.naturalHeight });
         img.onerror = () => resolve({ item, el: null });
-        img.src = `./lab/${item.file}`;
+        img.src = item.url || `./lab/${item.file}`;
       }
     }));
 
