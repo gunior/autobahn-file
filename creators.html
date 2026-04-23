@@ -689,9 +689,12 @@
   function fitTitle() {
     const el = document.getElementById('portraitsTitle');
     if (!el) return;
+    const lang = document.body.classList.contains('lang-fr') ? 'fr' : 'en';
+    const activeSpan = el.querySelector('.' + lang) || el;
+    const text = activeSpan.textContent;
     const clone = document.createElement('span');
     clone.style.cssText = ['font-family: Inter, sans-serif','font-weight: 900','letter-spacing: -0.05em','white-space: nowrap','position: absolute','visibility: hidden','top: -9999px','left: -9999px','padding: 0 1.2vw'].join(';');
-    clone.textContent = el.textContent;
+    clone.textContent = text;
     document.body.appendChild(clone);
     const target = window.innerWidth * 0.97;
     let size = 40;
@@ -704,6 +707,8 @@
   }
   document.fonts.ready.then(fitTitle);
   window.addEventListener('resize', fitTitle);
+  /* Relancer fitTitle si la langue change */
+  new MutationObserver(fitTitle).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
   /* ── FOND — vidéo (random trimmed) ou image fixe selon le creator ── */
   const bgVideo = document.getElementById('bgVideo');
