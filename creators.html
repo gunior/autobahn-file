@@ -419,11 +419,14 @@
     size -= 2;
     document.body.removeChild(clone);
     el.style.fontSize = size + 'px';
-    el.style.opacity = '1';
   }
-  document.fonts.ready.then(fitTitle);
+  function initTitle() {
+    fitTitle();
+    document.getElementById('portraitsTitle').style.opacity = '1';
+  }
+  document.fonts.ready.then(initTitle);
   window.addEventListener('resize', fitTitle);
-  /* Relancer fitTitle si la langue change */
+  /* Relancer fitTitle si la langue change (sans toucher à l'opacité) */
   new MutationObserver(fitTitle).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
   /* ── FOND — vidéo (random trimmed) ou image fixe selon le creator ── */
