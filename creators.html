@@ -496,11 +496,25 @@
   /* ── PAGE PROFIL ── */
   const profilePage = document.getElementById('profilePage');
   let heroVideoEl = null;
+  let currentProfileCreator = null;
+
+  function getBio(c) {
+    const isFr = document.body.classList.contains('lang-fr');
+    return (isFr && c.bioFr) ? c.bioFr : (c.bio || '');
+  }
+
+  /* Met à jour uniquement la bio si la langue change en cours de profil */
+  new MutationObserver(() => {
+    if (currentProfileCreator) {
+      document.getElementById('profileBio').textContent = getBio(currentProfileCreator);
+    }
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
   function openProfile(c) {
+    currentProfileCreator = c;
     document.getElementById('profileName').textContent    = c.name.split(' ').pop();
     document.getElementById('profileRole').textContent    = c.role;
-    document.getElementById('profileBio').textContent     = c.bio;
+    document.getElementById('profileBio').textContent     = getBio(c);
 
     const hero = document.getElementById('profileHero');
     heroVideoEl = null;
@@ -606,6 +620,7 @@
 
   function closeProfile() {
     if (heroVideoEl) { heroVideoEl.pause(); heroVideoEl.currentTime = 0; heroVideoEl = null; }
+    currentProfileCreator = null;
     profilePage.classList.remove('open');
     document.getElementById('profileCloseBtn').classList.remove('visible');
     document.body.style.overflow = 'hidden';

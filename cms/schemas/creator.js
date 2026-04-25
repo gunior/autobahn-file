@@ -25,8 +25,15 @@ export default {
     },
     {
       name: 'bio',
-      title: 'Bio',
-      description: 'Courte description de ta pratique (2-3 phrases)',
+      title: 'Bio (EN)',
+      description: 'Short description of your practice in English (2-3 sentences)',
+      type: 'text',
+      rows: 4,
+    },
+    {
+      name: 'bioFr',
+      title: 'Bio (FR)',
+      description: 'Version française de ta bio (2-3 phrases). Si vide, la version anglaise sera utilisée.',
       type: 'text',
       rows: 4,
     },
