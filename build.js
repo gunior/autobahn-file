@@ -103,7 +103,8 @@ async function generateLabManifest() {
       .map(i => ({
         url:  i.mediaType === 'image' ? i.imageUrl : i.videoUrl,
         type: i.mediaType,
-      }));
+      }))
+      .reverse(); // plus récent en premier (items ajoutés à la fin dans Sanity)
 
     fs.writeFileSync(outFile, JSON.stringify(items, null, 2));
     const imgs = items.filter(i => i.type === 'image').length;
@@ -112,7 +113,7 @@ async function generateLabManifest() {
     return;
   }
 
-  /* ── Fallback : fichiers locaux dans lab/ ── */
+  /* ── Fallback : fichiers locaux dans lab/, triés par date de modification décroissante ── */
   const imageExts = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif']);
   const videoExts = new Set(['.mp4', '.webm']);
 
@@ -129,7 +130,10 @@ async function generateLabManifest() {
     .map(f => ({
       file: f,
       type: videoExts.has(path.extname(f).toLowerCase()) ? 'video' : 'image',
-    }));
+      mtime: fs.statSync(path.join(labDir, f)).mtimeMs,
+    }))
+    .sort((a, b) => b.mtime - a.mtime) // plus récent en premier
+    .map(({ file, type }) => ({ file, type }));
 
   fs.writeFileSync(outFile, JSON.stringify(files, null, 2));
   const imgs = files.filter(f => f.type === 'image').length;
