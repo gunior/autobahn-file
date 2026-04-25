@@ -224,7 +224,8 @@
         if (!res.el) return;
 
         const profile = sizeProfiles[i % sizeProfiles.length];
-        const w = Math.round(cw * rand(...profile.wRatio));
+        const wRaw = Math.round(cw * rand(...profile.wRatio));
+        const w = Math.round(Math.min(wRaw, res.w * 2)); // jamais plus de 2× la résolution native
         const h = Math.round(w * res.h / res.w);
         const xFn = xPositions[i % xPositions.length];
         const x = Math.max(MARGIN, Math.min(vw - w - MARGIN * 0.5, xFn(cw, w)));
