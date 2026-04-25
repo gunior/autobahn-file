@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -498,7 +498,7 @@
   let heroVideoEl = null;
 
   function openProfile(c) {
-    document.getElementById('profileName').textContent    = c.name;
+    document.getElementById('profileName').textContent    = c.name.split(' ').pop();
     document.getElementById('profileRole').textContent    = c.role;
     document.getElementById('profileBio').textContent     = c.bio;
 
