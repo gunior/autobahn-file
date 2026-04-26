@@ -19,10 +19,11 @@ const DATASET    = process.env.SANITY_DATASET || 'production';
 
 const GROQ = `*[_type == "creator"] | order(order asc) {
   name, role, bio, bioFr,
-  "photo":     photo.asset->url,
-  "heroPhoto": heroPhoto.asset->url,
-  "showreel":  showreel.asset->url,
-  "hoverBg":   hoverBg.asset->url,
+  "photo":                  photo.asset->url,
+  "heroPhoto":              heroPhoto.asset->url,
+  "showreel":               showreel.asset->url,
+  "showreelOptimizedWebm":  showreelOptimizedWebm.asset->url,
+  "showreelOptimizedMp4":   showreelOptimizedMp4.asset->url,
   tools, disciplines, skills, links,
   projects[] {
     name, type, url,

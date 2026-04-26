@@ -429,6 +429,32 @@
   /* Relancer fitTitle si la langue change (sans toucher à l'opacité) */
   new MutationObserver(fitTitle).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
+  /* ══ DÉTECTION QUALITÉ DE CONNEXION ══════════════════════════════
+     Si réseau pourri (slow-2g, 2g, 3g) ou Data Saver activé,
+     on n'embarque PAS la vidéo au hover : le visiteur voit le heroPhoto
+     en static à la place. Le principe « showreel en fond au mouseover »
+     reste actif pour tout le monde sur 4G+ ou navigateur sans l'API
+     (Safari/Firefox = on assume bon réseau).
+  ═════════════════════════════════════════════════════════════════ */
+  const SLOW_CONNECTION = (() => {
+    const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!c) return false; // API absente = on assume une bonne connexion
+    if (c.saveData) return true;
+    return ['slow-2g', '2g', '3g'].includes(c.effectiveType);
+  })();
+
+  /* ── Choisit la meilleure source vidéo dispo : optimisée d'abord, brute en fallback ── */
+  function pickShowreelSources(c) {
+    const sources = [];
+    if (c.showreelOptimizedWebm) sources.push({ src: c.showreelOptimizedWebm, type: 'video/webm' });
+    if (c.showreelOptimizedMp4)  sources.push({ src: c.showreelOptimizedMp4,  type: 'video/mp4' });
+    if (sources.length === 0 && c.showreel) {
+      // Fallback brute : tant que le pipeline n'a pas tourné pour ce créateur
+      sources.push({ src: c.showreel, type: 'video/mp4' });
+    }
+    return sources;
+  }
+
   /* ── FOND — vidéo (random trimmed) ou image fixe selon le creator ── */
   const bgVideo = document.getElementById('bgVideo');
   const bgImage = document.getElementById('bgImage');
@@ -443,17 +469,38 @@
   function setBackground(c) {
     clearTimeout(hideTimer);
 
-    if (c.showreel) {
+    /* ─ Connexion lente → on utilise le heroPhoto en static, pas de vidéo ─ */
+    if (SLOW_CONNECTION && c.heroPhoto) {
+      bgVideo.classList.remove('visible');
+      document.body.classList.add('video-active');
+      if (c.heroPhoto !== currentSrc) {
+        currentSrc = c.heroPhoto;
+        bgImage.style.backgroundImage = `url('${c.heroPhoto}')`;
+      }
+      bgImage.classList.add('visible');
+      return;
+    }
+
+    const sources = pickShowreelSources(c);
+    if (sources.length > 0) {
       bgImage.classList.remove('visible');
       document.body.classList.add('video-active');
-      if (c.showreel === currentSrc) {
+      const key = sources[0].src;
+      if (key === currentSrc) {
         if (bgVideo.duration) bgVideo.currentTime = randomTime(bgVideo);
         return;
       }
-      currentSrc = c.showreel;
+      currentSrc = key;
       bgVideo.classList.remove('visible');
       setTimeout(() => {
-        bgVideo.src = currentSrc;
+        // Multi-source : WebM en priorité, MP4 en fallback Safari
+        bgVideo.innerHTML = '';
+        if (c.heroPhoto) bgVideo.poster = c.heroPhoto;
+        sources.forEach(s => {
+          const el = document.createElement('source');
+          el.src = s.src; el.type = s.type;
+          bgVideo.appendChild(el);
+        });
         bgVideo.load();
         bgVideo.onloadedmetadata = () => { bgVideo.currentTime = randomTime(bgVideo); };
         bgVideo.play().then(() => {
@@ -465,17 +512,7 @@
       return;
     }
 
-    if (c.hoverBg) {
-      bgVideo.classList.remove('visible');
-      document.body.classList.add('video-active');
-      if (c.hoverBg !== currentSrc) {
-        currentSrc = c.hoverBg;
-        bgImage.style.backgroundImage = `url('${c.hoverBg}')`;
-      }
-      bgImage.classList.add('visible');
-      return;
-    }
-
+    /* ─ Aucun showreel ni heroPhoto utilisable → état neutre ─ */
     bgVideo.classList.remove('visible');
     bgImage.classList.remove('visible');
     document.body.classList.remove('video-active');
@@ -488,7 +525,10 @@
       bgVideo.classList.remove('visible');
       bgImage.classList.remove('visible');
       document.body.classList.remove('video-active');
-      bgVideo.pause(); bgVideo.removeAttribute('src'); bgVideo.load();
+      bgVideo.pause();
+      bgVideo.innerHTML = '';
+      bgVideo.removeAttribute('src');
+      bgVideo.load();
       currentSrc = '';
     }, 50);
   }
@@ -531,11 +571,18 @@
       hero.appendChild(lbl);
     }
 
-    if (c.showreel) {
+    const profileSources = pickShowreelSources(c);
+    if (profileSources.length > 0) {
       const vid = document.createElement('video');
       vid.className = 'hero-video';
-      vid.src = c.showreel; vid.playsinline = true; vid.preload = 'metadata';
+      vid.playsinline = true; vid.preload = 'metadata';
       vid.muted = true; vid.volume = 0.8;
+      if (c.heroPhoto) vid.poster = c.heroPhoto;
+      profileSources.forEach(s => {
+        const el = document.createElement('source');
+        el.src = s.src; el.type = s.type;
+        vid.appendChild(el);
+      });
       hero.appendChild(vid);
       heroVideoEl = vid;
 

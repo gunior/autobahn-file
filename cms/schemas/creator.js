@@ -55,17 +55,38 @@ export default {
     },
     {
       name: 'showreel',
-      title: 'Showreel (vidéo)',
-      description: 'Vidéo de fond au survol de ta carte. WebM recommandé, max 720p.',
+      title: 'Showreel (vidéo brute)',
+      description: 'Upload sans te soucier du poids — la version finale est compressée automatiquement (1080p WebM + MP4). Idéalement < 30s.',
       type: 'file',
       options: { accept: 'video/*' },
     },
+
+    // ── AUTO — rempli par le pipeline GitHub Actions, masqué tant que vide ──
     {
-      name: 'hoverBg',
-      title: 'Image de fond au survol',
-      description: 'Alternative au showreel vidéo (pour créateurs son/musique sans vidéo)',
-      type: 'image',
-      options: { hotspot: true },
+      name: 'showreelOptimizedWebm',
+      title: 'Showreel optimisé · WebM (auto)',
+      description: 'Généré automatiquement par le pipeline de compression. Ne pas modifier à la main.',
+      type: 'file',
+      options: { accept: 'video/webm' },
+      readOnly: true,
+      hidden: ({ document }) => !document?.showreelOptimizedWebm,
+    },
+    {
+      name: 'showreelOptimizedMp4',
+      title: 'Showreel optimisé · MP4 (auto)',
+      description: 'Fallback Safari/anciens navigateurs. Généré automatiquement.',
+      type: 'file',
+      options: { accept: 'video/mp4' },
+      readOnly: true,
+      hidden: ({ document }) => !document?.showreelOptimizedMp4,
+    },
+    {
+      name: 'compressedFromRef',
+      title: 'Source de compression (interne)',
+      description: 'Référence de la vidéo brute déjà compressée — sert à éviter de recompresser à chaque édition.',
+      type: 'string',
+      readOnly: true,
+      hidden: true,
     },
 
     // ── COMPÉTENCES ─────────────────────────────────────────────────

@@ -1,0 +1,45 @@
+name: Compress showreel
+
+# Déclencheurs :
+#  • repository_dispatch type "compress-showreel" → envoyé par le webhook Sanity
+#    quand un créateur publie sa fiche (payload : { _id })
+#  • workflow_dispatch → permet de lancer manuellement depuis l'onglet Actions
+#    (utile pour le backfill initial sur les créateurs existants : laisse le champ vide)
+on:
+  repository_dispatch:
+    types: [compress-showreel]
+  workflow_dispatch:
+    inputs:
+      creatorId:
+        description: 'ID du créateur (vide = traite tous les créateurs non compressés)'
+        required: false
+        default: ''
+
+# Empêche deux runs concurrents pour le même créateur
+concurrency:
+  group: compress-${{ github.event.client_payload._id || github.event.inputs.creatorId || 'all' }}
+  cancel-in-progress: false
+
+jobs:
+  compress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify ffmpeg
+        run: ffmpeg -version | head -1
+
+      - name: Run compression
+        env:
+          SANITY_PROJECT_ID: ${{ secrets.SANITY_PROJECT_ID }}
+          SANITY_DATASET:    ${{ secrets.SANITY_DATASET }}
+          SANITY_TOKEN:      ${{ secrets.SANITY_TOKEN }}
+          CREATOR_ID:        ${{ github.event.client_payload._id || github.event.inputs.creatorId }}
+        run: node scripts/compress-showreel.js
