@@ -27,10 +27,13 @@
       height: 100%;
       object-fit: cover;
       z-index: 0;
-      opacity: 0;
-      transition: opacity 1.2s ease;
+      /* Le poster est visible dès le premier pixel, la vidéo prend le relais */
+      opacity: 1;
     }
-    #showreel.loaded { opacity: 1; }
+    /* Sur mobile : poster statique uniquement, pas de vidéo */
+    @media (max-width: 768px) {
+      #showreel source { display: none; }
+    }
 
     /* ── VIGNETTE — assombrit les bords pour lisibilité ── */
     #vignette {
@@ -214,9 +217,12 @@
 </head>
 <body>
 
-  <!-- Fond vidéo showreel -->
-  <video id="showreel" autoplay muted loop playsinline>
-    <source src="./videos/mini-vid.mp4" type="video/mp4">
+  <!-- Fond vidéo showreel — poster immédiat, vidéo optimisée -->
+  <video id="showreel" autoplay muted loop playsinline
+         poster="./videos/poster.jpg"
+         preload="auto">
+    <source src="./videos/mini-vid-opt.webm" type="video/webm">
+    <source src="./videos/mini-vid-opt.mp4"  type="video/mp4">
   </video>
 
   <!-- Vignette -->
@@ -262,17 +268,19 @@
   <script src="./nav.js"></script>
 
   <script>
-    // Fade-in de la vidéo une fois chargée
+    // Sur mobile on ne charge pas la vidéo du tout (poster suffit)
     const vid = document.getElementById('showreel');
-    vid.addEventListener('canplaythrough', () => vid.classList.add('loaded'));
-    if (vid.readyState >= 3) vid.classList.add('loaded');
+    if (window.innerWidth <= 768) {
+      vid.removeAttribute('autoplay');
+      vid.load(); // force l'affichage du poster sans télécharger la vidéo
+    }
 
     // iOS Safari suspend parfois la vidéo après quelques secondes → on la relance
     vid.addEventListener('pause', () => {
-      if (!document.hidden) vid.play().catch(() => {});
+      if (!document.hidden && window.innerWidth > 768) vid.play().catch(() => {});
     });
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) vid.play().catch(() => {});
+      if (!document.hidden && window.innerWidth > 768) vid.play().catch(() => {});
     });
 
     // Compteur créateurs dynamique

@@ -304,7 +304,14 @@
     .then(r => r.ok ? r.json() : null)
     .then(data => {
       if (data && data.images && data.images.length > 0) {
-        buildSlides(data.images.map(f => `./photos-studio/${f}`));
+        const srcs = data.images.map(f => `./photos-studio/${f}`);
+        // Précharger la première image avant de construire les slides
+        const preload = new Image();
+        preload.onload = () => buildSlides(srcs);
+        preload.onerror = () => buildSlides(srcs);
+        preload.src = srcs[0];
+        // Précharger les suivantes en tâche de fond
+        srcs.slice(1).forEach(src => { const img = new Image(); img.src = src; });
       } else {
         buildSlides([null, null, null, null]);
       }
