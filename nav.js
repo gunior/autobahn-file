@@ -133,7 +133,7 @@
      DARK MODE
   ────────────────────────────────────────────────────────── */
   const html   = document.documentElement;
-  const stored = localStorage.getItem('autobahn-theme') || 'light';
+  const stored = localStorage.getItem('autobahn-theme') || 'dark';
   html.setAttribute('data-theme', stored);
 
   function updateThemeIcon() {

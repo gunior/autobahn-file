@@ -25,6 +25,15 @@ export default defineConfig({
                   .filter('_type == "creator"')
                   .defaultOrdering([{ field: 'order', direction: 'asc' }])
               ),
+            S.listItem()
+              .title('Lab')
+              .icon(() => '🎬')
+              .child(
+                S.document()
+                  .title('Lab — Médias')
+                  .schemaType('lab')
+                  .documentId('lab-singleton')
+              ),
           ]),
     }),
     visionTool(),

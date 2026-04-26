@@ -1,9 +1,11 @@
-# Généré automatiquement au build — ne pas versionner
-lab/manifest.json
 
 # Showreels creators — hébergés en externe (trop lourds pour GitHub)
 creators/**/*.mp4
 
+# Sanity CMS — dépendances et build local
+cms/node_modules/
+cms/dist/
+cms/.sanity/
 
 # OS
 .DS_Store
