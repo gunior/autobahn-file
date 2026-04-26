@@ -166,7 +166,7 @@
     localStorage.setItem('autobahn-lang', lang);
   };
 
-  const savedLang = localStorage.getItem('autobahn-lang') || 'fr';
+  const savedLang = localStorage.getItem('autobahn-lang') || 'en';
   setLang(savedLang);
 
 })();
