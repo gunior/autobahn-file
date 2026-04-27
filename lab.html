@@ -121,48 +121,63 @@
     }
 
     /* ══════════════════════════════════════════
-       MODE ARCHIVE — toggle + grille + scrollbar
+       MODE SWITCHER (collage / archive) — pictos
     ══════════════════════════════════════════ */
 
-    /* Toggle Archive / Lab — fixé sur le côté droit, écriture verticale */
-    .lab-mode-toggle {
+    /* Deux pictos empilés sur le côté droit, à mi-hauteur */
+    .lab-mode-switcher {
       position: fixed;
-      right: 18px;
+      right: 14px;
       top: 50%;
       transform: translateY(-50%);
-      writing-mode: vertical-rl;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      z-index: 60;
+    }
+    .mode-btn {
       background: none;
       border: none;
-      font-family: var(--f-mono);
-      font-size: 10px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--c-slate);
+      padding: 6px;
       cursor: pointer;
-      z-index: 60;
-      padding: 12px 6px;
-      transition: color 0.2s ease, transform 0.2s ease;
-      user-select: none;
+      color: var(--c-slate);
+      opacity: 0.4;
+      transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .lab-mode-toggle:hover {
+    .mode-btn svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+    .mode-btn:hover {
+      opacity: 0.85;
+      transform: translateX(-2px);
+    }
+    /* État actif : suit body[data-lab-mode] */
+    body[data-lab-mode="collage"] .mode-btn[data-mode="collage"],
+    body[data-lab-mode="archive"] .mode-btn[data-mode="archive"] {
+      opacity: 1;
       color: var(--c-ink);
-      transform: translateY(-50%) translateX(-2px);
+      cursor: default;
     }
-
-    /* Le toggle affiche un seul label suivant le mode courant */
-    body[data-lab-mode="collage"] .toggle-label-archive { display: none; }
-    body[data-lab-mode="archive"] .toggle-label-collage { display: none; }
+    body[data-lab-mode="collage"] .mode-btn[data-mode="collage"]:hover,
+    body[data-lab-mode="archive"] .mode-btn[data-mode="archive"]:hover {
+      transform: none;
+    }
 
     /* Affichage exclusif : collage XOR archive */
     body[data-lab-mode="archive"] #labCanvas { display: none; }
     body[data-lab-mode="collage"] #labArchive { display: none; }
 
-    /* En mode archive on masque la scrollbar native — la barre custom prend le relais */
-    body[data-lab-mode="archive"] {
+    /* On masque la scrollbar native dans les deux modes — la barre custom prend le relais */
+    body {
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
-    body[data-lab-mode="archive"]::-webkit-scrollbar { display: none; }
+    body::-webkit-scrollbar { display: none; }
 
     /* Grille archive */
     .lab-archive {
@@ -204,7 +219,7 @@
       .lab-archive { grid-template-columns: repeat(3, 1fr); padding: 16px 12px 60px; }
     }
 
-    /* ── Scrollbar custom — visible uniquement en archive pendant le scroll ── */
+    /* ── Scrollbar custom — visible dans les DEUX modes pendant le scroll ── */
     .scroll-indicator {
       position: fixed;
       right: 6px;
@@ -216,11 +231,10 @@
       transition: opacity 0.4s ease, width 0.2s ease;
       pointer-events: none;
     }
-    body[data-lab-mode="archive"] .scroll-indicator.scrolling {
+    .scroll-indicator.scrolling {
       opacity: 1;
       width: 4px;
     }
-    body[data-lab-mode="collage"] .scroll-indicator { display: none; }
 
     .scroll-indicator-track {
       position: relative;
@@ -289,11 +303,32 @@
     </p>
   </header>
 
-  <!-- Toggle Archive / Lab (fixé sur le côté droit) -->
-  <button class="lab-mode-toggle" id="labModeToggle" aria-label="Toggle archive view">
-    <span class="toggle-label-collage">Archive</span>
-    <span class="toggle-label-archive">Lab</span>
-  </button>
+  <!-- Mode switcher : deux pictos (collage / grille archive) -->
+  <div class="lab-mode-switcher" role="tablist" aria-label="Layout mode">
+    <button class="mode-btn" data-mode="collage" aria-label="Collage / scroll infini" role="tab">
+      <!-- Picto masonry : blocs décalés -->
+      <svg viewBox="0 0 18 18" fill="currentColor" aria-hidden="true">
+        <rect x="1" y="1"  width="6" height="9"/>
+        <rect x="11" y="1" width="6" height="6"/>
+        <rect x="11" y="9" width="6" height="8"/>
+        <rect x="1" y="12" width="6" height="5"/>
+      </svg>
+    </button>
+    <button class="mode-btn" data-mode="archive" aria-label="Grille archive" role="tab">
+      <!-- Picto grille 3×3 -->
+      <svg viewBox="0 0 18 18" fill="currentColor" aria-hidden="true">
+        <rect x="1"  y="1"  width="4" height="4"/>
+        <rect x="7"  y="1"  width="4" height="4"/>
+        <rect x="13" y="1"  width="4" height="4"/>
+        <rect x="1"  y="7"  width="4" height="4"/>
+        <rect x="7"  y="7"  width="4" height="4"/>
+        <rect x="13" y="7"  width="4" height="4"/>
+        <rect x="1"  y="13" width="4" height="4"/>
+        <rect x="7"  y="13" width="4" height="4"/>
+        <rect x="13" y="13" width="4" height="4"/>
+      </svg>
+    </button>
+  </div>
 
   <!-- Scrollbar custom (uniquement en mode archive) -->
   <div class="scroll-indicator" id="scrollIndicator">
@@ -404,6 +439,7 @@
         const el = document.createElement('div');
         el.className = 'lab-item' + (res.item.type === 'video' ? ' lab-video-item' : '');
         el.style.cssText = `left:${x}px; top:${y}px; width:${w}px;`;
+        el.dataset.date = res.item.date || ''; // pour les marqueurs de mois côté custom scrollbar
 
         res.el.style.width  = '100%';
         res.el.style.height = 'auto';
@@ -467,7 +503,7 @@
 
   // Refs DOM
   const archiveEl   = document.getElementById('labArchive');
-  const toggleEl    = document.getElementById('labModeToggle');
+  const modeButtons = document.querySelectorAll('.mode-btn');
   const indicatorEl = document.getElementById('scrollIndicator');
   const trackEl     = document.getElementById('scrollTrack');
   const thumbEl     = document.getElementById('scrollThumb');
@@ -520,10 +556,9 @@
   /* ─ Custom scrollbar : update position du thumb + marqueurs de mois ─ */
   let scrollHideTimer = null;
   let lastTrackHeight = 0;
+  let lastDocHeight   = 0;
 
   function updateScrollIndicator() {
-    if (viewMode !== 'archive') return;
-
     const docHeight   = document.documentElement.scrollHeight;
     const winHeight   = window.innerHeight;
     const trackHeight = trackEl.offsetHeight;
@@ -537,9 +572,10 @@
     thumbEl.style.height = thumbHeight + 'px';
     thumbEl.style.top    = thumbY + 'px';
 
-    // Recalcule les marqueurs si la hauteur a changé (resize, ou première render)
-    if (trackHeight !== lastTrackHeight) {
+    // Recalcule les marqueurs si la hauteur du contenu OU de la track a changé
+    if (trackHeight !== lastTrackHeight || docHeight !== lastDocHeight) {
       lastTrackHeight = trackHeight;
+      lastDocHeight   = docHeight;
       buildMonthMarkers(docHeight, trackHeight);
     }
   }
@@ -551,7 +587,11 @@
     // Purge les marqueurs précédents
     trackEl.querySelectorAll('.month-marker, .month-marker-label').forEach(el => el.remove());
 
-    const cells = archiveEl.querySelectorAll('.archive-cell[data-date]');
+    // Sélection contextuelle : items du mode actif uniquement
+    const selector = viewMode === 'archive'
+      ? '#labArchive .archive-cell[data-date]'
+      : '#labCanvas .lab-item[data-date]';
+    const cells = document.querySelectorAll(selector);
     if (cells.length === 0) return;
 
     let prevKey = null;
@@ -582,27 +622,29 @@
     });
   }
 
-  /* ─ Toggle handler ─ */
-  toggleEl.addEventListener('click', () => {
-    viewMode = viewMode === 'collage' ? 'archive' : 'collage';
-    document.body.dataset.labMode = viewMode;
-    localStorage.setItem('autobahn-lab-mode', viewMode);
-    window.scrollTo(0, 0);
+  /* ─ Mode switcher : 2 boutons (collage / archive) ─ */
+  modeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newMode = btn.dataset.mode;
+      if (newMode === viewMode) return;
+      viewMode = newMode;
+      document.body.dataset.labMode = viewMode;
+      localStorage.setItem('autobahn-lab-mode', viewMode);
+      window.scrollTo(0, 0);
 
-    if (viewMode === 'archive') {
-      if (!archiveBuilt && allItems) {
+      if (viewMode === 'archive' && !archiveBuilt && allItems) {
         buildArchive(allItems);
         archiveBuilt = true;
       }
-      // Laisse le DOM se peindre avant de calculer les positions
+      // Force le recalcul des marqueurs (mode change = cellules différentes)
       lastTrackHeight = 0;
+      lastDocHeight   = 0;
       requestAnimationFrame(() => requestAnimationFrame(updateScrollIndicator));
-    }
+    });
   });
 
   /* ─ Scroll listener : montre la barre puis fade out après 1.5s sans scroll ─ */
   window.addEventListener('scroll', () => {
-    if (viewMode !== 'archive') return;
     updateScrollIndicator();
     indicatorEl.classList.add('scrolling');
     clearTimeout(scrollHideTimer);
@@ -627,8 +669,10 @@
       if (viewMode === 'archive') {
         buildArchive(items);
         archiveBuilt = true;
-        requestAnimationFrame(() => requestAnimationFrame(updateScrollIndicator));
       }
+      // Calcul initial des marqueurs (pour les deux modes) — un peu de délai pour laisser
+      // buildLayout finir son async (preload images + assignation des positions)
+      setTimeout(updateScrollIndicator, 800);
     })
     .catch(() => {
       labCanvas.innerHTML = `
@@ -647,9 +691,11 @@
         if (viewMode === 'archive') {
           buildArchive(items);
           archiveBuilt = true;
-          lastTrackHeight = 0;
-          requestAnimationFrame(() => requestAnimationFrame(updateScrollIndicator));
         }
+        // Force le recalcul des marqueurs (les positions ont changé avec le resize)
+        lastTrackHeight = 0;
+        lastDocHeight   = 0;
+        setTimeout(updateScrollIndicator, 800);
       })
       .catch(() => {});
   });
