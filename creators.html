@@ -466,12 +466,24 @@
     return TRIM_START + Math.random() * safeDur;
   }
 
+  /* Purge totale du <video> de fond — utilisée à chaque transition pour éviter
+   * qu'un poster ou des sources du créateur précédent ne flashent pendant le
+   * fade-out (~1s de transition CSS d'opacité). */
+  function purgeBgVideo() {
+    bgVideo.pause();
+    bgVideo.innerHTML = '';
+    bgVideo.removeAttribute('src');
+    bgVideo.removeAttribute('poster');
+    bgVideo.load();
+  }
+
   function setBackground(c) {
     clearTimeout(hideTimer);
 
     /* ─ Connexion lente → on utilise le heroPhoto en static, pas de vidéo ─ */
     if (SLOW_CONNECTION && c.heroPhoto) {
       bgVideo.classList.remove('visible');
+      purgeBgVideo();
       document.body.classList.add('video-active');
       if (c.heroPhoto !== currentSrc) {
         currentSrc = c.heroPhoto;
@@ -492,30 +504,30 @@
       }
       currentSrc = key;
       bgVideo.classList.remove('visible');
-      setTimeout(() => {
-        // Multi-source : WebM en priorité, MP4 en fallback Safari
-        bgVideo.innerHTML = '';
-        if (c.heroPhoto) bgVideo.poster = c.heroPhoto;
-        sources.forEach(s => {
-          const el = document.createElement('source');
-          el.src = s.src; el.type = s.type;
-          bgVideo.appendChild(el);
-        });
-        bgVideo.load();
-        bgVideo.onloadedmetadata = () => { bgVideo.currentTime = randomTime(bgVideo); };
-        bgVideo.play().then(() => {
-          if (bgVideo.duration) bgVideo.currentTime = randomTime(bgVideo);
-        }).catch(() => {});
-        bgVideo.oncanplaythrough = () => bgVideo.classList.add('visible');
-        if (bgVideo.readyState >= 3) bgVideo.classList.add('visible');
-      }, 150);
+      // Purge IMMÉDIATE du contenu précédent (poster + sources) pour ne rien
+      // laisser flasher pendant le fade-out, puis on installe le nouveau.
+      purgeBgVideo();
+      if (c.heroPhoto) bgVideo.poster = c.heroPhoto;
+      sources.forEach(s => {
+        const el = document.createElement('source');
+        el.src = s.src; el.type = s.type;
+        bgVideo.appendChild(el);
+      });
+      bgVideo.load();
+      bgVideo.onloadedmetadata = () => { bgVideo.currentTime = randomTime(bgVideo); };
+      bgVideo.play().then(() => {
+        if (bgVideo.duration) bgVideo.currentTime = randomTime(bgVideo);
+      }).catch(() => {});
+      bgVideo.oncanplaythrough = () => bgVideo.classList.add('visible');
+      if (bgVideo.readyState >= 3) bgVideo.classList.add('visible');
       return;
     }
 
-    /* ─ Aucun showreel ni heroPhoto utilisable → état neutre ─ */
+    /* ─ Aucun showreel ni heroPhoto utilisable → état neutre + purge complète ─ */
     bgVideo.classList.remove('visible');
     bgImage.classList.remove('visible');
     document.body.classList.remove('video-active');
+    purgeBgVideo();
     currentSrc = '';
   }
 
@@ -525,11 +537,7 @@
       bgVideo.classList.remove('visible');
       bgImage.classList.remove('visible');
       document.body.classList.remove('video-active');
-      bgVideo.pause();
-      bgVideo.innerHTML = '';
-      bgVideo.removeAttribute('src');
-      bgVideo.removeAttribute('poster'); // évite la persistance d'une vignette d'un hover précédent
-      bgVideo.load();
+      purgeBgVideo();
       currentSrc = '';
     }, 50);
   }
