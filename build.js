@@ -17,17 +17,25 @@ const DATASET    = process.env.SANITY_DATASET || 'production';
    1. SANITY — Fetch creators
 ══════════════════════════════════════════════════════ */
 
+/* Sanity sert ses images via cdn.sanity.io et accepte des paramètres de
+ * transformation à la volée (auto=format → WebP/AVIF si supporté, fit=max
+ * préserve le ratio, q= la qualité, w= la largeur max). Cache CDN ensuite,
+ * donc le coût n'est payé qu'à la 1ʳᵉ requête. */
+const IMG_PHOTO     = '?auto=format&fit=max&q=85&w=400';   // mini-cartes carousel + roue mobile
+const IMG_HERO      = '?auto=format&fit=max&q=85&w=1920';  // bannière profil + poster vidéo + fallback co lente
+const IMG_PROJECT   = '?auto=format&fit=max&q=85&w=1200';  // thumbnails portfolio (grille 2 col desktop)
+
 const GROQ = `*[_type == "creator"] | order(order asc) {
   name, role, bio, bioFr,
-  "photo":                  photo.asset->url,
-  "heroPhoto":              heroPhoto.asset->url,
+  "photo":                  photo.asset->url + "${IMG_PHOTO}",
+  "heroPhoto":              heroPhoto.asset->url + "${IMG_HERO}",
   "showreel":               showreel.asset->url,
   "showreelOptimizedWebm":  showreelOptimizedWebm.asset->url,
   "showreelOptimizedMp4":   showreelOptimizedMp4.asset->url,
   tools, disciplines, skills, links,
   projects[] {
     name, type, url,
-    "thumb": thumb.asset->url
+    "thumb": thumb.asset->url + "${IMG_PROJECT}"
   }
 }`;
 
@@ -60,10 +68,13 @@ function fetchCreators() {
       (fallback sur les fichiers locaux si Sanity indispo)
 ══════════════════════════════════════════════════════ */
 
+/* Lab : images potentiellement plein écran, on autorise jusqu'à 2400px (DPR 2 sur 1920) */
+const IMG_LAB = '?auto=format&fit=max&q=85&w=2400';
+
 const GROQ_LAB = `*[_type == "lab"][0] {
   items[] {
     mediaType,
-    "imageUrl": image.asset->url,
+    "imageUrl": image.asset->url + "${IMG_LAB}",
     "videoUrl": video.asset->url
   }
 }`;
