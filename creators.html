@@ -528,6 +528,7 @@
       bgVideo.pause();
       bgVideo.innerHTML = '';
       bgVideo.removeAttribute('src');
+      bgVideo.removeAttribute('poster'); // évite la persistance d'une vignette d'un hover précédent
       bgVideo.load();
       currentSrc = '';
     }, 50);
