@@ -74,8 +74,10 @@ const IMG_LAB = '?auto=format&fit=max&q=85&w=2400';
 const GROQ_LAB = `*[_type == "lab"][0] {
   items[] {
     mediaType,
-    "imageUrl": image.asset->url + "${IMG_LAB}",
-    "videoUrl": video.asset->url
+    "imageUrl":  image.asset->url + "${IMG_LAB}",
+    "imageDate": image.asset->_createdAt,
+    "videoUrl":  video.asset->url,
+    "videoDate": video.asset->_createdAt
   }
 }`;
 
@@ -113,8 +115,9 @@ async function generateLabManifest() {
     const items = sanityDoc.items
       .filter(i => (i.mediaType === 'image' && i.imageUrl) || (i.mediaType === 'video' && i.videoUrl))
       .map(i => ({
-        url:  i.mediaType === 'image' ? i.imageUrl : i.videoUrl,
+        url:  i.mediaType === 'image' ? i.imageUrl  : i.videoUrl,
         type: i.mediaType,
+        date: i.mediaType === 'image' ? i.imageDate : i.videoDate, // ISO _createdAt de l'asset
       }))
       .reverse(); // plus récent en premier (items ajoutés à la fin dans Sanity)
 
@@ -145,7 +148,11 @@ async function generateLabManifest() {
       mtime: fs.statSync(path.join(labDir, f)).mtimeMs,
     }))
     .sort((a, b) => b.mtime - a.mtime) // plus récent en premier
-    .map(({ file, type }) => ({ file, type }));
+    .map(({ file, type, mtime }) => ({
+      file,
+      type,
+      date: new Date(mtime).toISOString(), // pour les marqueurs de mois côté front
+    }));
 
   fs.writeFileSync(outFile, JSON.stringify(files, null, 2));
   const imgs = files.filter(f => f.type === 'image').length;

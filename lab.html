@@ -120,6 +120,158 @@
       color: var(--c-ash); letter-spacing: var(--ls-normal);
     }
 
+    /* ══════════════════════════════════════════
+       MODE ARCHIVE — toggle + grille + scrollbar
+    ══════════════════════════════════════════ */
+
+    /* Toggle Archive / Lab — fixé sur le côté droit, écriture verticale */
+    .lab-mode-toggle {
+      position: fixed;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      writing-mode: vertical-rl;
+      background: none;
+      border: none;
+      font-family: var(--f-mono);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--c-slate);
+      cursor: pointer;
+      z-index: 60;
+      padding: 12px 6px;
+      transition: color 0.2s ease, transform 0.2s ease;
+      user-select: none;
+    }
+    .lab-mode-toggle:hover {
+      color: var(--c-ink);
+      transform: translateY(-50%) translateX(-2px);
+    }
+
+    /* Le toggle affiche un seul label suivant le mode courant */
+    body[data-lab-mode="collage"] .toggle-label-archive { display: none; }
+    body[data-lab-mode="archive"] .toggle-label-collage { display: none; }
+
+    /* Affichage exclusif : collage XOR archive */
+    body[data-lab-mode="archive"] #labCanvas { display: none; }
+    body[data-lab-mode="collage"] #labArchive { display: none; }
+
+    /* En mode archive on masque la scrollbar native — la barre custom prend le relais */
+    body[data-lab-mode="archive"] {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    body[data-lab-mode="archive"]::-webkit-scrollbar { display: none; }
+
+    /* Grille archive */
+    .lab-archive {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      padding: 32px var(--space-lg) 80px;
+      background: var(--c-bg);
+      transition: background 0.4s;
+    }
+    .archive-cell {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      background: var(--c-surface);
+      cursor: zoom-in;
+      transition: transform 0.25s ease, z-index 0s linear 0.25s;
+    }
+    .archive-cell img,
+    .archive-cell video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .archive-cell:hover {
+      transform: scale(1.04);
+      z-index: 2;
+      transition: transform 0.25s ease, z-index 0s;
+    }
+    .archive-cell:hover img,
+    .archive-cell:hover video { transform: scale(1.02); }
+
+    @media (max-width: 1200px) {
+      .lab-archive { grid-template-columns: repeat(5, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .lab-archive { grid-template-columns: repeat(3, 1fr); padding: 16px 12px 60px; }
+    }
+
+    /* ── Scrollbar custom — visible uniquement en archive pendant le scroll ── */
+    .scroll-indicator {
+      position: fixed;
+      right: 6px;
+      top: 96px;
+      bottom: 96px;
+      width: 2px;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.4s ease, width 0.2s ease;
+      pointer-events: none;
+    }
+    body[data-lab-mode="archive"] .scroll-indicator.scrolling {
+      opacity: 1;
+      width: 4px;
+    }
+    body[data-lab-mode="collage"] .scroll-indicator { display: none; }
+
+    .scroll-indicator-track {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: rgba(245, 244, 240, 0.07);
+      border-radius: 2px;
+    }
+    html[data-theme="light"] .scroll-indicator-track { background: rgba(26, 26, 24, 0.08); }
+
+    .scroll-indicator-thumb {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      background: rgba(245, 244, 240, 0.45);
+      border-radius: 2px;
+      transition: background 0.2s ease;
+    }
+    html[data-theme="light"] .scroll-indicator-thumb { background: rgba(26, 26, 24, 0.45); }
+
+    .scroll-indicator.scrolling .scroll-indicator-thumb {
+      background: rgba(245, 244, 240, 0.7);
+    }
+    html[data-theme="light"] .scroll-indicator.scrolling .scroll-indicator-thumb {
+      background: rgba(26, 26, 24, 0.7);
+    }
+
+    /* Marqueurs de mois — petite ligne + label discret */
+    .month-marker {
+      position: absolute;
+      left: -3px;
+      width: 8px;
+      height: 1px;
+      background: rgba(245, 244, 240, 0.35);
+      pointer-events: none;
+    }
+    .month-marker-label {
+      position: absolute;
+      right: 14px;
+      transform: translateY(-50%);
+      font-family: var(--f-mono);
+      font-size: 8px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(245, 244, 240, 0.4);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    html[data-theme="light"] .month-marker { background: rgba(26, 26, 24, 0.35); }
+    html[data-theme="light"] .month-marker-label { color: rgba(26, 26, 24, 0.4); }
+
   </style>
 </head>
 <body>
@@ -137,7 +289,25 @@
     </p>
   </header>
 
+  <!-- Toggle Archive / Lab (fixé sur le côté droit) -->
+  <button class="lab-mode-toggle" id="labModeToggle" aria-label="Toggle archive view">
+    <span class="toggle-label-collage">Archive</span>
+    <span class="toggle-label-archive">Lab</span>
+  </button>
+
+  <!-- Scrollbar custom (uniquement en mode archive) -->
+  <div class="scroll-indicator" id="scrollIndicator">
+    <div class="scroll-indicator-track" id="scrollTrack">
+      <div class="scroll-indicator-thumb" id="scrollThumb"></div>
+      <!-- Les marqueurs de mois sont injectés dynamiquement ici -->
+    </div>
+  </div>
+
+  <!-- Vue collage (originale) -->
   <main class="lab-canvas" id="labCanvas"></main>
+
+  <!-- Vue archive (grille 7 colonnes, contact-sheet) -->
+  <main class="lab-archive" id="labArchive"></main>
 
   <!-- Lightbox -->
   <div id="lightbox">
@@ -285,12 +455,181 @@
     });
   }
 
+  /* ══════════════════════════════════════════
+     MODE ARCHIVE — toggle, grille, scrollbar custom
+  ══════════════════════════════════════════ */
+
+  // State
+  let allItems    = null;
+  let archiveBuilt = false;
+  let viewMode    = localStorage.getItem('autobahn-lab-mode') || 'collage';
+  document.body.dataset.labMode = viewMode;
+
+  // Refs DOM
+  const archiveEl   = document.getElementById('labArchive');
+  const toggleEl    = document.getElementById('labModeToggle');
+  const indicatorEl = document.getElementById('scrollIndicator');
+  const trackEl     = document.getElementById('scrollTrack');
+  const thumbEl     = document.getElementById('scrollThumb');
+
+  /* ─ Construit la grille archive (7 colonnes desktop) ─ */
+  function buildArchive(items) {
+    archiveEl.innerHTML = '';
+
+    if (!items || items.length === 0) {
+      archiveEl.innerHTML = `<div class="lab-empty" style="grid-column: 1 / -1;">
+        <span class="en">No content yet.</span>
+        <span class="fr">Aucun contenu.</span>
+      </div>`;
+      return;
+    }
+
+    // Tri du plus récent au plus ancien (les items du manifest ont déjà ce tri,
+    // mais on s'en assure ici au cas où le tri change côté build).
+    const sorted = [...items].sort((a, b) => {
+      const da = new Date(a.date || 0).getTime();
+      const db = new Date(b.date || 0).getTime();
+      return db - da;
+    });
+
+    sorted.forEach(item => {
+      const cell = document.createElement('div');
+      cell.className = 'archive-cell';
+      cell.dataset.date = item.date || '';
+
+      if (item.type === 'video') {
+        const vid = document.createElement('video');
+        vid.muted       = true;
+        vid.loop        = true;
+        vid.playsInline = true;
+        vid.preload     = 'metadata'; // pas d'autoplay en archive : juste la 1re frame
+        vid.src         = item.url || `./lab/${item.file}`;
+        cell.appendChild(vid);
+      } else {
+        const img = document.createElement('img');
+        img.src     = item.url || `./lab/${item.file}`;
+        img.loading = 'lazy';
+        img.alt     = '';
+        cell.appendChild(img);
+      }
+
+      archiveEl.appendChild(cell);
+    });
+  }
+
+  /* ─ Custom scrollbar : update position du thumb + marqueurs de mois ─ */
+  let scrollHideTimer = null;
+  let lastTrackHeight = 0;
+
+  function updateScrollIndicator() {
+    if (viewMode !== 'archive') return;
+
+    const docHeight   = document.documentElement.scrollHeight;
+    const winHeight   = window.innerHeight;
+    const trackHeight = trackEl.offsetHeight;
+    if (trackHeight === 0) return;
+
+    // Taille + position du thumb
+    const thumbHeight = Math.max(20, (winHeight / docHeight) * trackHeight);
+    const scrollMax   = Math.max(0, docHeight - winHeight);
+    const thumbY      = scrollMax > 0 ? (window.scrollY / scrollMax) * (trackHeight - thumbHeight) : 0;
+
+    thumbEl.style.height = thumbHeight + 'px';
+    thumbEl.style.top    = thumbY + 'px';
+
+    // Recalcule les marqueurs si la hauteur a changé (resize, ou première render)
+    if (trackHeight !== lastTrackHeight) {
+      lastTrackHeight = trackHeight;
+      buildMonthMarkers(docHeight, trackHeight);
+    }
+  }
+
+  /* ─ Petites étapes par mois sur la barre custom ─ */
+  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function buildMonthMarkers(docHeight, trackHeight) {
+    // Purge les marqueurs précédents
+    trackEl.querySelectorAll('.month-marker, .month-marker-label').forEach(el => el.remove());
+
+    const cells = archiveEl.querySelectorAll('.archive-cell[data-date]');
+    if (cells.length === 0) return;
+
+    let prevKey = null;
+    cells.forEach(cell => {
+      const dateStr = cell.dataset.date;
+      if (!dateStr) return;
+      const d   = new Date(dateStr);
+      if (isNaN(d.getTime())) return;
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (key === prevKey) return;
+      prevKey = key;
+
+      // Position du premier item du mois sur la track
+      const cellTop = cell.getBoundingClientRect().top + window.scrollY;
+      const ratio   = Math.min(1, Math.max(0, cellTop / docHeight));
+      const yOnTrack = ratio * trackHeight;
+
+      const tick = document.createElement('div');
+      tick.className = 'month-marker';
+      tick.style.top = yOnTrack + 'px';
+      trackEl.appendChild(tick);
+
+      const label = document.createElement('div');
+      label.className = 'month-marker-label';
+      label.textContent = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+      label.style.top = yOnTrack + 'px';
+      trackEl.appendChild(label);
+    });
+  }
+
+  /* ─ Toggle handler ─ */
+  toggleEl.addEventListener('click', () => {
+    viewMode = viewMode === 'collage' ? 'archive' : 'collage';
+    document.body.dataset.labMode = viewMode;
+    localStorage.setItem('autobahn-lab-mode', viewMode);
+    window.scrollTo(0, 0);
+
+    if (viewMode === 'archive') {
+      if (!archiveBuilt && allItems) {
+        buildArchive(allItems);
+        archiveBuilt = true;
+      }
+      // Laisse le DOM se peindre avant de calculer les positions
+      lastTrackHeight = 0;
+      requestAnimationFrame(() => requestAnimationFrame(updateScrollIndicator));
+    }
+  });
+
+  /* ─ Scroll listener : montre la barre puis fade out après 1.5s sans scroll ─ */
+  window.addEventListener('scroll', () => {
+    if (viewMode !== 'archive') return;
+    updateScrollIndicator();
+    indicatorEl.classList.add('scrolling');
+    clearTimeout(scrollHideTimer);
+    scrollHideTimer = setTimeout(() => {
+      indicatorEl.classList.remove('scrolling');
+    }, 1500);
+  }, { passive: true });
+
+  /* ══════════════════════════════════════════
+     CHARGEMENT DU MANIFEST
+  ══════════════════════════════════════════ */
+
   fetch('./lab/manifest.json')
     .then(r => {
       if (!r.ok) throw new Error('manifest not found');
       return r.json();
     })
-    .then(items => buildLayout(items))
+    .then(items => {
+      allItems = items;
+      buildLayout(items);
+      // Si l'utilisateur revient avec sa préférence "archive", on construit directement
+      if (viewMode === 'archive') {
+        buildArchive(items);
+        archiveBuilt = true;
+        requestAnimationFrame(() => requestAnimationFrame(updateScrollIndicator));
+      }
+    })
     .catch(() => {
       labCanvas.innerHTML = `
         <div class="lab-empty">
@@ -302,7 +641,16 @@
   window.addEventListener('resize', () => {
     fetch('./lab/manifest.json')
       .then(r => r.ok ? r.json() : [])
-      .then(items => buildLayout(items))
+      .then(items => {
+        allItems = items;
+        buildLayout(items);
+        if (viewMode === 'archive') {
+          buildArchive(items);
+          archiveBuilt = true;
+          lastTrackHeight = 0;
+          requestAnimationFrame(() => requestAnimationFrame(updateScrollIndicator));
+        }
+      })
       .catch(() => {});
   });
 
@@ -330,11 +678,13 @@
     if (e.key === 'Escape') closeLightbox();
   });
 
-  // Délègue les clics sur les images du canvas
-  document.getElementById('labCanvas').addEventListener('click', e => {
-    const img = e.target.closest('.lab-item')?.querySelector('img');
+  // Délègue les clics sur les images du canvas (collage) et de la grille archive
+  function handleLabClick(e) {
+    const img = e.target.closest('.lab-item, .archive-cell')?.querySelector('img');
     if (img) openLightbox(img.src);
-  });
+  }
+  document.getElementById('labCanvas').addEventListener('click', handleLabClick);
+  document.getElementById('labArchive').addEventListener('click', handleLabClick);
   </script>
 
 </body>
