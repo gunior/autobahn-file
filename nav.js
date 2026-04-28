@@ -11,20 +11,23 @@
   const LOGO_IMAGE_ALT    = 'Autobahn';
 
   /* ── PAGES & LIENS ───────────────────────────────────────── */
+  /* URLs propres : Vercel cleanUrls sert /creators → creators.html, etc. */
   const LINKS = [
-    { href: 'creators.html', en: 'Team', fr: 'Tchim' },
-    { href: 'lab.html',      en: 'Lab',      fr: 'Lab'       },
-    { href: 'studio.html',   en: 'Studio',   fr: 'Studio'    },
-    { href: 'contact.html',  en: 'Contact',  fr: 'Contact'   },
+    { href: '/creators', en: 'Team',    fr: 'Tchim'   },
+    { href: '/lab',      en: 'Lab',     fr: 'Lab'     },
+    { href: '/studio',   en: 'Studio',  fr: 'Studio'  },
+    { href: '/contact',  en: 'Contact', fr: 'Contact' },
   ];
 
   /* ── PAGES SANS DARK TOGGLE (fond fixe) ─────────────────── */
-  const NO_THEME_TOGGLE = ['studio.html', 'index.html'];
+  const NO_THEME_TOGGLE = ['/studio', '/'];
 
   /* ──────────────────────────────────────────────────────────
      Construction du HTML de navigation
   ────────────────────────────────────────────────────────── */
-  const page = window.location.pathname.split('/').pop() || 'index.html';
+  /* On normalise : pathname sans extension .html ni trailing slash */
+  let page = window.location.pathname.replace(/\.html$/, '').replace(/\/$/, '');
+  if (page === '') page = '/';
 
   const linksHTML = LINKS.map(l => {
     const active = page === l.href ? 'class="active"' : '';
