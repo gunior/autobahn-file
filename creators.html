@@ -477,16 +477,35 @@
     bgVideo.load();
   }
 
-  /* Affiche heroPhoto en fond statique (utilisé en co lente + créateurs sans showreel) */
+  /* Affiche heroPhoto en fond statique (utilisé en co lente + créateurs sans showreel)
+     Précharge l'image avant d'appliquer le fade-in pour éviter qu'on voie l'overlay
+     vide se faire fader avant que l'image arrive. */
   function showHeroPhotoStatic(c) {
     bgVideo.classList.remove('visible');
     purgeBgVideo();
     document.body.classList.add('video-active');
-    if (c.heroPhoto !== currentSrc) {
-      currentSrc = c.heroPhoto;
-      bgImage.style.backgroundImage = `url('${c.heroPhoto}')`;
+
+    if (c.heroPhoto === currentSrc) {
+      // Même image que le précédent hover → déjà appliquée, on remet visible
+      bgImage.classList.add('visible');
+      return;
     }
-    bgImage.classList.add('visible');
+
+    currentSrc = c.heroPhoto;
+    // Reset visuel : on cache pendant le chargement, on évite de flasher l'image précédente
+    bgImage.classList.remove('visible');
+    bgImage.style.backgroundImage = '';
+
+    const preload = new Image();
+    const apply = () => {
+      // Si l'utilisateur est passé sur un autre créateur entre temps, on n'applique pas
+      if (currentSrc !== c.heroPhoto) return;
+      bgImage.style.backgroundImage = `url('${c.heroPhoto}')`;
+      bgImage.classList.add('visible');
+    };
+    preload.onload  = apply;
+    preload.onerror = apply; // on tente quand même l'affichage en cas d'erreur de preload
+    preload.src     = c.heroPhoto;
   }
 
   function setBackground(c) {
@@ -905,6 +924,15 @@
       return r.json();
     })
     .then(creators => {
+      // Précharge toutes les heroPhotos en parallèle dès le chargement de la page
+      // pour que le hover affiche l'image instantanément (pas de délai de fetch)
+      creators.forEach(c => {
+        if (c.heroPhoto) {
+          const pre = new Image();
+          pre.src = c.heroPhoto;
+        }
+      });
+
       if (window.innerWidth <= 768) {
         buildMobileWheel(creators);
         return;
