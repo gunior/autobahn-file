@@ -106,7 +106,7 @@
     /* Light : fond blanc + typo bleue (même bleu que le titre TEAM) */
     /* Dark  : fond noir + typo jaune fluo (même jaune que le titre TEAM en dark) */
     .recipient-select {
-      background-color: #ffffff;
+      background-color: var(--c-bg);
       color: #1A2ED5;
       border: none;
       font-family: inherit;
@@ -132,7 +132,7 @@
 
     /* Options du dropdown — état par défaut */
     .recipient-select option {
-      background-color: #ffffff;
+      background-color: var(--c-bg);
       color: #1A2ED5;
       font-weight: 600;
       padding: 8px 12px;
@@ -291,7 +291,7 @@
       <div class="contact-infos">
         <div class="info-block">
           <div class="info-label">Email</div>
-          <a class="info-value" href="mailto:hello@autobahn.studio">hello@autobahn.studio</a>
+          <a class="info-value" id="studioEmailLink" href="#">—</a>
         </div>
         <div class="info-block">
           <div class="info-label">
@@ -308,9 +308,7 @@
             <span class="en">Follow</span><span class="fr">Suivre</span>
           </div>
           <div class="social-links">
-            <a class="social-link" href="#">Instagram</a>
-            <a class="social-link" href="#">Vimeo</a>
-            <a class="social-link" href="#">LinkedIn</a>
+            <a class="social-link" href="https://www.instagram.com/autobahn_nantes/" target="_blank" rel="noopener">Instagram</a>
           </div>
         </div>
       </div>
@@ -320,8 +318,8 @@
       <div class="form-title">
         <span class="en">Send a message at</span><span class="fr">Envoyer un message à</span>
         <select class="recipient-select" id="recipientSelect" aria-label="Recipient">
-          <option value="hello@autobahn.studio" data-name="Autobahn">Autobahn</option>
-          <!-- Les créateurs avec email seront injectés dynamiquement -->
+          <!-- L'option Autobahn (avec STUDIO_EMAIL) est injectée par le JS au load.
+               Les créateurs avec email sont ajoutés ensuite depuis creators.json. -->
         </select>
       </div>
       <form class="form" id="contactForm">
@@ -376,6 +374,18 @@
 
   <script src="./nav.js"></script>
   <script>
+    /* ══════════════════════════════════════════
+       CONFIGURATION — UN SEUL ENDROIT À MODIFIER
+    ══════════════════════════════════════════ */
+    const STUDIO_EMAIL = 'hello@autobahn.studio'; // ← change cette adresse pour mettre à jour partout
+
+    /* ── Renseigne dynamiquement les éléments qui dépendent de STUDIO_EMAIL ── */
+    const emailLink = document.getElementById('studioEmailLink');
+    if (emailLink) {
+      emailLink.href = 'mailto:' + STUDIO_EMAIL;
+      emailLink.textContent = STUDIO_EMAIL;
+    }
+
     /* Focus cursor sur les champs de formulaire */
     document.querySelectorAll('input, textarea, select').forEach(el => {
       el.addEventListener('focus', () => document.getElementById('cursor')?.classList.add('hovering'));
@@ -384,6 +394,13 @@
 
     /* ── Charge la liste des créateurs avec email pour le sélecteur de destinataire ── */
     const recipientSelect = document.getElementById('recipientSelect');
+
+    /* Injecte d'abord l'option par défaut Autobahn (utilise STUDIO_EMAIL) */
+    const autobahnOption = document.createElement('option');
+    autobahnOption.value = STUDIO_EMAIL;
+    autobahnOption.dataset.name = 'Autobahn';
+    autobahnOption.textContent = 'Autobahn';
+    recipientSelect.appendChild(autobahnOption);
     fetch('./creators.json')
       .then(r => r.ok ? r.json() : [])
       .then(creators => {
