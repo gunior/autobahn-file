@@ -477,19 +477,24 @@
     bgVideo.load();
   }
 
+  /* Affiche heroPhoto en fond statique (utilisé en co lente + créateurs sans showreel) */
+  function showHeroPhotoStatic(c) {
+    bgVideo.classList.remove('visible');
+    purgeBgVideo();
+    document.body.classList.add('video-active');
+    if (c.heroPhoto !== currentSrc) {
+      currentSrc = c.heroPhoto;
+      bgImage.style.backgroundImage = `url('${c.heroPhoto}')`;
+    }
+    bgImage.classList.add('visible');
+  }
+
   function setBackground(c) {
     clearTimeout(hideTimer);
 
-    /* ─ Connexion lente → on utilise le heroPhoto en static, pas de vidéo ─ */
+    /* ─ Connexion lente : heroPhoto static, pas de vidéo ─ */
     if (SLOW_CONNECTION && c.heroPhoto) {
-      bgVideo.classList.remove('visible');
-      purgeBgVideo();
-      document.body.classList.add('video-active');
-      if (c.heroPhoto !== currentSrc) {
-        currentSrc = c.heroPhoto;
-        bgImage.style.backgroundImage = `url('${c.heroPhoto}')`;
-      }
-      bgImage.classList.add('visible');
+      showHeroPhotoStatic(c);
       return;
     }
 
@@ -523,7 +528,13 @@
       return;
     }
 
-    /* ─ Aucun showreel ni heroPhoto utilisable → état neutre + purge complète ─ */
+    /* ─ Pas de showreel mais on a un heroPhoto → fallback statique ─ */
+    if (c.heroPhoto) {
+      showHeroPhotoStatic(c);
+      return;
+    }
+
+    /* ─ Ni showreel ni heroPhoto → état neutre ─ */
     bgVideo.classList.remove('visible');
     bgImage.classList.remove('visible');
     document.body.classList.remove('video-active');
