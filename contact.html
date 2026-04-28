@@ -100,7 +100,31 @@
       text-transform: uppercase; color: var(--c-slate);
       margin-bottom: 40px; padding-bottom: 16px;
       border-bottom: var(--border-weight) solid var(--c-border); transition: border-color 0.4s;
+      display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
     }
+    .recipient-select {
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed var(--c-slate);
+      font-family: inherit;
+      font-size: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
+      color: var(--c-ink);
+      padding: 2px 18px 2px 4px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: color 0.2s, border-bottom-color 0.2s;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.2'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 2px center;
+    }
+    .recipient-select:hover {
+      color: var(--c-accent);
+      border-bottom-color: var(--c-ink);
+    }
+    .recipient-select option { background: var(--c-bg); color: var(--c-ink); }
 
     .form { display: flex; flex-direction: column; gap: 0; }
 
@@ -265,10 +289,13 @@
 
     <div class="contact-right">
       <div class="form-title">
-        <span class="en">Send us a message</span>
-        <span class="fr">Envoyez-nous un message</span>
+        <span class="en">Send a message at</span><span class="fr">Envoyer un message à</span>
+        <select class="recipient-select" id="recipientSelect" aria-label="Recipient">
+          <option value="hello@autobahn.studio" data-name="Autobahn">Autobahn</option>
+          <!-- Les créateurs avec email seront injectés dynamiquement -->
+        </select>
       </div>
-      <form class="form" onsubmit="return false;">
+      <form class="form" id="contactForm">
         <div class="form-field">
           <label class="form-label">
             <span class="en">Full name</span><span class="fr">Nom complet</span>
@@ -324,6 +351,52 @@
     document.querySelectorAll('input, textarea, select').forEach(el => {
       el.addEventListener('focus', () => document.getElementById('cursor')?.classList.add('hovering'));
       el.addEventListener('blur',  () => document.getElementById('cursor')?.classList.remove('hovering'));
+    });
+
+    /* ── Charge la liste des créateurs avec email pour le sélecteur de destinataire ── */
+    const recipientSelect = document.getElementById('recipientSelect');
+    fetch('./creators.json')
+      .then(r => r.ok ? r.json() : [])
+      .then(creators => {
+        creators.forEach(c => {
+          if (!c.email) return;
+          const firstName = (c.name || '').trim().split(/\s+/).pop();
+          const opt = document.createElement('option');
+          opt.value = c.email;
+          opt.dataset.name = firstName;
+          opt.textContent = firstName;
+          recipientSelect.appendChild(opt);
+        });
+      })
+      .catch(() => {});
+
+    /* ── Soumission : ouvre le client mail avec destinataire + sujet + corps ── */
+    const form = document.getElementById('contactForm');
+    const subjectMap = {
+      project:   { en: 'Project brief', fr: 'Brief projet'    },
+      collab:    { en: 'Collaboration', fr: 'Collaboration'   },
+      residency: { en: 'Residency',     fr: 'Résidence'       },
+      other:     { en: 'Other',         fr: 'Autre'           },
+    };
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const isFr = document.body.classList.contains('lang-fr');
+      const recipient = recipientSelect.value;
+      const fullName  = form.querySelector('input[type="text"]').value.trim();
+      const senderEmail = form.querySelector('input[type="email"]').value.trim();
+      const subjectKey  = form.querySelector('.form-select').value;
+      const messageText = form.querySelector('.form-textarea').value.trim();
+
+      const subjectLabel = subjectMap[subjectKey]
+        ? subjectMap[subjectKey][isFr ? 'fr' : 'en']
+        : (isFr ? 'Contact' : 'Contact');
+
+      const fromLabel = isFr ? 'De' : 'From';
+      const mailSubject = `[Autobahn] ${subjectLabel}${fullName ? ' — ' + fullName : ''}`;
+      const mailBody = `${messageText}\n\n—\n${fromLabel}: ${fullName || ''} <${senderEmail || ''}>`;
+
+      window.location.href = `mailto:${recipient}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
     });
   </script>
 </body>

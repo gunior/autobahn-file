@@ -18,6 +18,13 @@ export default {
       validation: Rule => Rule.required(),
     },
     {
+      name: 'email',
+      title: 'Email',
+      description: "Email perso pour recevoir les messages du formulaire de contact. Si vide, tu n'apparaîtras pas dans la liste de sélection sur la page contact.",
+      type: 'string',
+      validation: Rule => Rule.email().error('Adresse email invalide'),
+    },
+    {
       name: 'role',
       title: 'Rôle',
       description: 'Ex : Motion Designer & Director',

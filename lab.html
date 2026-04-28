@@ -217,6 +217,19 @@
     }
     @media (max-width: 768px) {
       .lab-archive { grid-template-columns: repeat(3, 1fr); padding: 16px 12px 60px; }
+
+      /* Header : titre + description ferrés à gauche, empilés verticalement */
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 100px var(--space-lg) 32px;
+      }
+      .page-desc {
+        text-align: left;
+        max-width: 100%;
+        padding-bottom: 0;
+      }
     }
 
     /* ── Scrollbar custom — visible dans les DEUX modes pendant le scroll ── */

@@ -26,7 +26,7 @@ const IMG_HERO      = '?auto=format&fit=max&q=85&w=1920';  // bannière profil +
 const IMG_PROJECT   = '?auto=format&fit=max&q=85&w=1200';  // thumbnails portfolio (grille 2 col desktop)
 
 const GROQ = `*[_type == "creator"] | order(order asc) {
-  name, role, bio, bioFr,
+  name, email, role, bio, bioFr,
   "photo":                  photo.asset->url + "${IMG_PHOTO}",
   "heroPhoto":              heroPhoto.asset->url + "${IMG_HERO}",
   "showreel":               showreel.asset->url,
