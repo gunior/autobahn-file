@@ -175,12 +175,28 @@ function generateStudioManifest() {
 
   const imageExts = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif']);
 
-  const images = fs.readdirSync(studioDir)
+  const allImages = fs.readdirSync(studioDir)
     .filter(f => imageExts.has(path.extname(f).toLowerCase()))
     .sort();
 
+  // N'affiche que les versions optimisées (-opt) quand elles existent,
+  // l'original sert de fallback si aucune version -opt n'est disponible.
+  const optSet = new Set(allImages.filter(f => f.includes('-opt')));
+  const images = allImages.filter(f => {
+    if (f.includes('-opt')) return true; // c'est une version opt → toujours incluse
+    // c'est un original → inclus seulement si aucune version -opt n'existe pour lui
+    const ext  = path.extname(f);
+    const base = path.basename(f, ext);
+    return !optSet.has(`${base}-opt${ext}`) &&
+           !optSet.has(`${base}-opt.jpg`)  &&
+           !optSet.has(`${base}-opt.jpeg`) &&
+           !optSet.has(`${base}-opt.png`)  &&
+           !optSet.has(`${base}-opt.webp`) &&
+           !optSet.has(`${base}-opt.avif`);
+  });
+
   fs.writeFileSync(outFile, JSON.stringify({ images }, null, 2));
-  console.log(`✓  Studio manifest — ${images.length} photos`);
+  console.log(`✓  Studio manifest — ${images.length} photos (originaux exclus quand -opt disponible)`);
 }
 
 /* ══════════════════════════════════════════════════════
