@@ -502,7 +502,7 @@
       const recipient    = recipientSelect.value;
       const recipientOpt = recipientSelect.options[recipientSelect.selectedIndex];
       const recipientName = recipientOpt?.dataset?.name || 'Autobahn';
-      const fullName     = form.querySelector('input[type="text"]').value.trim();
+      const fullName     = form.querySelector('.form-input[type="text"]').value.trim();
       const senderEmail  = form.querySelector('input[type="email"]').value.trim();
       const subject      = form.querySelector('.form-select').value;
       const message      = form.querySelector('.form-textarea').value.trim();
