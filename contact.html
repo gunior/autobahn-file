@@ -155,6 +155,39 @@
       color: #000000;
     }
 
+    /* Honeypot anti-spam : invisible aux humains, rempli par les bots */
+    .form-honeypot {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Messages de statut sous le bouton submit */
+    .form-status {
+      margin-top: 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      line-height: 1.5;
+      display: none;
+    }
+    .form-status.visible { display: block; }
+    .form-status.success { color: #2a9d6c; }
+    .form-status.error   { color: #d4543b; }
+
+    /* Submit button désactivé pendant l'envoi */
+    .submit-btn[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
     .form { display: flex; flex-direction: column; gap: 0; }
 
     .form-field {
@@ -322,7 +355,12 @@
                Les créateurs avec email sont ajoutés ensuite depuis creators.json. -->
         </select>
       </div>
-      <form class="form" id="contactForm">
+      <form class="form" id="contactForm" novalidate>
+        <!-- Honeypot anti-spam : un humain le laisse vide, les bots le remplissent -->
+        <div class="form-honeypot" aria-hidden="true">
+          <label>Website</label>
+          <input type="text" name="website" tabindex="-1" autocomplete="off">
+        </div>
         <div class="form-field">
           <label class="form-label">
             <span class="en">Full name</span><span class="fr">Nom complet</span>
@@ -358,11 +396,12 @@
             <span class="en">We usually reply within 48 hours.</span>
             <span class="fr">Nous répondons généralement sous 48h.</span>
           </p>
-          <button class="submit-btn" type="submit">
+          <button class="submit-btn" type="submit" id="submitBtn">
             <span class="en">Send</span><span class="fr">Envoyer</span>
             <span class="btn-arrow">→</span>
           </button>
         </div>
+        <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
       </form>
     </div>
   </main>
@@ -416,33 +455,92 @@
       })
       .catch(() => {});
 
-    /* ── Soumission : ouvre le client mail avec destinataire + sujet + corps ── */
-    const form = document.getElementById('contactForm');
-    const subjectMap = {
-      project:   { en: 'Project brief', fr: 'Brief projet'    },
-      collab:    { en: 'Collaboration', fr: 'Collaboration'   },
-      residency: { en: 'Residency',     fr: 'Résidence'       },
-      other:     { en: 'Other',         fr: 'Autre'           },
+    /* ── Soumission : envoi via Vercel Function /api/contact (Resend backend) ── */
+    const form       = document.getElementById('contactForm');
+    const submitBtn  = document.getElementById('submitBtn');
+    const statusEl   = document.getElementById('formStatus');
+
+    const MSG = {
+      sending:    { en: 'Sending…',                                       fr: 'Envoi…'                                                 },
+      success:    { en: '✓ Message sent. We\'ll reply soon.',             fr: '✓ Message envoyé. Réponse rapide.'                       },
+      missing:    { en: 'Please fill in all required fields.',            fr: 'Merci de remplir tous les champs.'                       },
+      badEmail:   { en: 'Please enter a valid email address.',            fr: 'Adresse email invalide.'                                 },
+      serverErr:  { en: 'Something went wrong. Please try again.',        fr: 'Une erreur est survenue. Réessaie plus tard.'            },
+      networkErr: { en: 'Connection issue. Check your network.',          fr: 'Problème de connexion. Vérifie ton réseau.'              },
     };
 
-    form.addEventListener('submit', e => {
-      e.preventDefault();
+    function t(key) {
       const isFr = document.body.classList.contains('lang-fr');
-      const recipient = recipientSelect.value;
-      const fullName  = form.querySelector('input[type="text"]').value.trim();
-      const senderEmail = form.querySelector('input[type="email"]').value.trim();
-      const subjectKey  = form.querySelector('.form-select').value;
-      const messageText = form.querySelector('.form-textarea').value.trim();
+      return MSG[key][isFr ? 'fr' : 'en'];
+    }
+    function setStatus(message, kind) {
+      statusEl.textContent = message;
+      statusEl.className = 'form-status visible ' + (kind || '');
+    }
+    function clearStatus() {
+      statusEl.textContent = '';
+      statusEl.className = 'form-status';
+    }
+    function setSubmitting(submitting) {
+      submitBtn.disabled = submitting;
+      const labelEn = submitBtn.querySelector('.en');
+      const labelFr = submitBtn.querySelector('.fr');
+      if (submitting) {
+        labelEn.textContent = MSG.sending.en;
+        labelFr.textContent = MSG.sending.fr;
+      } else {
+        labelEn.textContent = 'Send';
+        labelFr.textContent = 'Envoyer';
+      }
+    }
 
-      const subjectLabel = subjectMap[subjectKey]
-        ? subjectMap[subjectKey][isFr ? 'fr' : 'en']
-        : (isFr ? 'Contact' : 'Contact');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (submitBtn.disabled) return;
 
-      const fromLabel = isFr ? 'De' : 'From';
-      const mailSubject = `[Autobahn] ${subjectLabel}${fullName ? ' — ' + fullName : ''}`;
-      const mailBody = `${messageText}\n\n—\n${fromLabel}: ${fullName || ''} <${senderEmail || ''}>`;
+      // Récupération + nettoyage des valeurs
+      const recipient    = recipientSelect.value;
+      const recipientOpt = recipientSelect.options[recipientSelect.selectedIndex];
+      const recipientName = recipientOpt?.dataset?.name || 'Autobahn';
+      const fullName     = form.querySelector('input[type="text"]').value.trim();
+      const senderEmail  = form.querySelector('input[type="email"]').value.trim();
+      const subject      = form.querySelector('.form-select').value;
+      const message      = form.querySelector('.form-textarea').value.trim();
+      const website      = form.querySelector('input[name="website"]').value;
 
-      window.location.href = `mailto:${recipient}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
+      // Validation côté client (le serveur revérifie de toute façon)
+      if (!fullName || !senderEmail || !message) {
+        setStatus(t('missing'), 'error');
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail)) {
+        setStatus(t('badEmail'), 'error');
+        return;
+      }
+
+      clearStatus();
+      setSubmitting(true);
+
+      try {
+        const r = await fetch('/api/contact', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            recipient, recipientName, fullName, senderEmail, subject, message, website,
+          }),
+        });
+
+        if (r.ok) {
+          setStatus(t('success'), 'success');
+          form.reset();
+        } else {
+          setStatus(t('serverErr'), 'error');
+        }
+      } catch (err) {
+        setStatus(t('networkErr'), 'error');
+      } finally {
+        setSubmitting(false);
+      }
     });
   </script>
 </body>
