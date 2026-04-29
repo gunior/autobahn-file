@@ -508,8 +508,12 @@
       const message      = form.querySelector('.form-textarea').value.trim();
       const website      = form.querySelector('input[name="website"]').value;
 
+      // [DEBUG] À retirer une fois que tout marche
+      console.log('[contact submit]', { recipient, recipientName, fullName, senderEmail, subject, message, website });
+
       // Validation côté client (le serveur revérifie de toute façon)
       if (!fullName || !senderEmail || !message) {
+        console.warn('[contact validation FAILED]', { fullNameEmpty: !fullName, emailEmpty: !senderEmail, messageEmpty: !message });
         setStatus(t('missing'), 'error');
         return;
       }
