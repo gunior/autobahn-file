@@ -149,6 +149,44 @@
     }
     .profile-close-btn:hover { background: var(--c-slate); }
 
+    .profile-share-btn {
+      position: fixed;
+      top: calc(var(--nav-height) + 14px);
+      right: calc(var(--space-lg) + 48px);
+      z-index: 410;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--c-ink);
+      border: none;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: url('./assets/cursor-hand-hover.png') 9 0, auto;
+      transition: background 0.2s, opacity 0.3s;
+      opacity: 0;
+      overflow: hidden;
+    }
+    .profile-share-btn.visible {
+      display: flex;
+      opacity: 1;
+    }
+    .profile-share-btn svg {
+      width: 15px; height: 15px;
+      stroke: var(--c-bg);
+      transition: opacity 0.2s;
+    }
+    .profile-share-btn:hover { background: var(--c-slate); }
+    .profile-share-btn .share-confirm {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Inter', sans-serif; font-size: 8px; font-weight: 600;
+      letter-spacing: 0.04em; color: var(--c-bg);
+      opacity: 0; transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .profile-share-btn.copied svg { opacity: 0; }
+    .profile-share-btn.copied .share-confirm { opacity: 1; }
+
     .profile-page {
       position: fixed; inset: 0; z-index: 400;
       background: var(--c-bg); overflow-y: auto;
@@ -255,8 +293,24 @@
     .portfolio-ptype { font-family: 'Inter', sans-serif; font-weight: 300; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(245,244,240,0.5); }
     .portfolio-ext { position: absolute; top: 12px; right: 12px; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 12px; color: rgba(245,244,240,0.6); opacity: 0; transition: opacity 0.3s; }
     .portfolio-item:hover .portfolio-ext { opacity: 1; }
-    footer { border-top: var(--border-weight) solid var(--c-border); padding: var(--space-md) var(--space-lg); display: flex; justify-content: space-between; transition: border-color 0.4s; }
+    footer { border-top: var(--border-weight) solid var(--c-border); padding: var(--space-md) var(--space-lg); display: flex; justify-content: space-between; align-items: center; transition: border-color 0.4s; }
     .footer-copy, .footer-tag { font-family: var(--f-mono); font-size: var(--fs-label); color: var(--c-ash); letter-spacing: var(--ls-normal); }
+
+    .footer-share-btn {
+      font-family: var(--f-mono); font-size: var(--fs-label); letter-spacing: var(--ls-normal);
+      color: var(--c-ash); background: none;
+      border: var(--border-weight) solid var(--c-border);
+      padding: 9px 18px; display: flex; align-items: center; gap: 8px;
+      cursor: url('./assets/cursor-hand-hover.png') 9 0, auto;
+      transition: color 0.2s, border-color 0.2s;
+      white-space: nowrap;
+    }
+    .footer-share-btn:hover { color: var(--c-ink); border-color: var(--c-ink); }
+    .footer-share-btn.copied { color: var(--c-accent); border-color: var(--c-accent); }
+    .footer-share-btn svg { flex-shrink: 0; }
+    .footer-share-confirm { display: none; }
+    .footer-share-btn.copied .footer-share-label  { display: none; }
+    .footer-share-btn.copied .footer-share-confirm { display: inline; }
 
   @media (max-width: 768px) {
     /* Cache les éléments desktop */
@@ -334,7 +388,8 @@
     .profile-name    { font-size: clamp(28px, 8vw, 48px); }
     .profile-hero    { aspect-ratio: 4/3; }
     .portfolio-grid  { grid-template-columns: 1fr; gap: 12px; }
-    footer           { flex-direction: column; gap: 6px; }
+    footer           { flex-direction: column; gap: 12px; align-items: flex-start; }
+    .footer-share-btn { width: 100%; justify-content: center; }
   }
 
   </style>
@@ -353,6 +408,16 @@
 
   <h1 id="portraitsTitle"><span class="en">Team.</span><span class="fr">Tchim.</span></h1>
   <div class="coverflow-wrap" id="cfWrap"></div>
+
+  <!-- Bouton partager profil -->
+  <button class="profile-share-btn" id="profileShareBtn" aria-label="Partager">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+      <polyline points="16 6 12 2 8 6"/>
+      <line x1="12" y1="2" x2="12" y2="15"/>
+    </svg>
+    <span class="share-confirm">COPIÉ</span>
+  </button>
 
   <!-- Bouton fermer profil — × circulaire, toujours en haut à droite -->
   <button class="profile-close-btn" id="profileCloseBtn" aria-label="Fermer">
@@ -385,6 +450,21 @@
     </div>
     <footer>
       <div class="footer-copy">© 2025 Autobahn — All rights reserved</div>
+      <button class="footer-share-btn" id="footerShareBtn" aria-label="Partager ce profil">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+          <polyline points="16 6 12 2 8 6"/>
+          <line x1="12" y1="2" x2="12" y2="15"/>
+        </svg>
+        <span class="footer-share-label">
+          <span class="en">Share this profile</span>
+          <span class="fr">Partager ce profil</span>
+        </span>
+        <span class="footer-share-confirm">
+          <span class="en">Link copied!</span>
+          <span class="fr">Lien copié !</span>
+        </span>
+      </button>
       <div class="footer-tag">Based in Nantes. Working worldwide.</div>
     </footer>
   </div>
@@ -577,6 +657,13 @@
   let heroVideoEl = null;
   let currentProfileCreator = null;
 
+  function nameToSlug(name) {
+    return (name || '').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '') // accents → base
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+  }
+
   function getBio(c) {
     const isFr = document.body.classList.contains('lang-fr');
     return (isFr && c.bioFr) ? c.bioFr : (c.bio || '');
@@ -700,8 +787,34 @@
 
     profilePage.classList.add('open');
     document.getElementById('profileCloseBtn').classList.add('visible');
+    document.getElementById('profileShareBtn').classList.add('visible');
     profilePage.scrollTop = 0;
     document.body.style.overflow = 'auto';
+
+    /* ── URL hash ── */
+    history.pushState({ creator: c.name }, '', '#' + nameToSlug(c.name));
+
+    /* ── Bouton partager (haut) + bouton partager (footer) ── */
+    async function doShare() {
+      const url = window.location.href;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: c.name + ' — Autobahn', url });
+        } else {
+          await navigator.clipboard.writeText(url);
+          /* feedback bouton haut */
+          const shareBtn = document.getElementById('profileShareBtn');
+          shareBtn.classList.add('copied');
+          setTimeout(() => shareBtn.classList.remove('copied'), 2000);
+          /* feedback bouton footer */
+          const footerBtn = document.getElementById('footerShareBtn');
+          footerBtn.classList.add('copied');
+          setTimeout(() => footerBtn.classList.remove('copied'), 2000);
+        }
+      } catch (e) { /* annulé par l'utilisateur */ }
+    }
+    document.getElementById('profileShareBtn').onclick = doShare;
+    document.getElementById('footerShareBtn').onclick  = doShare;
   }
 
   function closeProfile() {
@@ -709,7 +822,9 @@
     currentProfileCreator = null;
     profilePage.classList.remove('open');
     document.getElementById('profileCloseBtn').classList.remove('visible');
+    document.getElementById('profileShareBtn').classList.remove('visible');
     document.body.style.overflow = 'hidden';
+    history.pushState(null, '', window.location.pathname + window.location.search);
   }
 
   document.getElementById('profileCloseBtn').addEventListener('click', closeProfile);
@@ -932,6 +1047,13 @@
           pre.src = c.heroPhoto;
         }
       });
+
+      /* ── Ouverture directe si un hash est présent dans l'URL ── */
+      const hashSlug = window.location.hash.slice(1);
+      if (hashSlug) {
+        const target = creators.find(c => nameToSlug(c.name) === hashSlug);
+        if (target) openProfile(target);
+      }
 
       if (window.innerWidth <= 768) {
         buildMobileWheel(creators);
