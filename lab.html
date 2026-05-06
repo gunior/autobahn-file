@@ -522,6 +522,30 @@
   const trackEl     = document.getElementById('scrollTrack');
   const thumbEl     = document.getElementById('scrollThumb');
 
+  /* ─ Mélange les items dans chaque tranche mensuelle, en gardant l'ordre
+       chronologique des mois (mois récent → ancien). Évite que des contenus
+       uploadés en batch apparaissent forcément collés les uns aux autres. */
+  function shuffleWithinMonths(items) {
+    const groups = new Map(); // ordre d'insertion = ordre chrono (manifest est trié newest-first)
+    items.forEach(item => {
+      const d = new Date(item.date || 0);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    });
+    // Fisher-Yates dans chaque groupe
+    for (const arr of groups.values()) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+    // Recolle les groupes dans leur ordre d'apparition
+    const out = [];
+    for (const arr of groups.values()) out.push(...arr);
+    return out;
+  }
+
   /* ─ Construit la grille archive (7 colonnes desktop) ─ */
   function buildArchive(items) {
     archiveEl.innerHTML = '';
@@ -534,15 +558,9 @@
       return;
     }
 
-    // Tri du plus récent au plus ancien (les items du manifest ont déjà ce tri,
-    // mais on s'en assure ici au cas où le tri change côté build).
-    const sorted = [...items].sort((a, b) => {
-      const da = new Date(a.date || 0).getTime();
-      const db = new Date(b.date || 0).getTime();
-      return db - da;
-    });
-
-    sorted.forEach(item => {
+    // Les items arrivent déjà mélangés DANS chaque mois mais en ordre
+    // chronologique entre mois (cf. shuffleWithinMonths côté fetch).
+    items.forEach(item => {
       const cell = document.createElement('div');
       cell.className = 'archive-cell';
       cell.dataset.date = item.date || '';
@@ -677,11 +695,12 @@
       return r.json();
     })
     .then(items => {
-      allItems = items;
-      buildLayout(items);
+      // Mélange les items DANS chaque tranche mensuelle (mois groupés en chrono)
+      allItems = shuffleWithinMonths(items);
+      buildLayout(allItems);
       // Si l'utilisateur revient avec sa préférence "archive", on construit directement
       if (viewMode === 'archive') {
-        buildArchive(items);
+        buildArchive(allItems);
         archiveBuilt = true;
       }
       // Calcul initial des marqueurs (pour les deux modes) — un peu de délai pour laisser
@@ -700,10 +719,11 @@
     fetch('./lab/manifest.json')
       .then(r => r.ok ? r.json() : [])
       .then(items => {
-        allItems = items;
-        buildLayout(items);
+        // Re-shuffle au resize : les mois restent ordonnés, le contenu intra-mois change
+        allItems = shuffleWithinMonths(items);
+        buildLayout(allItems);
         if (viewMode === 'archive') {
-          buildArchive(items);
+          buildArchive(allItems);
           archiveBuilt = true;
         }
         // Force le recalcul des marqueurs (les positions ont changé avec le resize)

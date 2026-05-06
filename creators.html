@@ -656,6 +656,7 @@
   const profilePage = document.getElementById('profilePage');
   let heroVideoEl = null;
   let currentProfileCreator = null;
+  let _creators = []; // peuplé après fetch creators.json — accessible au listener popstate
 
   function nameToSlug(name) {
     return (name || '').toLowerCase()
@@ -676,7 +677,7 @@
     }
   }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
-  function openProfile(c) {
+  function openProfile(c, fromPopstate = false) {
     currentProfileCreator = c;
     document.getElementById('profileName').textContent    = c.name.split(' ').pop();
     document.getElementById('profileRole').textContent    = c.role;
@@ -791,8 +792,17 @@
     profilePage.scrollTop = 0;
     document.body.style.overflow = 'auto';
 
-    /* ── URL hash ── */
-    history.pushState({ creator: c.name }, '', '#' + nameToSlug(c.name));
+    /* ── URL hash : push une nouvelle entrée si on entre sur un profil,
+       sinon replace pour ne pas accumuler N entrées quand on saute entre profils.
+       Comme ça un seul "back" referme toute la pile profil et revient à /creators. */
+    if (!fromPopstate) {
+      const slug = nameToSlug(c.name);
+      if (history.state?.creator) {
+        history.replaceState({ creator: slug }, '', '#' + slug);
+      } else {
+        history.pushState({ creator: slug }, '', '#' + slug);
+      }
+    }
 
     /* ── Bouton partager (haut) + bouton partager (footer) ── */
     async function doShare() {
@@ -817,19 +827,36 @@
     document.getElementById('footerShareBtn').onclick  = doShare;
   }
 
-  function closeProfile() {
+  function closeProfile(fromPopstate = false) {
     if (heroVideoEl) { heroVideoEl.pause(); heroVideoEl.currentTime = 0; heroVideoEl = null; }
     currentProfileCreator = null;
     profilePage.classList.remove('open');
     document.getElementById('profileCloseBtn').classList.remove('visible');
     document.getElementById('profileShareBtn').classList.remove('visible');
     document.body.style.overflow = 'hidden';
-    history.pushState(null, '', window.location.pathname + window.location.search);
+
+    /* Si on a un état de profil dans l'historique, on le pop pour nettoyer l'URL.
+       Le popstate qui en résulte rappellera closeProfile(true) → no-op côté UI. */
+    if (!fromPopstate && history.state?.creator) {
+      history.back();
+    }
   }
 
-  document.getElementById('profileCloseBtn').addEventListener('click', closeProfile);
+  /* Bouton fermer + touche Escape */
+  document.getElementById('profileCloseBtn').addEventListener('click', () => closeProfile());
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && profilePage.classList.contains('open')) closeProfile();
+  });
+
+  /* Bouton "back" du navigateur : synchronise l'UI avec l'URL */
+  window.addEventListener('popstate', e => {
+    const slug = e.state?.creator;
+    if (slug) {
+      const c = _creators.find(c => nameToSlug(c.name) === slug);
+      if (c) openProfile(c, true);
+    } else if (currentProfileCreator) {
+      closeProfile(true);
+    }
   });
 
   /* ══ WHEEL MOBILE — roue polaire ══════════════════════════════ */
@@ -1039,6 +1066,8 @@
       return r.json();
     })
     .then(creators => {
+      _creators = creators; // accessible au listener popstate
+
       // Précharge toutes les heroPhotos en parallèle dès le chargement de la page
       // pour que le hover affiche l'image instantanément (pas de délai de fetch)
       creators.forEach(c => {
@@ -1048,11 +1077,17 @@
         }
       });
 
-      /* ── Ouverture directe si un hash est présent dans l'URL ── */
+      /* ── Ouverture directe si un hash est présent dans l'URL ──
+         On utilise replaceState pour positionner l'état du profil sur l'entrée
+         courante (pas de pushState supplémentaire), comme ça un click "back"
+         referme tout de suite le profil au lieu de laisser une URL fantôme. */
       const hashSlug = window.location.hash.slice(1);
       if (hashSlug) {
         const target = creators.find(c => nameToSlug(c.name) === hashSlug);
-        if (target) openProfile(target);
+        if (target) {
+          history.replaceState({ creator: hashSlug }, '', '#' + hashSlug);
+          openProfile(target, true); // skip pushState (URL déjà bonne)
+        }
       }
 
       if (window.innerWidth <= 768) {
