@@ -172,12 +172,14 @@
     body[data-lab-mode="archive"] #labCanvas { display: none; }
     body[data-lab-mode="collage"] #labArchive { display: none; }
 
-    /* On masque la scrollbar native dans les deux modes — la barre custom prend le relais */
-    body {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
+    /* On masque la scrollbar native dans les deux modes — la barre custom prend le relais.
+       En Chrome la scrollbar du viewport est sur <html>, donc on cible aussi html. */
+    html, body {
+      scrollbar-width: none;       /* Firefox */
+      -ms-overflow-style: none;    /* IE/Edge legacy */
     }
-    body::-webkit-scrollbar { display: none; }
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar { display: none; } /* Chrome / Safari / Edge */
 
     /* Grille archive */
     .lab-archive {
