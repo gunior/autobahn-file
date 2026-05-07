@@ -1,7 +1,11 @@
 {
-  "images": [
-    "homepage-pic1-opt.jpg",
-    "homepage-pic2-opt.jpg",
-    "homepage-pic3-opt.jpg"
+  "slides": [
+    { "default": "0004_2A2-opt.jpg" },
+    { "default": "0005_3A-opt.jpg" },
+    { "default": "pat-sun-opt.jpg", "vert": "pat-sun_vert-opt.jpg" },
+    { "default": "pizz-opt.jpg", "vert": "pizz_vert-opt.jpg" },
+    { "default": "skate-opt.jpg", "vert": "skate_vert-opt.jpg" },
+    { "default": "vyka-security-opt.jpg", "vert": "vyka-security_vert-opt.jpg" },
+    { "default": "cat_vert-opt.jpg" }
   ]
 }

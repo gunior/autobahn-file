@@ -47,11 +47,15 @@
       transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .slide.active { opacity: 1; }
-    .slide-bg {
+    .slide-pic {
+      position: absolute; inset: 0;
+      display: block; overflow: hidden;
+    }
+    .slide-pic img {
       width: 100%; height: 100%;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+      object-fit: cover;
+      object-position: center;
+      display: block;
     }
     @keyframes zoomSlow {
       from { transform: scale(1); }
@@ -200,29 +204,44 @@
   let rafId = null;
   const fill = document.getElementById('progressFill');
 
-  function startZoom(bg) {
-    if (!bg) return;
-    bg.style.animation = 'none';
-    bg.offsetHeight; // force reflow
-    bg.style.animation = 'zoomSlow 10s ease-out forwards';
+  function startZoom(slide) {
+    const target = slide?.querySelector('.slide-pic img');
+    if (!target) return;
+    target.style.animation = 'none';
+    target.offsetHeight; // force reflow
+    target.style.animation = 'zoomSlow 10s ease-out forwards';
   }
 
-  function buildSlides(images) {
+  // Construit le HTML d'un slide à partir d'un objet { default, vert }
+  // Utilise <picture> + <source media> pour que le navigateur pioche tout seul
+  // la version mobile portrait quand on est en dessous de 768px
+  function slideHTML(slide) {
+    if (!slide) return `<div class="slide-placeholder">Photo studio</div><div class="slide-overlay"></div>`;
+    const def  = `./photos-studio/${slide.default}`;
+    const vert = slide.vert ? `./photos-studio/${slide.vert}` : null;
+    const sourceTag = vert ? `<source media="(max-width: 768px)" srcset="${vert}">` : '';
+    return `
+      <picture class="slide-pic">
+        ${sourceTag}
+        <img src="${def}" alt="" loading="lazy">
+      </picture>
+      <div class="slide-overlay"></div>`;
+  }
+
+  function buildSlides(items) {
     carousel.innerHTML = '';
     slides = [];
-    images.forEach((src, i) => {
+    items.forEach((item, i) => {
       const slide = document.createElement('div');
       slide.className = 'slide' + (i === 0 ? ' active' : '');
-      if (src) {
-        slide.innerHTML = `<div class="slide-bg" style="background-image:url('${src}')"></div><div class="slide-overlay"></div>`;
-      } else {
-        slide.innerHTML = `<div class="slide-placeholder">Photo studio — ${String(i+1).padStart(2,'0')}</div><div class="slide-overlay"></div>`;
-      }
+      slide.innerHTML = slideHTML(item);
+      // 1re image : eager, les autres restent lazy
+      if (i === 0) slide.querySelector('img')?.removeAttribute('loading');
       carousel.appendChild(slide);
       slides.push(slide);
     });
     // Démarre le zoom sur le premier slide
-    startZoom(slides[0]?.querySelector('.slide-bg'));
+    startZoom(slides[0]);
 
     document.getElementById('counterTotal').textContent = String(slides.length).padStart(2, '0');
     buildDots();
@@ -249,7 +268,7 @@
     current = (idx + slides.length) % slides.length;
     slides[current].classList.add('active');
     // Redémarre le zoom sur le nouveau slide
-    startZoom(slides[current].querySelector('.slide-bg'));
+    startZoom(slides[current]);
     document.getElementById('counterCurrent').textContent = String(current + 1).padStart(2, '0');
     updateDots(current);
     resetProgress();
@@ -299,22 +318,32 @@
     }
   }, { passive: true });
 
-  /* Charge le manifest si dispo, sinon 4 placeholders */
+  /* Charge le manifest si dispo, sinon 4 placeholders.
+     Format attendu : { slides: [{ default, vert? }, ...] }
+     Backward-compat : ancien format { images: [filename, ...] } géré aussi. */
   fetch('./photos-studio/manifest.json')
     .then(r => r.ok ? r.json() : null)
     .then(data => {
-      if (data && data.images && data.images.length > 0) {
-        const srcs = data.images.map(f => `./photos-studio/${f}`);
-        // Précharger la première image avant de construire les slides
-        const preload = new Image();
-        preload.onload = () => buildSlides(srcs);
-        preload.onerror = () => buildSlides(srcs);
-        preload.src = srcs[0];
-        // Précharger les suivantes en tâche de fond
-        srcs.slice(1).forEach(src => { const img = new Image(); img.src = src; });
-      } else {
-        buildSlides([null, null, null, null]);
-      }
+      let items = null;
+      if (data?.slides?.length)      items = data.slides;
+      else if (data?.images?.length) items = data.images.map(f => ({ default: f }));
+
+      if (!items) { buildSlides([null, null, null, null]); return; }
+
+      // Précharge la première image (selon viewport) avant de construire les slides
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const firstSrc = `./photos-studio/${(isMobile && items[0].vert) ? items[0].vert : items[0].default}`;
+      const preload = new Image();
+      preload.onload = () => buildSlides(items);
+      preload.onerror = () => buildSlides(items);
+      preload.src = firstSrc;
+
+      // Précharge les suivantes en tâche de fond (version par défaut, pas la _vert
+      // pour limiter la conso bandwidth — la balise picture les chargera si besoin)
+      items.slice(1).forEach(it => {
+        const img = new Image();
+        img.src = `./photos-studio/${(isMobile && it.vert) ? it.vert : it.default}`;
+      });
     })
     .catch(() => buildSlides([null, null, null, null]));
   </script>

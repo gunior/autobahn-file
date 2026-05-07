@@ -175,28 +175,44 @@ function generateStudioManifest() {
 
   const imageExts = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif']);
 
-  const allImages = fs.readdirSync(studioDir)
+  // On ne garde QUE les versions optimisées (-opt). Les originaux lourds restent
+  // dans le dossier (sources de retraitement éventuel) mais ne sont jamais servis.
+  const allOpts = fs.readdirSync(studioDir)
     .filter(f => imageExts.has(path.extname(f).toLowerCase()))
+    .filter(f => /-opt\.[a-z]+$/i.test(f))
     .sort();
 
-  // N'affiche que les versions optimisées (-opt) quand elles existent,
-  // l'original sert de fallback si aucune version -opt n'est disponible.
-  const optSet = new Set(allImages.filter(f => f.includes('-opt')));
-  const images = allImages.filter(f => {
-    if (f.includes('-opt')) return true; // c'est une version opt → toujours incluse
-    // c'est un original → inclus seulement si aucune version -opt n'existe pour lui
-    const ext  = path.extname(f);
-    const base = path.basename(f, ext);
-    return !optSet.has(`${base}-opt${ext}`) &&
-           !optSet.has(`${base}-opt.jpg`)  &&
-           !optSet.has(`${base}-opt.jpeg`) &&
-           !optSet.has(`${base}-opt.png`)  &&
-           !optSet.has(`${base}-opt.webp`) &&
-           !optSet.has(`${base}-opt.avif`);
+  // Sépare verticales (xxx_vert-opt.ext) et horizontales (xxx-opt.ext)
+  // Convention : si une image a la même racine + suffixe `_vert`, on l'utilise
+  // comme version mobile (portrait). Le default sert sur desktop/tablette.
+  const verts = new Map(); // baseName → fichier vertical
+  const horizontals = []; // [{ base, file }]
+
+  allOpts.forEach(f => {
+    const vertMatch = f.match(/^(.+)_vert-opt\.[a-z]+$/i);
+    if (vertMatch) {
+      verts.set(vertMatch[1], f);
+      return;
+    }
+    const baseMatch = f.match(/^(.+)-opt\.[a-z]+$/i);
+    if (baseMatch) horizontals.push({ base: baseMatch[1], file: f });
   });
 
-  fs.writeFileSync(outFile, JSON.stringify({ images }, null, 2));
-  console.log(`✓  Studio manifest — ${images.length} photos (originaux exclus quand -opt disponible)`);
+  // Pour chaque horizontale, on attache la version verticale si elle existe
+  const slides = horizontals.map(({ base, file }) => {
+    const vert = verts.get(base);
+    return vert ? { default: file, vert } : { default: file };
+  });
+
+  // Verticales orphelines (pas de pendant horizontal) — affichées partout
+  const usedVerts = new Set(slides.map(s => s.vert).filter(Boolean));
+  for (const [, file] of verts) {
+    if (!usedVerts.has(file)) slides.push({ default: file });
+  }
+
+  fs.writeFileSync(outFile, JSON.stringify({ slides }, null, 2));
+  const withVert = slides.filter(s => s.vert).length;
+  console.log(`✓  Studio manifest — ${slides.length} slides (${withVert} avec version mobile)`);
 }
 
 /* ══════════════════════════════════════════════════════
