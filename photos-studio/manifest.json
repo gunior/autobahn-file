@@ -6,6 +6,6 @@
     { "default": "pizz-opt.jpg", "vert": "pizz_vert-opt.jpg" },
     { "default": "skate-opt.jpg", "vert": "skate_vert-opt.jpg" },
     { "default": "vyka-security-opt.jpg", "vert": "vyka-security_vert-opt.jpg" },
-    { "default": "cat_vert-opt.jpg" }
+    { "vert": "cat_vert-opt.jpg" }
   ]
 }

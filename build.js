@@ -204,10 +204,11 @@ function generateStudioManifest() {
     return vert ? { default: file, vert } : { default: file };
   });
 
-  // Verticales orphelines (pas de pendant horizontal) — affichées partout
+  // Verticales orphelines (pas de pendant horizontal) → MOBILE ONLY
+  // On n'attache PAS de "default" : la slide ne s'affiche que sur mobile.
   const usedVerts = new Set(slides.map(s => s.vert).filter(Boolean));
   for (const [, file] of verts) {
-    if (!usedVerts.has(file)) slides.push({ default: file });
+    if (!usedVerts.has(file)) slides.push({ vert: file });
   }
 
   fs.writeFileSync(outFile, JSON.stringify({ slides }, null, 2));

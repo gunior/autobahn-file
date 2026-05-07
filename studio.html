@@ -214,24 +214,44 @@
 
   // Construit le HTML d'un slide à partir d'un objet { default, vert }
   // Utilise <picture> + <source media> pour que le navigateur pioche tout seul
-  // la version mobile portrait quand on est en dessous de 768px
+  // la version mobile portrait quand on est en dessous de 768px.
+  // Les slides "vert-only" (sans default) sont mobile-only — leur src de fallback
+  // est la version vert pour ne pas avoir d'image cassée si on resize en grand.
   function slideHTML(slide) {
     if (!slide) return `<div class="slide-placeholder">Photo studio</div><div class="slide-overlay"></div>`;
-    const def  = `./photos-studio/${slide.default}`;
-    const vert = slide.vert ? `./photos-studio/${slide.vert}` : null;
+    const def  = slide.default ? `./photos-studio/${slide.default}` : null;
+    const vert = slide.vert    ? `./photos-studio/${slide.vert}`    : null;
     const sourceTag = vert ? `<source media="(max-width: 768px)" srcset="${vert}">` : '';
+    const imgSrc    = def || vert; // pour les slides vert-only, fallback sur le vert
     return `
       <picture class="slide-pic">
         ${sourceTag}
-        <img src="${def}" alt="" loading="lazy">
+        <img src="${imgSrc}" alt="" loading="lazy">
       </picture>
       <div class="slide-overlay"></div>`;
   }
 
+  // allItems : liste complète depuis le manifest. slides : sous-ensemble actif
+  // pour le viewport courant (les "vert-only" sont retirés en desktop).
+  let allItems = [];
+
+  function pickItemsForViewport() {
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    return allItems.filter(it => {
+      // Slide vert-only (pas de default) → mobile uniquement
+      if (!it.default && it.vert) return isMobile;
+      return true;
+    });
+  }
+
   function buildSlides(items) {
+    allItems = items;
+    const visible = pickItemsForViewport();
+
     carousel.innerHTML = '';
     slides = [];
-    items.forEach((item, i) => {
+    current = 0;
+    visible.forEach((item, i) => {
       const slide = document.createElement('div');
       slide.className = 'slide' + (i === 0 ? ' active' : '');
       slide.innerHTML = slideHTML(item);
@@ -244,9 +264,20 @@
     startZoom(slides[0]);
 
     document.getElementById('counterTotal').textContent = String(slides.length).padStart(2, '0');
+    document.getElementById('counterCurrent').textContent = '01';
     buildDots();
     resetProgress();
   }
+
+  // Quand le viewport bascule mobile/desktop, rebuild la liste des slides
+  // (sinon les slides vert-only resteraient affichées en desktop ou inversement).
+  let _mqDebounce = null;
+  window.matchMedia('(max-width: 768px)').addEventListener('change', () => {
+    clearTimeout(_mqDebounce);
+    _mqDebounce = setTimeout(() => {
+      if (allItems.length) buildSlides(allItems);
+    }, 200);
+  });
 
   function buildDots() {
     const dotsEl = document.getElementById('dots');
