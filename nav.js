@@ -172,4 +172,25 @@
   const savedLang = localStorage.getItem('autobahn-lang') || 'en';
   setLang(savedLang);
 
+  /* ──────────────────────────────────────────────────────────
+     MINI FOOTER GLOBAL — injecté sur les pages qui n'ont pas
+     déjà leur propre <footer>. Pour Lab et Contact (qui ont
+     un footer en flux), on ajoute juste le lien Mentions
+     légales directement dans leur HTML.
+  ────────────────────────────────────────────────────────── */
+  if (!document.querySelector('footer')) {
+    const isLegalPage = page === 'mentions-legales' || page === 'mentions-legales.html'
+                     || /mentions-legales/.test(window.location.pathname);
+
+    const miniFooter = document.createElement('footer');
+    miniFooter.className = 'mini-footer';
+    miniFooter.innerHTML = `
+      <span class="mini-footer-copy">© 2026 Autobahn</span>
+      ${isLegalPage ? '' : `<a class="mini-footer-link" href="/mentions-legales">
+        <span class="en">Legal notices</span>
+        <span class="fr">Mentions légales</span>
+      </a>`}`;
+    document.body.appendChild(miniFooter);
+  }
+
 })();
