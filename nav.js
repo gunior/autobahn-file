@@ -173,24 +173,76 @@
   setLang(savedLang);
 
   /* ──────────────────────────────────────────────────────────
-     MINI FOOTER GLOBAL — injecté sur les pages qui n'ont pas
-     déjà leur propre <footer>. Pour Lab et Contact (qui ont
-     un footer en flux), on ajoute juste le lien Mentions
-     légales directement dans leur HTML.
+     MINI FOOTER GLOBAL — bandeau noir, slide-in au scroll down.
+     Injecté sur les pages qui n'ont pas leur propre <footer>.
+     Lab et Contact gèrent le lien dans leur footer en flux.
   ────────────────────────────────────────────────────────── */
   if (!document.querySelector('footer')) {
-    const isLegalPage = page === 'mentions-legales' || page === 'mentions-legales.html'
-                     || /mentions-legales/.test(window.location.pathname);
+    const isLegalPage = /mentions-legales/.test(window.location.pathname);
 
     const miniFooter = document.createElement('footer');
     miniFooter.className = 'mini-footer';
     miniFooter.innerHTML = `
       <span class="mini-footer-copy">© 2026 Autobahn</span>
-      ${isLegalPage ? '' : `<a class="mini-footer-link" href="/mentions-legales">
+      ${isLegalPage ? '<span></span>' : `<a class="mini-footer-link" href="/mentions-legales">
         <span class="en">Legal notices</span>
         <span class="fr">Mentions légales</span>
       </a>`}`;
     document.body.appendChild(miniFooter);
+
+    // Détection : la page est-elle scrollable ?
+    // - Oui (lab/contact/legal/404/500 etc.) → bandeau caché par défaut, slide-in
+    //   au scroll vers le bas, slide-out au scroll vers le haut ou retour au top.
+    // - Non (index/creators/studio en overflow:hidden) → bandeau visible en permanence
+    //   (sinon impossible de l'afficher puisque pas de scroll).
+    function setupScrollBehavior() {
+      const isScrollable = document.documentElement.scrollHeight > window.innerHeight + 8;
+
+      if (!isScrollable) {
+        miniFooter.classList.add('visible');
+        return;
+      }
+
+      let lastY = window.scrollY;
+      let ticking = false;
+
+      function update() {
+        const y = window.scrollY;
+        const goingDown = y > lastY + 2; // petit seuil pour éviter le jitter
+        const goingUp   = y < lastY - 2;
+
+        if (y < 60) {
+          miniFooter.classList.remove('visible');
+        } else if (goingDown) {
+          miniFooter.classList.add('visible');
+        } else if (goingUp) {
+          miniFooter.classList.remove('visible');
+        }
+
+        lastY = y;
+        ticking = false;
+      }
+
+      window.addEventListener('scroll', () => {
+        if (!ticking) {
+          requestAnimationFrame(update);
+          ticking = true;
+        }
+      }, { passive: true });
+
+      update();
+    }
+
+    // Le DOM peut encore changer (images qui se chargent, lazy content) →
+    // re-évalue après load + sur resize.
+    setupScrollBehavior();
+    window.addEventListener('load', setupScrollBehavior);
+    window.addEventListener('resize', () => {
+      // Sur resize, si la page bascule scrollable/non-scrollable, on rebascule.
+      const wasVisible = miniFooter.classList.contains('visible');
+      setupScrollBehavior();
+      // setupScrollBehavior remettra à 0 — pas de souci
+    });
   }
 
 })();

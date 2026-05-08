@@ -317,43 +317,45 @@ footer {
 }
 .footer-legal:hover { color: var(--c-ink); }
 
-/* ── Mini-footer global (injecté par nav.js sur les pages plein écran) ── */
+/* ── Mini-footer global (injecté par nav.js sur les pages plein écran)
+   Bandeau noir avec typo off-white, slide-in depuis le bas quand on scroll
+   vers le bas. Reste visible en permanence sur pages non-scrollables. ── */
 .mini-footer {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: 28px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-lg);
-  background: linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0));
+  background: #0d0d0c;
+  color: #f5f4f0;
   font-family: var(--f-mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
+  font-size: 10px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(245, 244, 240, 0.4);
   z-index: 100;
   border: none;
   margin: 0;
   pointer-events: none;
+  transform: translateY(100%);
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.mini-footer .mini-footer-link {
-  color: rgba(245, 244, 240, 0.6);
-  text-decoration: none;
-  transition: color 0.2s;
-  pointer-events: all;
-}
-.mini-footer .mini-footer-link:hover { color: rgba(245, 244, 240, 0.95); }
+.mini-footer.visible { transform: translateY(0); }
 
-html[data-theme="light"] .mini-footer {
-  background: linear-gradient(to top, rgba(255,255,255,0.5), rgba(255,255,255,0));
-  color: rgba(26, 26, 24, 0.45);
+.mini-footer .mini-footer-copy { opacity: 0.55; }
+
+.mini-footer .mini-footer-link {
+  color: #f5f4f0;
+  text-decoration: none;
+  opacity: 0.75;
+  pointer-events: all;
+  transition: opacity 0.2s;
 }
-html[data-theme="light"] .mini-footer .mini-footer-link { color: rgba(26, 26, 24, 0.7); }
-html[data-theme="light"] .mini-footer .mini-footer-link:hover { color: rgba(26, 26, 24, 0.95); }
+.mini-footer .mini-footer-link:hover { opacity: 1; }
 
 @media (max-width: 768px) {
-  .mini-footer { padding: 0 var(--space-lg, 20px); font-size: 8px; }
+  .mini-footer { padding: 0 20px; font-size: 9px; height: 32px; }
 }
 
 /* ============================================================
