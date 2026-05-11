@@ -323,10 +323,6 @@
       </div>
       <div class="contact-infos">
         <div class="info-block">
-          <div class="info-label">Email</div>
-          <a class="info-value" id="studioEmailLink" href="#">—</a>
-        </div>
-        <div class="info-block">
           <div class="info-label">
             <span class="en">Location</span><span class="fr">Localisation</span>
           </div>
@@ -421,13 +417,6 @@
        CONFIGURATION — UN SEUL ENDROIT À MODIFIER
     ══════════════════════════════════════════ */
     const STUDIO_EMAIL = 'hello@autobahn.studio'; // ← change cette adresse pour mettre à jour partout
-
-    /* ── Renseigne dynamiquement les éléments qui dépendent de STUDIO_EMAIL ── */
-    const emailLink = document.getElementById('studioEmailLink');
-    if (emailLink) {
-      emailLink.href = 'mailto:' + STUDIO_EMAIL;
-      emailLink.textContent = STUDIO_EMAIL;
-    }
 
     /* Focus cursor sur les champs de formulaire */
     document.querySelectorAll('input, textarea, select').forEach(el => {
