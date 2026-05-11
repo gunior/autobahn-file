@@ -191,46 +191,59 @@
     document.body.appendChild(miniFooter);
 
     // Détection : la page est-elle scrollable ?
-    // - Oui (lab/contact/legal/404/500 etc.) → bandeau caché par défaut, slide-in
-    //   au scroll vers le bas, slide-out au scroll vers le haut ou retour au top.
-    // - Non (index/creators/studio en overflow:hidden) → bandeau visible en permanence
-    //   (sinon impossible de l'afficher puisque pas de scroll).
+    // - Oui → bandeau caché par défaut, slide-in au scroll vers le bas,
+    //   slide-out au scroll vers le haut ou retour au top.
+    // - Non (index/creators/studio en overflow:hidden) sur DESKTOP →
+    //   bandeau visible en permanence.
+    // - Non sur MOBILE → on écoute les touchmove pour détecter la direction
+    //   du swipe et révéler/cacher le bandeau (même si la page ne scroll pas).
     function setupScrollBehavior() {
       const isScrollable = document.documentElement.scrollHeight > window.innerHeight + 8;
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
-      if (!isScrollable) {
+      // Cas 1 — page scrollable : on suit le scrollY
+      if (isScrollable) {
+        let lastY = window.scrollY;
+        let ticking = false;
+        function update() {
+          const y = window.scrollY;
+          const goingDown = y > lastY + 2;
+          const goingUp   = y < lastY - 2;
+          if (y < 60)            miniFooter.classList.remove('visible');
+          else if (goingDown)    miniFooter.classList.add('visible');
+          else if (goingUp)      miniFooter.classList.remove('visible');
+          lastY = y;
+          ticking = false;
+        }
+        window.addEventListener('scroll', () => {
+          if (!ticking) { requestAnimationFrame(update); ticking = true; }
+        }, { passive: true });
+        update();
+        return;
+      }
+
+      // Cas 2 — page non-scrollable + DESKTOP : bandeau permanent
+      if (!isMobile) {
         miniFooter.classList.add('visible');
         return;
       }
 
-      let lastY = window.scrollY;
-      let ticking = false;
-
-      function update() {
-        const y = window.scrollY;
-        const goingDown = y > lastY + 2; // petit seuil pour éviter le jitter
-        const goingUp   = y < lastY - 2;
-
-        if (y < 60) {
-          miniFooter.classList.remove('visible');
-        } else if (goingDown) {
-          miniFooter.classList.add('visible');
-        } else if (goingUp) {
-          miniFooter.classList.remove('visible');
-        }
-
-        lastY = y;
-        ticking = false;
-      }
-
-      window.addEventListener('scroll', () => {
-        if (!ticking) {
-          requestAnimationFrame(update);
-          ticking = true;
-        }
+      // Cas 3 — page non-scrollable + MOBILE : touch-aware
+      // Le doigt monte (dy négatif) = direction "scroll vers le bas" = on montre
+      // Le doigt descend (dy positif) = direction "scroll vers le haut" = on cache
+      let lastTouchY = null;
+      document.addEventListener('touchstart', (e) => {
+        lastTouchY = e.touches[0].clientY;
       }, { passive: true });
-
-      update();
+      document.addEventListener('touchmove', (e) => {
+        if (lastTouchY === null) return;
+        const y = e.touches[0].clientY;
+        const dy = y - lastTouchY;
+        if (dy < -8)       miniFooter.classList.add('visible');
+        else if (dy > 8)   miniFooter.classList.remove('visible');
+        lastTouchY = y;
+      }, { passive: true });
+      document.addEventListener('touchend', () => { lastTouchY = null; }, { passive: true });
     }
 
     // Le DOM peut encore changer (images qui se chargent, lazy content) →

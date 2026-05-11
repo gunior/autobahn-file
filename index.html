@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Autobahn — Design, Technologie & Image en mouvement</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./design.css">
   <style>
 
@@ -30,10 +33,7 @@
       /* Le poster est visible dès le premier pixel, la vidéo prend le relais */
       opacity: 1;
     }
-    /* Sur mobile : poster statique uniquement, pas de vidéo */
-    @media (max-width: 768px) {
-      #showreel source { display: none; }
-    }
+    /* La vidéo joue sur mobile aussi (muted + playsinline → autorisé partout) */
 
     /* ── VIGNETTE — assombrit les bords pour lisibilité ── */
     #vignette {
@@ -84,7 +84,8 @@
       text-align: center;
     }
     .hero-discipline {
-      font-family: var(--f-mono);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
       font-size: var(--fs-micro, 10px);
       letter-spacing: var(--ls-xwide, 0.15em);
       text-transform: uppercase;
@@ -104,7 +105,8 @@
       pointer-events: all;
     }
     .side-link {
-      font-family: var(--f-mono);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
       font-size: var(--fs-micro, 10px);
       letter-spacing: var(--ls-wide, 0.1em);
       text-transform: uppercase;
@@ -144,9 +146,10 @@
       display: block;
       animation: reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
-    .hero-title-line:nth-child(1) span { animation-delay: 0.1s; }
-    .hero-title-line:nth-child(2) span { animation-delay: 0.22s; }
-    .hero-title-line:nth-child(3) span { animation-delay: 0.34s; }
+    .hero-title-line:nth-child(1) span { animation-delay: 0.10s; }
+    .hero-title-line:nth-child(2) span { animation-delay: 0.20s; }
+    .hero-title-line:nth-child(3) span { animation-delay: 0.30s; }
+    .hero-title-line:nth-child(4) span { animation-delay: 0.40s; }
     @keyframes reveal {
       from { transform: translateY(100%); opacity: 0; }
       to   { transform: translateY(0);   opacity: 1; }
@@ -170,7 +173,8 @@
       gap: 12px;
     }
     .meta-item {
-      font-family: var(--f-mono);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
       font-size: var(--fs-micro, 10px);
       letter-spacing: var(--ls-wide, 0.1em);
       text-transform: uppercase;
@@ -194,23 +198,45 @@
 
   @media (max-width: 768px) {
     .hero-title-wrap {
-      bottom: 90px;
+      bottom: 110px;
       left: var(--space-lg, 20px);
       right: var(--space-lg, 20px);
     }
     .hero-title {
       font-size: clamp(32px, 9vw, 56px);
     }
+    /* Hero-meta sur mobile : on garde la disposition row (text à gauche +
+       logo à droite) au lieu de basculer en column qui pousserait tout
+       à gauche. Plus serré, fonts plus petites. */
     .hero-meta {
       left: var(--space-lg, 20px);
       right: var(--space-lg, 20px);
-      flex-direction: column;
-      align-items: flex-start;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
       gap: 12px;
-      padding-top: 12px;
+      padding-top: 10px;
     }
-    .meta-row { flex-wrap: wrap; gap: 8px; }
-    .meta-logo { height: 8px; }
+    .meta-row {
+      flex-wrap: wrap;
+      gap: 6px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .meta-item { font-size: 8px; letter-spacing: 0.08em; }
+    .meta-dot  { width: 1.5px; height: 1.5px; }
+    .meta-logo { height: 8px; flex-shrink: 0; }
+
+    /* Hero title : sur mobile chaque "line" est decomposée en 2 lignes
+       d'animation séparées pour que le reveal stack proprement quand le
+       texte wrap. */
+    .title-desktop { display: none; }
+    .title-mobile  { display: block; }
+  }
+  /* Au-dessus de 768px : on affiche la version 2 lignes (desktop) */
+  @media (min-width: 769px) {
+    .title-desktop { display: block; }
+    .title-mobile  { display: none; }
   }
 
   </style>
@@ -238,10 +264,25 @@
 
     <div class="hero-title-wrap">
       <h1 class="hero-title">
-        <span class="hero-title-line en"><span>A multidisciplinary creative studio</span></span>
-        <span class="hero-title-line en"><span>shaping visual experiences.</span></span>
-        <span class="hero-title-line fr"><span>Un studio créatif multidisciplinaire</span></span>
-        <span class="hero-title-line fr"><span>façonnant des expériences visuelles.</span></span>
+        <!-- Version desktop : 2 lignes par langue (visible >768px) -->
+        <span class="title-desktop">
+          <span class="hero-title-line en"><span>A multidisciplinary creative studio</span></span>
+          <span class="hero-title-line en"><span>shaping visual experiences.</span></span>
+          <span class="hero-title-line fr"><span>Un studio créatif multidisciplinaire</span></span>
+          <span class="hero-title-line fr"><span>façonnant des expériences visuelles.</span></span>
+        </span>
+        <!-- Version mobile : 4 lignes par langue pour que l'animation reveal
+             match la coupe naturelle du texte (visible ≤768px) -->
+        <span class="title-mobile">
+          <span class="hero-title-line en"><span>A multidisciplinary</span></span>
+          <span class="hero-title-line en"><span>creative studio</span></span>
+          <span class="hero-title-line en"><span>shaping visual</span></span>
+          <span class="hero-title-line en"><span>experiences.</span></span>
+          <span class="hero-title-line fr"><span>Un studio créatif</span></span>
+          <span class="hero-title-line fr"><span>multidisciplinaire</span></span>
+          <span class="hero-title-line fr"><span>façonnant des</span></span>
+          <span class="hero-title-line fr"><span>expériences visuelles.</span></span>
+        </span>
       </h1>
     </div>
 
@@ -268,19 +309,15 @@
   <script src="./nav.js"></script>
 
   <script>
-    // Sur mobile on ne charge pas la vidéo du tout (poster suffit)
+    // La vidéo s'auto-lance partout (muted + playsinline → autorisé sur mobile aussi)
     const vid = document.getElementById('showreel');
-    if (window.innerWidth <= 768) {
-      vid.removeAttribute('autoplay');
-      vid.load(); // force l'affichage du poster sans télécharger la vidéo
-    }
 
     // iOS Safari suspend parfois la vidéo après quelques secondes → on la relance
     vid.addEventListener('pause', () => {
-      if (!document.hidden && window.innerWidth > 768) vid.play().catch(() => {});
+      if (!document.hidden) vid.play().catch(() => {});
     });
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && window.innerWidth > 768) vid.play().catch(() => {});
+      if (!document.hidden) vid.play().catch(() => {});
     });
 
     // Compteur créateurs dynamique
