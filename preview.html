@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DA Preview — Autobahn</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ════════════════════════════════════════════════
+       DA PREVIEW — Autobahn
+       Application du DESIGN.md sur des composants types
+       Brutalisme contrôlé · Mono partout + display serif · 5 accents par section
+    ════════════════════════════════════════════════ */
+
+    :root {
+      /* Couleurs fond / texte */
+      --bg:        #f5f4f0;
+      --bg-pure:   #ffffff;
+      --ink:       #0a0a08;
+      --ink-soft:  #5a5a55;
+      --line:      #0a0a08;
+
+      /* Accents par section */
+      --acc-home:    #E84A1F;
+      --acc-team:    #1A2ED5;
+      --acc-lab:     #7AE810;
+      --acc-studio:  #FF4D8A;
+      --acc-contact: #5B1FE8;
+
+      /* Typos */
+      --f-display: 'Fraunces', 'Times New Roman', serif;
+      --f-mono:    'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--f-mono);
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══════════ BACK LINK SUR PREVIEW ═══════════ */
+    .back-link {
+      position: fixed;
+      top: 16px; left: 16px;
+      z-index: 50;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      letter-spacing: 0;
+      color: var(--ink);
+      text-decoration: none;
+      padding: 8px 14px;
+      border: 2px solid var(--ink);
+      background: var(--bg);
+    }
+    .back-link:hover { background: var(--ink); color: var(--bg); }
+
+    /* ═══════════ HERO PREVIEW ═══════════ */
+    .hero {
+      padding: 120px 32px 80px;
+      border-bottom: 4px solid var(--line);
+      position: relative;
+    }
+    .hero-meta {
+      display: flex;
+      gap: 24px;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      margin-bottom: 48px;
+      color: var(--ink-soft);
+    }
+    .hero-meta strong { color: var(--ink); font-weight: 500; }
+    .hero-title {
+      font-family: var(--f-display);
+      font-weight: 300;
+      font-style: italic;
+      font-size: clamp(56px, 11vw, 180px);
+      line-height: 0.92;
+      letter-spacing: -0.03em;
+      max-width: 14ch;
+    }
+    .hero-title em {
+      font-style: italic;
+      font-variation-settings: "WONK" 1;
+      color: var(--acc-home);
+      font-weight: 400;
+    }
+    .hero-sub {
+      margin-top: 32px;
+      font-family: var(--f-mono);
+      font-size: 13px;
+      max-width: 56ch;
+      color: var(--ink-soft);
+      line-height: 1.65;
+    }
+
+    /* Off-grid : numéro de section dans le coin */
+    .hero-num {
+      position: absolute;
+      top: 120px; right: 32px;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+
+    /* ═══════════ SECTION GENERIQUE ═══════════ */
+    section.preview-section {
+      padding: 80px 32px;
+      border-bottom: 4px solid var(--line);
+      position: relative;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 48px;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .section-tag {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border: 2px solid var(--ink);
+    }
+    .section-title {
+      font-family: var(--f-display);
+      font-weight: 400;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    /* ═══════════ TYPO SPECIMEN ═══════════ */
+    .typo-grid {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 24px;
+      row-gap: 40px;
+      align-items: baseline;
+    }
+    .typo-label {
+      font-family: var(--f-mono);
+      font-size: 10px;
+      color: var(--ink-soft);
+      align-self: start;
+      padding-top: 8px;
+      border-top: 2px solid var(--line);
+    }
+    .typo-sample-display-xl {
+      font-family: var(--f-display);
+      font-weight: 300;
+      font-style: italic;
+      font-size: 120px;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+    }
+    .typo-sample-display-lg {
+      font-family: var(--f-display);
+      font-weight: 400;
+      font-size: 64px;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+    }
+    .typo-sample-display-md {
+      font-family: var(--f-display);
+      font-weight: 400;
+      font-size: 32px;
+      line-height: 1.05;
+    }
+    .typo-sample-mono-body {
+      font-family: var(--f-mono);
+      font-size: 14px;
+      line-height: 1.65;
+      max-width: 56ch;
+    }
+    .typo-sample-mono-small {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+    .typo-sample-mono-xs {
+      font-family: var(--f-mono);
+      font-size: 9px;
+      color: var(--ink-soft);
+      letter-spacing: 0;
+    }
+
+    /* ═══════════ PALETTE COULEURS ═══════════ */
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      border: 2px solid var(--line);
+    }
+    .palette-cell {
+      aspect-ratio: 3 / 4;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-right: 2px solid var(--line);
+      color: var(--bg);
+      font-family: var(--f-mono);
+      font-size: 10px;
+    }
+    .palette-cell:last-child { border-right: none; }
+    .palette-cell-name {
+      font-family: var(--f-display);
+      font-size: 20px;
+      font-style: italic;
+      font-weight: 400;
+    }
+    .palette-cell-hex {
+      font-size: 11px;
+      letter-spacing: 0;
+    }
+    .palette-cell.home    { background: var(--acc-home); }
+    .palette-cell.team    { background: var(--acc-team); }
+    .palette-cell.lab     { background: var(--acc-lab); color: var(--ink); }
+    .palette-cell.studio  { background: var(--acc-studio); }
+    .palette-cell.contact { background: var(--acc-contact); }
+
+    /* ═══════════ COMPOSANTS ═══════════ */
+    .components {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 24px;
+    }
+
+    /* Bouton */
+    .demo-btn {
+      grid-column: span 4;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .btn-flat {
+      display: inline-flex; align-items: center; gap: 12px;
+      padding: 14px 20px;
+      background: var(--acc-home);
+      color: var(--bg);
+      font-family: var(--f-mono);
+      font-size: 12px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .btn-flat:hover { background: var(--ink); }
+    .btn-arrow { font-family: var(--f-mono); }
+
+    /* Tag bracket */
+    .demo-tags {
+      grid-column: span 4;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .tag-row {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      font-family: var(--f-mono);
+      font-size: 12px;
+    }
+    .tag-bracket {
+      display: inline-flex;
+      gap: 0;
+    }
+    .tag-bracket::before { content: '['; color: var(--ink-soft); }
+    .tag-bracket::after  { content: ']'; color: var(--ink-soft); }
+    .tag-bracket span { padding: 0 4px; }
+
+    /* Carte brute */
+    .demo-card {
+      grid-column: span 4;
+    }
+    .card-brut {
+      border: 4px solid var(--line);
+      padding: 20px;
+      background: var(--bg-pure);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card-brut-num {
+      font-family: var(--f-mono);
+      font-size: 10px;
+      color: var(--ink-soft);
+    }
+    .card-brut-title {
+      font-family: var(--f-display);
+      font-size: 24px;
+      font-weight: 400;
+      line-height: 1.05;
+      font-style: italic;
+    }
+    .card-brut-meta {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: var(--ink-soft);
+      display: flex; gap: 8px;
+    }
+    .card-brut-accent { color: var(--acc-lab); font-weight: 500; }
+
+    /* Liste mono avec filets épais */
+    .demo-list {
+      grid-column: span 12;
+      margin-top: 48px;
+    }
+    .list-spec {
+      width: 100%;
+      border-top: 4px solid var(--line);
+      border-bottom: 4px solid var(--line);
+    }
+    .list-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 200px 120px;
+      gap: 24px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--ink-soft);
+      font-family: var(--f-mono);
+      font-size: 13px;
+      align-items: center;
+    }
+    .list-row:last-child { border-bottom: none; }
+    .list-num { color: var(--ink-soft); font-size: 11px; }
+    .list-title { font-weight: 500; }
+    .list-meta { font-size: 11px; color: var(--ink-soft); }
+    .list-tag  {
+      justify-self: end;
+      font-size: 11px;
+      padding: 2px 8px;
+      border: 2px solid var(--ink);
+    }
+    .list-tag.green { border-color: var(--acc-lab); color: var(--acc-lab); }
+    .list-tag.pink  { border-color: var(--acc-studio); color: var(--acc-studio); }
+    .list-tag.blue  { border-color: var(--acc-team); color: var(--acc-team); }
+
+    /* ═══════════ LAYOUT OFF-GRID ═══════════ */
+    .offgrid-demo {
+      position: relative;
+      min-height: 480px;
+      background: var(--bg-pure);
+      border: 4px solid var(--line);
+      overflow: hidden;
+    }
+    .offgrid-block {
+      position: absolute;
+      padding: 20px;
+    }
+    .offgrid-block.a {
+      top: 0; left: 0;
+      width: 38%;
+      background: var(--acc-contact);
+      color: var(--bg);
+      font-family: var(--f-mono);
+      font-size: 11px;
+      padding: 24px;
+    }
+    .offgrid-block.b {
+      top: 22%; right: 0;
+      width: 48%;
+      font-family: var(--f-display);
+      font-style: italic;
+      font-size: 56px;
+      line-height: 0.95;
+      padding: 24px;
+    }
+    .offgrid-block.c {
+      bottom: 0; left: 14%;
+      width: 36%;
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: var(--ink-soft);
+      padding: 16px;
+      border-top: 4px solid var(--line);
+    }
+    .offgrid-block.d {
+      bottom: 24px; right: 24px;
+      font-family: var(--f-mono);
+      font-size: 10px;
+      color: var(--ink-soft);
+    }
+
+    /* ═══════════ COMPARAISON AVANT / APRES ═══════════ */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 4px solid var(--line);
+    }
+    .compare-side {
+      padding: 32px;
+      min-height: 280px;
+    }
+    .compare-side.before {
+      background: #141412;
+      color: rgba(245,244,240,0.92);
+      border-right: 4px solid var(--line);
+    }
+    .compare-side.after {
+      background: var(--bg);
+    }
+    .compare-label {
+      font-family: var(--f-mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      opacity: 0.6;
+    }
+    .compare-title-before {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 36px;
+      letter-spacing: -0.02em;
+      color: rgba(245,244,240,0.95);
+      margin-bottom: 16px;
+    }
+    .compare-meta-before {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(245,244,240,0.5);
+    }
+    .compare-title-after {
+      font-family: var(--f-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 56px;
+      letter-spacing: -0.03em;
+      line-height: 0.92;
+      margin-bottom: 16px;
+    }
+    .compare-title-after em { color: var(--acc-team); font-variation-settings: "WONK" 1; }
+    .compare-meta-after {
+      font-family: var(--f-mono);
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+
+    /* ═══════════ FOOTER PREVIEW ═══════════ */
+    .preview-footer {
+      padding: 32px;
+      background: var(--ink);
+      color: var(--bg);
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--f-mono);
+      font-size: 11px;
+    }
+    .preview-footer a { color: var(--bg); text-decoration: none; border-bottom: 1px solid currentColor; }
+    .preview-footer a:hover { color: var(--acc-lab); }
+
+    /* ═══════════ MOBILE ═══════════ */
+    @media (max-width: 768px) {
+      .hero { padding: 100px 16px 60px; }
+      .hero-num { right: 16px; top: 60px; }
+      section.preview-section { padding: 60px 16px; }
+      .components { grid-template-columns: 1fr; gap: 32px; }
+      .demo-btn, .demo-tags, .demo-card { grid-column: span 1; }
+      .palette { grid-template-columns: repeat(2, 1fr); }
+      .palette-cell:nth-child(odd) { border-right: 2px solid var(--line); }
+      .palette-cell:nth-child(2n) { border-right: none; }
+      .list-row { grid-template-columns: 40px 1fr 80px; gap: 12px; }
+      .list-row .list-meta { display: none; }
+      .compare { grid-template-columns: 1fr; }
+      .compare-side.before { border-right: none; border-bottom: 4px solid var(--line); }
+      .typo-sample-display-xl { font-size: 56px; }
+      .typo-sample-display-lg { font-size: 38px; }
+      .offgrid-block.a, .offgrid-block.b, .offgrid-block.c {
+        position: static; width: 100%;
+      }
+      .offgrid-demo { display: flex; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <a class="back-link" href="/">← Retour site</a>
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section class="hero">
+    <div class="hero-meta">
+      <span><strong>DA preview</strong></span>
+      <span>v0.1</span>
+      <span>May 2026</span>
+      <span>autobahn-studio.com</span>
+    </div>
+    <span class="hero-num">[01/06]</span>
+    <h1 class="hero-title">
+      A <em>multidisciplinary</em><br>
+      creative studio <em>shaping</em><br>
+      visual experiences.
+    </h1>
+    <p class="hero-sub">
+      Cette page n'est pas live. C'est un terrain d'essai pour valider la direction artistique
+      décrite dans DESIGN.md : brutalisme contrôlé, typographie display serif + mono partout,
+      fond clair + couleur d'accentuation par section. Compare avec les pages actuelles.
+    </p>
+  </section>
+
+  <!-- ═══════════ TYPOGRAPHIE ═══════════ -->
+  <section class="preview-section">
+    <div class="section-head">
+      <span class="section-tag">02 / Typographie</span>
+      <h2 class="section-title">Display · <em style="font-style:italic; font-variation-settings:'WONK' 1;">Fraunces</em> + Mono · JetBrains</h2>
+    </div>
+
+    <div class="typo-grid">
+      <div class="typo-label">Display XL<br>120px</div>
+      <div class="typo-sample-display-xl">Studio <em style="font-style:italic; color:var(--acc-home); font-variation-settings:'WONK' 1;">brutaliste</em></div>
+
+      <div class="typo-label">Display L<br>64px / 400</div>
+      <div class="typo-sample-display-lg">Le grain de cette page <em style="font-style:italic;">trahit</em> son intention.</div>
+
+      <div class="typo-label">Display M<br>32px</div>
+      <div class="typo-sample-display-md">Sous-titre éditorial, italique nette.</div>
+
+      <div class="typo-label">Mono body<br>14px</div>
+      <div class="typo-sample-mono-body">
+        Le corps de texte passe en monospace. C'est un parti pris : on accepte que le rendu
+        ressemble à un document technique plutôt qu'à un article de blog. La lisibilité
+        s'obtient par le rythme du texte et l'espacement, pas par l'invisibilité de la typo.
+      </div>
+
+      <div class="typo-label">Mono small<br>11px</div>
+      <div class="typo-sample-mono-small">[meta] · [date] · [position] · 11px lit comme une légende ou une métadonnée.</div>
+
+      <div class="typo-label">Mono XS<br>9px</div>
+      <div class="typo-sample-mono-xs">9px / version la plus tassée, pour des références techniques (numéros, hash, codes).</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ PALETTE ═══════════ -->
+  <section class="preview-section">
+    <div class="section-head">
+      <span class="section-tag">03 / Palette</span>
+      <h2 class="section-title">Une couleur par section, fond constant</h2>
+    </div>
+
+    <div class="palette">
+      <div class="palette-cell home">
+        <div>
+          <div class="palette-cell-name">Home</div>
+        </div>
+        <div>
+          <div>Orange brûlé</div>
+          <div class="palette-cell-hex">#E84A1F</div>
+        </div>
+      </div>
+      <div class="palette-cell team">
+        <div>
+          <div class="palette-cell-name">Team</div>
+        </div>
+        <div>
+          <div>Cobalt</div>
+          <div class="palette-cell-hex">#1A2ED5</div>
+        </div>
+      </div>
+      <div class="palette-cell lab">
+        <div>
+          <div class="palette-cell-name">Lab</div>
+        </div>
+        <div>
+          <div>Acide</div>
+          <div class="palette-cell-hex">#7AE810</div>
+        </div>
+      </div>
+      <div class="palette-cell studio">
+        <div>
+          <div class="palette-cell-name">Studio</div>
+        </div>
+        <div>
+          <div>Hot pink</div>
+          <div class="palette-cell-hex">#FF4D8A</div>
+        </div>
+      </div>
+      <div class="palette-cell contact">
+        <div>
+          <div class="palette-cell-name">Contact</div>
+        </div>
+        <div>
+          <div>Violet</div>
+          <div class="palette-cell-hex">#5B1FE8</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ COMPOSANTS ═══════════ -->
+  <section class="preview-section">
+    <div class="section-head">
+      <span class="section-tag">04 / Composants</span>
+      <h2 class="section-title">Bouton · tags · carte</h2>
+    </div>
+
+    <div class="components">
+      <div class="demo-btn">
+        <div class="typo-sample-mono-small">[a] Bouton primaire — aplat couleur accent, mono, angles vifs</div>
+        <button class="btn-flat">Send message <span class="btn-arrow">→</span></button>
+      </div>
+
+      <div class="demo-tags">
+        <div class="typo-sample-mono-small">[b] Tags brackets — feel catalogue / archive</div>
+        <div class="tag-row">
+          <span class="tag-bracket"><span>motion</span></span>
+          <span class="tag-bracket"><span>vfx</span></span>
+          <span class="tag-bracket"><span>3d</span></span>
+          <span class="tag-bracket"><span>sound design</span></span>
+          <span class="tag-bracket"><span>direction</span></span>
+        </div>
+      </div>
+
+      <div class="demo-card">
+        <div class="typo-sample-mono-small">[c] Carte — bordure 4px, pas de radius, mono + display</div>
+        <div class="card-brut">
+          <div class="card-brut-num">#03 · 2026.04</div>
+          <h3 class="card-brut-title">Datamosh experiment 01</h3>
+          <div class="card-brut-meta">
+            <span class="card-brut-accent">[lab]</span>
+            <span>·</span>
+            <span>Anetha</span>
+            <span>·</span>
+            <span>Sound + visual</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-list">
+        <div class="typo-sample-mono-small" style="margin-bottom:16px">[d] Liste façon spec sheet — séparateurs francs, alignement strict</div>
+        <div class="list-spec">
+          <div class="list-row">
+            <span class="list-num">#01</span>
+            <span class="list-title">ESTRADE Guillaume</span>
+            <span class="list-meta">Motion Designer &amp; Director</span>
+            <span class="list-tag green">motion</span>
+          </div>
+          <div class="list-row">
+            <span class="list-num">#02</span>
+            <span class="list-title">REBIC Antonin</span>
+            <span class="list-meta">Creative Technologist — Motion &amp; VFX</span>
+            <span class="list-tag green">vfx</span>
+          </div>
+          <div class="list-row">
+            <span class="list-num">#03</span>
+            <span class="list-title">PESSET Océane</span>
+            <span class="list-meta">Motion Design &amp; Illustration</span>
+            <span class="list-tag pink">illustration</span>
+          </div>
+          <div class="list-row">
+            <span class="list-num">#04</span>
+            <span class="list-title">Maitre Victor</span>
+            <span class="list-meta">Composer &amp; Sound Designer</span>
+            <span class="list-tag blue">sound</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ LAYOUT OFF-GRID ═══════════ -->
+  <section class="preview-section">
+    <div class="section-head">
+      <span class="section-tag">05 / Layout off-grid</span>
+      <h2 class="section-title">Asymétrie contrôlée, blocs décalés</h2>
+    </div>
+
+    <div class="offgrid-demo">
+      <div class="offgrid-block a">
+        <div style="margin-bottom:12px">[bloc-A] / page header</div>
+        <div style="font-size:9px; opacity:0.7;">
+          Le titre principal sort hors-grille, le bloc info reste à 38% de la largeur. Le déséquilibre est intentionnel et signe l'esthétique.
+        </div>
+      </div>
+      <div class="offgrid-block b">
+        Hors-grille, <em style="color:var(--acc-contact); font-variation-settings:'WONK' 1;">délibérément</em>.
+      </div>
+      <div class="offgrid-block c">
+        [bloc-C] / contenu secondaire posé sur un filet 4px. La page accepte les vides.
+      </div>
+      <div class="offgrid-block d">[bottom-right index]</div>
+    </div>
+  </section>
+
+  <!-- ═══════════ COMPARAISON ═══════════ -->
+  <section class="preview-section">
+    <div class="section-head">
+      <span class="section-tag">06 / Avant / Après</span>
+      <h2 class="section-title">Le même contenu, deux DA</h2>
+    </div>
+
+    <div class="compare">
+      <div class="compare-side before">
+        <div class="compare-label">Actuel · "default Claude"</div>
+        <div class="compare-title-before">Team.</div>
+        <div class="compare-meta-before">Distinct skills, one shared space.</div>
+        <div style="margin-top:24px; font-family:'Inter',sans-serif; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:rgba(245,244,240,0.4);">
+          Nantes, FR · Est. 2021 · 13 creators
+        </div>
+      </div>
+      <div class="compare-side after">
+        <div class="compare-label">Proposition · DA brutaliste</div>
+        <div class="compare-title-after">
+          Team / <em>tchim.</em>
+        </div>
+        <div class="compare-meta-after">[13] / distinct skills, one shared space.</div>
+        <div style="margin-top:24px; display:flex; gap:8px; font-family:var(--f-mono); font-size:11px;">
+          <span class="tag-bracket"><span>nantes</span></span>
+          <span class="tag-bracket"><span>est. 2021</span></span>
+          <span class="tag-bracket"><span>13 creators</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer class="preview-footer">
+    <div>Autobahn — DA preview · v0.1 · <em style="font-family:var(--f-display); font-style:italic;">May 2026</em></div>
+    <div>
+      <a href="/">retour site</a>
+      &nbsp;·&nbsp;
+      <a href="/mentions-legales">mentions légales</a>
+    </div>
+  </footer>
+
+</body>
+</html>
