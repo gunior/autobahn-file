@@ -536,29 +536,19 @@
 
   window.addEventListener('resize', render);
 
-  /* ─ Chargement des créateurs — fetch direct Sanity (indépendant du build) ─ */
-  const GROQ = encodeURIComponent(
-    '*[_type=="creator"]|order(order asc){name,role,' +
-    '"photo":photo.asset->url+"?auto=format&fit=max&q=85&w=800",' +
-    '"heroPhoto":heroPhoto.asset->url+"?auto=format&fit=max&q=85&w=1920",' +
-    '"showreel":showreel.asset->url,' +
-    '"showreelOptimizedWebm":showreelOptimizedWebm.asset->url,' +
-    '"showreelOptimizedMp4":showreelOptimizedMp4.asset->url}'
-  );
-  const SANITY_URL = 'https://a6p7i4un.apicdn.sanity.io/v2024-01-01/data/query/production?query=' + GROQ;
-
-  fetch(SANITY_URL)
-    .then(r => r.json())
-    .then(d => {
-      const list = d.result || [];
-      if (!list.length) {
+  /* ─ Chargement des créateurs depuis creators.json (généré par build.js) ─ */
+  fetch('./creators.json')
+    .then(r => r.ok ? r.json() : Promise.reject('not found'))
+    .then(list => {
+      if (!list || !list.length) {
         wheelInner.innerHTML = '<div style="color:rgba(245,244,240,0.4);font-family:Inter;font-size:13px;padding:20px;">Aucun créateur chargé.</div>';
         return;
       }
       buildWheel(list);
     })
-    .catch(() => {
-      wheelInner.innerHTML = '<div style="color:rgba(245,244,240,0.4);font-family:Inter;font-size:13px;padding:20px;">Erreur chargement Sanity.</div>';
+    .catch(e => {
+      console.error('creators.json error:', e);
+      wheelInner.innerHTML = '<div style="color:rgba(245,244,240,0.4);font-family:Inter;font-size:13px;padding:20px;">Erreur : creators.json introuvable. Vérifier le build Vercel.</div>';
     });
   </script>
 
