@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team — Preview · Autobahn</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./design.css">
+  <style>
+
+    /* ════════════════════════════════════════════════
+       PREVIEW TEAM — Roue verticale type CoverFlow
+       Aucune page "TEAM" d'arrivée, les profils apparaissent du bas vers le haut
+       en pile 3D verticale, scrollable, hystérésis 90% pour activer un profil.
+    ════════════════════════════════════════════════ */
+
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body { background: #0a0a08; color: rgba(245,244,240,0.92); }
+
+    /* ── BG VIDÉO showreel ── */
+    #bgVideo {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; z-index: 0; opacity: 0;
+      transition: opacity 0.8s ease;
+      pointer-events: none;
+    }
+    #bgVideo.visible { opacity: 1; }
+
+    #vignette {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%),
+        linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 30%, transparent 60%, rgba(0,0,0,0.8) 100%);
+    }
+
+    /* ── BACK LINK (preview only) ── */
+    .back-link {
+      position: fixed;
+      top: 18px; left: 18px;
+      z-index: 90;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(245,244,240,0.6);
+      text-decoration: none;
+      padding: 8px 14px;
+      border: 0.5px solid rgba(245,244,240,0.2);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.2);
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .back-link:hover { color: rgba(245,244,240,1); border-color: rgba(245,244,240,0.6); }
+
+    /* ── ROUE VERTICALE ── */
+    .wheel-stage {
+      position: fixed; inset: 0;
+      z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+      perspective: 1400px;
+      pointer-events: none;
+    }
+    .wheel-stage-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+    }
+
+    /* Une carte créateur */
+    .wcard {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: clamp(320px, 42vw, 600px);
+      aspect-ratio: 16 / 9;
+      transform-origin: center center;
+      cursor: url('./assets/cursor-hand-hover.png') 9 0, pointer;
+      transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  opacity 0.45s ease,
+                  filter 0.5s ease;
+      pointer-events: all;
+      will-change: transform, opacity;
+    }
+    .wcard-inner {
+      position: relative;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #1a1a18;
+    }
+    .wcard-photo {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+      transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .wcard.active .wcard-photo { transform: scale(1.06); }
+
+    .wcard-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top,
+        rgba(0,0,0,0.85) 0%,
+        rgba(0,0,0,0.3) 45%,
+        transparent 75%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .wcard.active .wcard-overlay { opacity: 1; }
+
+    .wcard-info {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 18px 22px 22px;
+      transform: translateY(8px);
+      opacity: 0;
+      transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.05s,
+                  opacity 0.4s ease 0.05s;
+    }
+    .wcard.active .wcard-info { transform: translateY(0); opacity: 1; }
+    .wcard-name {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: clamp(16px, 1.4vw, 22px);
+      letter-spacing: -0.01em;
+      color: rgba(245,244,240,0.95);
+      line-height: 1.05;
+    }
+    .wcard-role {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(245,244,240,0.55);
+      margin-top: 8px;
+    }
+
+    /* ── INDEX (compteur position dans la roue) ── */
+    .wheel-index {
+      position: fixed;
+      right: 32px; top: 50%;
+      transform: translateY(-50%);
+      z-index: 50;
+      display: flex; flex-direction: column;
+      align-items: flex-end; gap: 12px;
+      font-family: 'Inter', sans-serif;
+      pointer-events: none;
+    }
+    .wheel-index-cur {
+      font-weight: 600;
+      font-size: 22px;
+      color: rgba(245,244,240,0.9);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .wheel-index-sep {
+      width: 28px; height: 1px;
+      background: rgba(245,244,240,0.25);
+      margin: 4px 0;
+    }
+    .wheel-index-total {
+      font-weight: 300;
+      font-size: 13px;
+      color: rgba(245,244,240,0.4);
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
+    /* ── HINT scroll ── */
+    .scroll-hint {
+      position: fixed;
+      left: 50%; bottom: 56px;
+      transform: translateX(-50%);
+      z-index: 50;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(245,244,240,0.4);
+      pointer-events: none;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 10px;
+      transition: opacity 0.4s ease;
+    }
+    .scroll-hint.fade { opacity: 0; }
+    .scroll-hint::after {
+      content: '';
+      width: 1px; height: 24px;
+      background: linear-gradient(to bottom, rgba(245,244,240,0.6), transparent);
+      animation: hintPulse 2s ease-in-out infinite;
+    }
+    @keyframes hintPulse {
+      0%,100% { transform: translateY(0); opacity: 0.7; }
+      50%     { transform: translateY(8px); opacity: 0.2; }
+    }
+
+    /* ── HEADER discret (nav passera ici en intégration finale) ── */
+    .preview-header {
+      position: fixed;
+      top: 18px; right: 18px;
+      z-index: 90;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(245,244,240,0.5);
+      pointer-events: none;
+    }
+
+    /* ── PLACEHOLDER pour cartes sans photo ── */
+    .wcard-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Inter', sans-serif; font-weight: 600;
+      font-size: 60px;
+      color: rgba(245,244,240,0.15);
+      background: rgba(245,244,240,0.05);
+      letter-spacing: -0.02em;
+    }
+
+  </style>
+</head>
+<body>
+
+  <video id="bgVideo" autoplay muted loop playsinline></video>
+  <div id="vignette"></div>
+
+  <a class="back-link" href="/">← Retour site</a>
+  <div class="preview-header">Preview · Team v3 — 16:9 cards</div>
+
+  <div class="wheel-stage">
+    <div class="wheel-stage-inner" id="wheelInner"></div>
+  </div>
+
+  <div class="wheel-index">
+    <div class="wheel-index-cur"  id="wIdxCur">01</div>
+    <div class="wheel-index-sep"></div>
+    <div class="wheel-index-total" id="wIdxTotal">—</div>
+  </div>
+
+  <div class="scroll-hint" id="scrollHint">Scroll<br></div>
+
+  <script>
+  /* ════════════════════════════════════════════════
+     VERTICAL COVERFLOW
+     ════════════════════════════════════════════════
+     - N profils placés en pile 3D verticale
+     - active = profil centré (scale 1, opacity 1, perspective neutre)
+     - profils au-dessus / en dessous : translateY, scale, rotateX qui s'accentuent
+       avec la distance à l'active
+     - Hystérésis 90% pour basculer sur le profil suivant (cf. demande utilisateur)
+     - Showreel du profil actif joue dans le bgVideo
+     - Click sur l'active → /creators#slug (réutilise la profile page existante)
+  ════════════════════════════════════════════════ */
+
+  const wheelInner = document.getElementById('wheelInner');
+  const bgVideo    = document.getElementById('bgVideo');
+  const scrollHint = document.getElementById('scrollHint');
+  const idxCur     = document.getElementById('wIdxCur');
+  const idxTotal   = document.getElementById('wIdxTotal');
+
+  /* Paramètres de la roue */
+  const STEP_PX       = 280;   // pixels de scroll virtuel par cran
+  const SHOW_RADIUS   = 4;     // nombre de cartes visibles de chaque côté de l'active
+  const THRESHOLD_IN  = 0.90;  // 90% avant de basculer sur le suivant
+  const THRESHOLD_OUT = 0.10;  // hystérésis : 10% pour rebasculer
+
+  let creators = [];
+  let cardEls  = [];
+  let activeIdx = -1;
+  let virtualScroll = 0;
+  let targetScroll  = 0;
+  let snapRaf = null;
+  let lastInteraction = 0;
+
+  /* ─ Slug pour lien vers la profile page ─ */
+  function nameToSlug(name) {
+    return (name || '').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+  }
+
+  /* ─ Construction des cartes ─ */
+  function buildWheel(list) {
+    creators = list;
+    wheelInner.innerHTML = '';
+    cardEls = creators.map((c, i) => {
+      const el = document.createElement('div');
+      el.className = 'wcard';
+      const photoSrc = c.heroPhoto || c.photo;
+      const inner = document.createElement('div');
+      inner.className = 'wcard-inner';
+      if (photoSrc) {
+        const img = document.createElement('img');
+        img.className = 'wcard-photo';
+        img.src = photoSrc;
+        img.alt = c.name || '';
+        img.loading = 'lazy';
+        inner.appendChild(img);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'wcard-placeholder';
+        ph.textContent = (c.name || '').split(' ').pop().charAt(0);
+        inner.appendChild(ph);
+      }
+      const overlay = document.createElement('div');
+      overlay.className = 'wcard-overlay';
+      inner.appendChild(overlay);
+
+      const info = document.createElement('div');
+      info.className = 'wcard-info';
+      info.innerHTML = `
+        <div class="wcard-name">${(c.name || '').split(' ').pop()}</div>
+        <div class="wcard-role">${c.role || ''}</div>
+      `;
+      inner.appendChild(info);
+
+      el.appendChild(inner);
+      el.addEventListener('click', () => onCardClick(i));
+      wheelInner.appendChild(el);
+      return el;
+    });
+
+    idxTotal.textContent = String(creators.length).padStart(2, '0');
+    virtualScroll = 0;
+    targetScroll  = 0;
+    render();
+    /* Apparition : slide-up + fade-in du conteneur entier, sans animation interne de scroll */
+    const stageEl = document.querySelector('.wheel-stage-inner');
+    stageEl.style.opacity = '0';
+    stageEl.style.transform = 'translateY(60px)';
+    stageEl.style.transition = 'opacity 0.8s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94)';
+    requestAnimationFrame(() => {
+      stageEl.style.opacity = '1';
+      stageEl.style.transform = 'translateY(0)';
+    });
+  }
+
+  /* ─ Rendu visuel : positionne chaque carte dans la pile 3D ─ */
+  function render() {
+    const idx = virtualScroll / STEP_PX;  /* float */
+
+    cardEls.forEach((el, i) => {
+      const offset = i - idx;                       /* offset en unités de cartes */
+      const absO   = Math.abs(offset);
+
+      /* Hors radius visible → masqué */
+      if (absO > SHOW_RADIUS) {
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+        el.style.transform = '';
+        return;
+      }
+
+      const sign = offset === 0 ? 0 : (offset > 0 ? 1 : -1);
+
+      /* Translate Y proportionnel à l'offset, avec compression progressive
+         pour empiler les cartes éloignées sans chevauchement */
+      const yBase = offset * 220; /* px par cran de distance */
+      const yPull = sign * Math.pow(absO, 1.2) * 55; /* compression non-linéaire */
+      const translateY = yBase + yPull;
+
+      /* Scale et opacité dégressifs */
+      const scale   = Math.max(0.55, 1 - absO * 0.12);
+      const opacity = Math.max(0.08, 1 - absO * 0.26);
+
+      /* Inclinaison perspective : max 40° pour rester lisible */
+      const rotateX = sign * Math.min(40, absO * 12);
+
+      /* z-index décroissant avec la distance pour que l'active soit toujours dessus */
+      const zIndex = Math.round(100 - absO * 10);
+
+      el.style.opacity = opacity;
+      el.style.pointerEvents = absO < 0.6 ? 'all' : 'none';
+      el.style.zIndex = zIndex;
+      el.style.transform = `translate(-50%, calc(-50% + ${translateY}px)) scale(${scale}) rotateX(${rotateX}deg)`;
+      el.classList.toggle('active', absO < 0.5);
+      el.style.filter = absO > 0.6 ? `blur(${Math.min(4, (absO - 0.6) * 4)}px)` : 'none';
+    });
+
+    /* Détection du créateur actif avec hystérésis 90% */
+    const base    = Math.floor(idx);
+    const next    = base + 1;
+    const progress = idx - base;
+    let newActive;
+    if (progress >= THRESHOLD_IN)        newActive = next;
+    else if (progress <= THRESHOLD_OUT)  newActive = base;
+    else if (activeIdx === base || activeIdx === next) newActive = activeIdx;
+    else newActive = base;
+
+    newActive = Math.max(0, Math.min(creators.length - 1, newActive));
+
+    if (newActive !== activeIdx) {
+      activeIdx = newActive;
+      idxCur.textContent = String(activeIdx + 1).padStart(2, '0');
+      onActiveChange(creators[activeIdx]);
+    }
+  }
+
+  /* ─ Changement de profil actif → showreel en BG ─ */
+  let currentBgSrc = '';
+  function onActiveChange(c) {
+    if (!c) return;
+    const sources = [];
+    if (c.showreelOptimizedWebm) sources.push({ src: c.showreelOptimizedWebm, type: 'video/webm' });
+    if (c.showreelOptimizedMp4)  sources.push({ src: c.showreelOptimizedMp4,  type: 'video/mp4'  });
+    if (sources.length === 0 && c.showreel) sources.push({ src: c.showreel, type: 'video/mp4' });
+
+    if (sources.length === 0) {
+      bgVideo.classList.remove('visible');
+      return;
+    }
+
+    const key = sources[0].src;
+    if (key === currentBgSrc) return;
+    currentBgSrc = key;
+
+    bgVideo.classList.remove('visible');
+    bgVideo.pause();
+    bgVideo.innerHTML = '';
+    if (c.heroPhoto) bgVideo.poster = c.heroPhoto;
+    sources.forEach(s => {
+      const el = document.createElement('source');
+      el.src = s.src; el.type = s.type;
+      bgVideo.appendChild(el);
+    });
+    bgVideo.load();
+    bgVideo.play().catch(() => {});
+    bgVideo.oncanplaythrough = () => bgVideo.classList.add('visible');
+    if (bgVideo.readyState >= 3) bgVideo.classList.add('visible');
+  }
+
+  /* ─ Click sur carte ─ */
+  function onCardClick(i) {
+    if (i === activeIdx) {
+      /* déjà active → navigue vers la profile page existante */
+      const slug = nameToSlug(creators[i].name);
+      window.location.href = '/creators#' + slug;
+    } else {
+      /* sinon, snap vers cette carte */
+      smoothTo(i * STEP_PX);
+    }
+  }
+
+  /* ─ Smooth scroll vers une position ─ */
+  function smoothTo(target) {
+    if (snapRaf) cancelAnimationFrame(snapRaf);
+    targetScroll = target;
+    const start  = virtualScroll;
+    const diff   = target - start;
+    if (Math.abs(diff) < 0.5) { virtualScroll = target; render(); return; }
+    const dur = 480;
+    const t0  = performance.now();
+    function step(now) {
+      const p = Math.min(1, (now - t0) / dur);
+      const ease = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3) / 2;
+      virtualScroll = start + diff * ease;
+      render();
+      if (p < 1) snapRaf = requestAnimationFrame(step);
+      else { snapRaf = null; virtualScroll = target; render(); }
+    }
+    snapRaf = requestAnimationFrame(step);
+  }
+
+  function snapToNearest() {
+    const idx = Math.round(virtualScroll / STEP_PX);
+    const clamped = Math.max(0, Math.min(creators.length - 1, idx));
+    smoothTo(clamped * STEP_PX);
+  }
+
+  /* ─ Wheel desktop ─ */
+  let wheelAccumulator = 0;
+  let wheelTimeout = null;
+  window.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (creators.length === 0) return;
+    scrollHint.classList.add('fade');
+    lastInteraction = Date.now();
+
+    if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
+
+    /* Accumule pour éviter le snap permanent : un cran de scroll trackpad
+       = un mouvement progressif, on snap quand l'inertie s'arrête */
+    virtualScroll = Math.max(0, Math.min((creators.length - 1) * STEP_PX,
+                              virtualScroll + e.deltaY * 0.8));
+    render();
+
+    clearTimeout(wheelTimeout);
+    wheelTimeout = setTimeout(() => snapToNearest(), 140);
+  }, { passive: false });
+
+  /* ─ Touch mobile / trackpad : delta cumulé ─ */
+  let touchStartY = 0, touchLastY = 0, touchMoved = false;
+  window.addEventListener('touchstart', (e) => {
+    touchStartY = e.touches[0].clientY;
+    touchLastY  = touchStartY;
+    touchMoved  = false;
+    if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
+  }, { passive: true });
+  window.addEventListener('touchmove', (e) => {
+    if (creators.length === 0) return;
+    e.preventDefault();
+    const y  = e.touches[0].clientY;
+    const dy = touchLastY - y;
+    touchLastY = y;
+    if (Math.abs(y - touchStartY) > 6) touchMoved = true;
+    virtualScroll = Math.max(0, Math.min((creators.length - 1) * STEP_PX,
+                              virtualScroll + dy));
+    render();
+    scrollHint.classList.add('fade');
+  }, { passive: false });
+  window.addEventListener('touchend', () => {
+    if (touchMoved) snapToNearest();
+  });
+
+  /* ─ Clavier ─ */
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault();
+      smoothTo(Math.min(creators.length - 1, activeIdx + 1) * STEP_PX);
+      scrollHint.classList.add('fade');
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      smoothTo(Math.max(0, activeIdx - 1) * STEP_PX);
+      scrollHint.classList.add('fade');
+    } else if (e.key === 'Enter') {
+      if (activeIdx >= 0) onCardClick(activeIdx);
+    }
+  });
+
+  window.addEventListener('resize', render);
+
+  /* ─ Chargement des créateurs ─ */
+  fetch('./creators.json')
+    .then(r => r.ok ? r.json() : [])
+    .then(list => {
+      if (!list || list.length === 0) {
+        wheelInner.innerHTML = '
