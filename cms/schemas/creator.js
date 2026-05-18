@@ -1,3 +1,5 @@
+import { Photo169Input } from '../components/Photo169Input'
+
 export default {
   name: 'creator',
   title: 'Créateur',
@@ -48,10 +50,11 @@ export default {
     // ── MÉDIAS ──────────────────────────────────────────────────────
     {
       name: 'photo',
-      title: 'Photo de profil',
-      description: 'Portrait carré ou format libre — apparaît dans la liste des créateurs',
+      title: 'Photo de profil (carte 16:9)',
+      description: 'Recadre au format 16:9 — c'est exactement le format des cartes dans la roue des créateurs.',
       type: 'image',
       options: { hotspot: true },
+      components: { input: Photo169Input },
     },
     {
       name: 'heroPhoto',
