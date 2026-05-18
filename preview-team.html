@@ -445,9 +445,9 @@
     const start = virtualScroll;
     const diff  = target - start;
     if (Math.abs(diff) < 0.5) { virtualScroll = target; render(); return; }
-    /* Durée proportionnelle à la distance : rapide pour 1 carte, plus long pour plusieurs */
+    /* Durée proportionnelle : 280ms pour 1 carte, +60ms par carte supplémentaire */
     const cards = Math.abs(diff / STEP_PX);
-    const dur   = Math.min(500, 260 + cards * 80);
+    const dur   = Math.min(480, 220 + cards * 60);
     const t0    = performance.now();
     function step(now) {
       const p = Math.min(1, (now - t0) / dur);
@@ -465,22 +465,40 @@
     smoothTo(targetPosition);
   }
 
-  /* ─ Wheel desktop — snap par carte, infini ─ */
+  /* ─ Wheel desktop — accumulation + snap par carte, infini ─
+     WHEEL_SENSITIVITY : px de deltaY pour avancer d'1 carte.
+     Trackpad (deltaY = 2-10 / event) → accumule avant de snap.
+     Souris (deltaY ≈ 100 / clic) → 1 clic = 1 carte immédiatement.
+     Gros coup / flick → plusieurs cartes d'un coup.
+  ─────────────────────────────────────────────────────────── */
+  const WHEEL_SENSITIVITY = 120;
+  let wheelBuffer  = 0;
   let wheelTimeout = null;
+
   window.addEventListener('wheel', (e) => {
     e.preventDefault();
     if (creators.length === 0) return;
     scrollHint.classList.add('fade');
 
-    const dir   = e.deltaY > 0 ? 1 : -1;
-    const speed = Math.abs(e.deltaY);
-    /* 1 carte pour un cran normal, jusqu'à 4 pour un gros coup de molette/trackpad */
-    const cards = speed > 300 ? Math.min(4, Math.ceil(speed / 150)) : 1;
+    let delta = e.deltaY;
+    if (e.deltaMode === 1) delta *= 40;   /* line → pixels */
+    if (e.deltaMode === 2) delta *= 800;  /* page → pixels */
 
-    targetPosition += dir * cards * STEP_PX;
-    /* Arrondi pour que la cible soit toujours pile sur une carte */
-    targetPosition = Math.round(targetPosition / STEP_PX) * STEP_PX;
-    smoothTo(targetPosition);
+    wheelBuffer += delta;
+
+    const cardsToMove = Math.trunc(wheelBuffer / WHEEL_SENSITIVITY);
+    if (cardsToMove !== 0) {
+      wheelBuffer  -= cardsToMove * WHEEL_SENSITIVITY;
+      targetPosition += cardsToMove * STEP_PX;
+      targetPosition  = Math.round(targetPosition / STEP_PX) * STEP_PX;
+      smoothTo(targetPosition);
+    }
+
+    clearTimeout(wheelTimeout);
+    wheelTimeout = setTimeout(() => {
+      wheelBuffer = 0;
+      snapToNearest();
+    }, 200);
   }, { passive: false });
 
   /* ─ Touch mobile / trackpad : delta cumulé ─ */
