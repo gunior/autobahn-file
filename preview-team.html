@@ -245,6 +245,9 @@
 
   <div class="scroll-hint" id="scrollHint">Scroll<br></div>
 
+  <!-- Overlay de transition page → profil -->
+  <div id="pageTransition" style="position:fixed;inset:0;z-index:999;background:#0a0a08;opacity:0;pointer-events:none;transition:opacity 0.35s ease;"></div>
+
   <script>
   /* ════════════════════════════════════════════════
      VERTICAL COVERFLOW
@@ -423,11 +426,26 @@
     if (bgVideo.readyState >= 3) bgVideo.classList.add('visible');
   }
 
+  const pageTransition = document.getElementById('pageTransition');
+
   /* ─ Click sur carte ─ */
   function onCardClick(i) {
     if (i === activeIdx) {
       const slug = nameToSlug(creators[i].name);
-      window.location.href = '/creators#' + slug;
+      const el   = cardEls[i];
+
+      /* 1. Zoom léger sur la carte active */
+      el.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.38s ease';
+      el.style.transform  = 'translate(-50%, -50%) scale(1.07)';
+
+      /* 2. Fade to black de la page entière */
+      pageTransition.style.pointerEvents = 'all';
+      setTimeout(() => { pageTransition.style.opacity = '1'; }, 80);
+
+      /* 3. Navigue après la transition */
+      setTimeout(() => {
+        window.location.href = '/creators#' + slug;
+      }, 420);
     } else {
       /* Chemin le plus court (infini) vers la carte cliquée */
       const N = creators.length;
@@ -471,7 +489,7 @@
      Souris (deltaY ≈ 100 / clic) → 1 clic = 1 carte immédiatement.
      Gros coup / flick → plusieurs cartes d'un coup.
   ─────────────────────────────────────────────────────────── */
-  const WHEEL_SENSITIVITY = 120;
+  const WHEEL_SENSITIVITY = 80;  /* 80px = 1 carte. Souris (~100px/clic) = snap immédiat. */
   let wheelBuffer  = 0;
   let wheelTimeout = null;
 
