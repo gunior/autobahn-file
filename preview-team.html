@@ -274,9 +274,36 @@
   let creators = [];
   let cardEls  = [];
   let activeIdx = -1;
-  let virtualScroll = 0;   /* position animée courante, non bornée */
-  let targetPosition = 0;  /* cible snap, multiple de STEP_PX, non bornée */
+  let virtualScroll = 0;
+  let targetPosition = 0;
   let snapRaf = null;
+
+  /* ── Focus mode : après 1s d'inactivité les cartes autour s'estompent ── */
+  let isFocused    = false;
+  let focusTimeout = null;
+
+  function scheduleFocus() {
+    clearTimeout(focusTimeout);
+    focusTimeout = setTimeout(() => {
+      isFocused = true;
+      cardEls.forEach(el => {
+        el.style.transition = 'opacity 0.7s ease';
+        el.style.opacity = el.classList.contains('active') ? '1' : '0.3';
+      });
+    }, 1000);
+  }
+
+  function resetFocus() {
+    clearTimeout(focusTimeout);
+    focusTimeout = null;
+    if (!isFocused) return;
+    isFocused = false;
+    /* Retire les overrides inline — render() reprend le contrôle immédiatement */
+    cardEls.forEach(el => {
+      el.style.transition = '';
+      el.style.opacity    = '';
+    });
+  }
 
   /* ─ Slug pour lien vers la profile page ─ */
   function nameToSlug(name) {
@@ -471,7 +498,7 @@
       virtualScroll = start + diff * ease;
       render();
       if (p < 1) snapRaf = requestAnimationFrame(step);
-      else { snapRaf = null; virtualScroll = target; render(); }
+      else { snapRaf = null; virtualScroll = target; render(); scheduleFocus(); }
     }
     snapRaf = requestAnimationFrame(step);
   }
@@ -495,6 +522,7 @@
     if (creators.length === 0) return;
     scrollHint.classList.add('fade');
 
+    resetFocus();
     const now = performance.now();
     if (now - lastWheelTime >= WHEEL_COOLDOWN) {
       lastWheelTime = now;
@@ -518,6 +546,7 @@
   }, { passive: true });
   window.addEventListener('touchmove', (e) => {
     if (creators.length === 0) return;
+    resetFocus();
     e.preventDefault();
     const y  = e.touches[0].clientY;
     const dy = touchLastY - y;
@@ -535,6 +564,7 @@
   window.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
       e.preventDefault();
+      resetFocus();
       targetPosition += STEP_PX;
       smoothTo(targetPosition);
       scrollHint.classList.add('fade');
