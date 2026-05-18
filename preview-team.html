@@ -81,9 +81,7 @@
       aspect-ratio: 16 / 9;
       transform-origin: center center;
       cursor: url('./assets/cursor-hand-hover.png') 9 0, pointer;
-      transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                  opacity 0.45s ease,
-                  filter 0.5s ease;
+      /* Pas de transition CSS ici — le JS gère tout via rAF pour éviter les conflits */
       pointer-events: all;
       will-change: transform, opacity;
     }
@@ -483,40 +481,31 @@
     smoothTo(targetPosition);
   }
 
-  /* ─ Wheel desktop — accumulation + snap par carte, infini ─
-     WHEEL_SENSITIVITY : px de deltaY pour avancer d'1 carte.
-     Trackpad (deltaY = 2-10 / event) → accumule avant de snap.
-     Souris (deltaY ≈ 100 / clic) → 1 clic = 1 carte immédiatement.
-     Gros coup / flick → plusieurs cartes d'un coup.
+  /* ─ Wheel desktop — cooldown + snap par carte, infini ─
+     1er event → avance immédiatement (0 délai).
+     Events suivants ignorés pendant WHEEL_COOLDOWN ms.
+     Scroll continu rapide → avance régulièrement à ce rythme.
   ─────────────────────────────────────────────────────────── */
-  const WHEEL_SENSITIVITY = 80;  /* 80px = 1 carte. Souris (~100px/clic) = snap immédiat. */
-  let wheelBuffer  = 0;
-  let wheelTimeout = null;
+  const WHEEL_COOLDOWN = 180; /* ms min entre deux avancements de carte */
+  let lastWheelTime = 0;
+  let wheelTimeout  = null;
 
   window.addEventListener('wheel', (e) => {
     e.preventDefault();
     if (creators.length === 0) return;
     scrollHint.classList.add('fade');
 
-    let delta = e.deltaY;
-    if (e.deltaMode === 1) delta *= 40;   /* line → pixels */
-    if (e.deltaMode === 2) delta *= 800;  /* page → pixels */
-
-    wheelBuffer += delta;
-
-    const cardsToMove = Math.trunc(wheelBuffer / WHEEL_SENSITIVITY);
-    if (cardsToMove !== 0) {
-      wheelBuffer  -= cardsToMove * WHEEL_SENSITIVITY;
-      targetPosition += cardsToMove * STEP_PX;
+    const now = performance.now();
+    if (now - lastWheelTime >= WHEEL_COOLDOWN) {
+      lastWheelTime = now;
+      const dir = e.deltaY > 0 ? 1 : -1;
+      targetPosition += dir * STEP_PX;
       targetPosition  = Math.round(targetPosition / STEP_PX) * STEP_PX;
       smoothTo(targetPosition);
     }
 
     clearTimeout(wheelTimeout);
-    wheelTimeout = setTimeout(() => {
-      wheelBuffer = 0;
-      snapToNearest();
-    }, 200);
+    wheelTimeout = setTimeout(() => snapToNearest(), 250);
   }, { passive: false });
 
   /* ─ Touch mobile / trackpad : delta cumulé ─ */
