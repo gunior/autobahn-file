@@ -1155,7 +1155,7 @@
     const cardEls = list.map((c, i) => {
       const el = document.createElement('div');
       el.className = 'wcard';
-      const photoSrc = c.heroPhoto || c.photo;
+      const photoSrc = c.photo;
       const inner = document.createElement('div');
       inner.className = 'wcard-inner';
       if (photoSrc) {
@@ -1241,7 +1241,11 @@ setBackground(list[dwActiveIdx]);
         el.style.transform   = 'translate(-50%,-50%) scale(1.07)';
         transition.style.pointerEvents = 'all';
         setTimeout(() => { transition.style.opacity = '1'; }, 80);
-        setTimeout(() => openProfile(list[i]), 420);
+        setTimeout(() => {
+          openProfile(list[i]);
+          transition.style.opacity = '0';
+          transition.style.pointerEvents = 'none';
+        }, 420);
       } else {
         const currentFloat = virtualScroll / STEP_PX;
         let offset = i - currentFloat;
