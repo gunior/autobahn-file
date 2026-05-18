@@ -338,11 +338,7 @@
   .wcard.active .wcard-info { transform: translateY(0); opacity: 1; }
   .wcard-name { font-family: 'Inter', sans-serif; font-weight: 600; font-size: clamp(16px,1.4vw,22px); letter-spacing: -0.01em; color: rgba(245,244,240,0.95); line-height: 1.05; }
   .wcard-role { font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245,244,240,0.55); margin-top: 8px; }
-  .dwheel-idx { position: fixed; right: 32px; top: 50%; transform: translateY(-50%); z-index: 50; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; font-family: 'Inter', sans-serif; pointer-events: none; }
-  .dwheel-idx-cur { font-weight: 600; font-size: 22px; color: rgba(245,244,240,0.9); letter-spacing: -0.02em; line-height: 1; }
-  .dwheel-idx-sep { width: 28px; height: 1px; background: rgba(245,244,240,0.25); margin: 4px 0; }
-  .dwheel-idx-tot { font-weight: 300; font-size: 13px; color: rgba(245,244,240,0.4); line-height: 1; }
-  .dwheel-hint { position: fixed; left: 50%; bottom: 56px; transform: translateX(-50%); z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
+.dwheel-hint { position: fixed; left: 50%; bottom: 56px; transform: translateX(-50%); z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
   .dwheel-hint.fade { opacity: 0; }
   .dwheel-hint::after { content: ''; width: 1px; height: 24px; background: linear-gradient(to bottom, rgba(245,244,240,0.6), transparent); animation: hintPulse 2s ease-in-out infinite; }
   @keyframes hintPulse { 0%,100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(8px); opacity: 0.2; } }
@@ -448,11 +444,7 @@
   <div class="wheel-stage-v" id="dWheelStage" style="display:none;">
     <div class="wheel-stage-v-inner" id="dWheelInner"></div>
   </div>
-  <div class="dwheel-idx" id="dWheelIdxBox" style="display:none;">
-    <div class="dwheel-idx-cur" id="dWheelCur">01</div>
-    <div class="dwheel-idx-sep"></div>
-    <div class="dwheel-idx-tot" id="dWheelTot">—</div>
-  </div>
+
   <div class="dwheel-hint" id="dWheelHint" style="display:none;">Scroll</div>
   <div id="dWheelTransition" style="position:fixed;inset:0;z-index:998;background:#0a0a08;opacity:0;pointer-events:none;transition:opacity 0.35s ease;"></div>
 
@@ -1116,13 +1108,10 @@
   /* ══ ROUE VERTICALE DESKTOP ══════════════════════════════════════════════ */
   function buildDesktopWheel(list) {
     const wheelInner = document.getElementById('dWheelInner');
-    const idxCur     = document.getElementById('dWheelCur');
-    const idxTot     = document.getElementById('dWheelTot');
     const hint       = document.getElementById('dWheelHint');
     const transition = document.getElementById('dWheelTransition');
 
-    document.getElementById('dWheelStage').style.display  = '';
-    document.getElementById('dWheelIdxBox').style.display = '';
+    document.getElementById('dWheelStage').style.display = '';
     hint.style.display = '';
     document.body.classList.add('video-active');
 
@@ -1141,7 +1130,6 @@
     let lastWheelTime  = 0;
     let wheelTimeout   = null;
 
-    idxTot.textContent = String(N).padStart(2, '0');
 
     /* ─ Focus mode ─ */
     function scheduleFocus() {
@@ -1218,8 +1206,7 @@
       const newActive = ((( (rawActive - base) >= THRESHOLD_IN ? base + 1 : base) % N) + N) % N;
       if (newActive !== dwActiveIdx) {
         dwActiveIdx = newActive;
-        idxCur.textContent = String(dwActiveIdx + 1).padStart(2, '0');
-        setBackground(list[dwActiveIdx]);
+setBackground(list[dwActiveIdx]);
       }
     }
 
