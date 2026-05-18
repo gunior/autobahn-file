@@ -312,6 +312,41 @@
     .footer-share-btn.copied .footer-share-label  { display: none; }
     .footer-share-btn.copied .footer-share-confirm { display: inline; }
 
+  /* ══ ROUE VERTICALE DESKTOP ══════════════════════════════════════ */
+  @media (min-width: 769px) {
+    .coverflow-wrap, #portraitsTitle, .page-subtitle { display: none !important; }
+  }
+  .wheel-stage-v {
+    position: fixed; inset: 0; z-index: 6;
+    display: flex; align-items: center; justify-content: center;
+    perspective: 1400px; pointer-events: none;
+  }
+  .wheel-stage-v-inner { position: relative; width: 100%; height: 100%; }
+  .wcard {
+    position: absolute; left: 50%; top: 50%;
+    width: clamp(320px, 42vw, 600px); aspect-ratio: 16 / 9;
+    transform-origin: center center;
+    cursor: url('./assets/cursor-hand-hover.png') 9 0, pointer;
+    pointer-events: all; will-change: transform, opacity;
+  }
+  .wcard-inner { position: relative; width: 100%; height: 100%; overflow: hidden; background: #1a1a18; }
+  .wcard-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .wcard-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 60px; color: rgba(245,244,240,0.15); letter-spacing: -0.02em; }
+  .wcard-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 45%, transparent 75%); opacity: 0; transition: opacity 0.4s ease; }
+  .wcard.active .wcard-overlay { opacity: 1; }
+  .wcard-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 18px 22px 22px; transform: translateY(8px); opacity: 0; transition: transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94) 0.05s, opacity 0.4s ease 0.05s; }
+  .wcard.active .wcard-info { transform: translateY(0); opacity: 1; }
+  .wcard-name { font-family: 'Inter', sans-serif; font-weight: 600; font-size: clamp(16px,1.4vw,22px); letter-spacing: -0.01em; color: rgba(245,244,240,0.95); line-height: 1.05; }
+  .wcard-role { font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245,244,240,0.55); margin-top: 8px; }
+  .dwheel-idx { position: fixed; right: 32px; top: 50%; transform: translateY(-50%); z-index: 50; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; font-family: 'Inter', sans-serif; pointer-events: none; }
+  .dwheel-idx-cur { font-weight: 600; font-size: 22px; color: rgba(245,244,240,0.9); letter-spacing: -0.02em; line-height: 1; }
+  .dwheel-idx-sep { width: 28px; height: 1px; background: rgba(245,244,240,0.25); margin: 4px 0; }
+  .dwheel-idx-tot { font-weight: 300; font-size: 13px; color: rgba(245,244,240,0.4); line-height: 1; }
+  .dwheel-hint { position: fixed; left: 50%; bottom: 56px; transform: translateX(-50%); z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
+  .dwheel-hint.fade { opacity: 0; }
+  .dwheel-hint::after { content: ''; width: 1px; height: 24px; background: linear-gradient(to bottom, rgba(245,244,240,0.6), transparent); animation: hintPulse 2s ease-in-out infinite; }
+  @keyframes hintPulse { 0%,100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(8px); opacity: 0.2; } }
+
   @media (max-width: 768px) {
     /* Cache les éléments desktop */
     .coverflow-wrap { display: none !important; }
@@ -408,6 +443,18 @@
 
   <h1 id="portraitsTitle"><span class="en">Team.</span><span class="fr">Tchim.</span></h1>
   <div class="coverflow-wrap" id="cfWrap"></div>
+
+  <!-- Roue verticale desktop -->
+  <div class="wheel-stage-v" id="dWheelStage" style="display:none;">
+    <div class="wheel-stage-v-inner" id="dWheelInner"></div>
+  </div>
+  <div class="dwheel-idx" id="dWheelIdxBox" style="display:none;">
+    <div class="dwheel-idx-cur" id="dWheelCur">01</div>
+    <div class="dwheel-idx-sep"></div>
+    <div class="dwheel-idx-tot" id="dWheelTot">—</div>
+  </div>
+  <div class="dwheel-hint" id="dWheelHint" style="display:none;">Scroll</div>
+  <div id="dWheelTransition" style="position:fixed;inset:0;z-index:998;background:#0a0a08;opacity:0;pointer-events:none;transition:opacity 0.35s ease;"></div>
 
   <!-- Bouton partager profil -->
   <button class="profile-share-btn" id="profileShareBtn" aria-label="Partager">
@@ -1066,6 +1113,220 @@
     renderWheel(0);
   }
 
+  /* ══ ROUE VERTICALE DESKTOP ══════════════════════════════════════════════ */
+  function buildDesktopWheel(list) {
+    const wheelInner = document.getElementById('dWheelInner');
+    const idxCur     = document.getElementById('dWheelCur');
+    const idxTot     = document.getElementById('dWheelTot');
+    const hint       = document.getElementById('dWheelHint');
+    const transition = document.getElementById('dWheelTransition');
+
+    document.getElementById('dWheelStage').style.display  = '';
+    document.getElementById('dWheelIdxBox').style.display = '';
+    hint.style.display = '';
+    document.body.classList.add('video-active');
+
+    const N              = list.length;
+    const STEP_PX        = 280;
+    const SHOW_RADIUS    = 4;
+    const THRESHOLD_IN   = 0.90;
+    const WHEEL_COOLDOWN = 320;
+
+    let virtualScroll = 0;
+    let targetPosition = 0;
+    let snapRaf        = null;
+    let dwActiveIdx    = -1;
+    let isFocused      = false;
+    let focusTimeout   = null;
+    let lastWheelTime  = 0;
+    let wheelTimeout   = null;
+
+    idxTot.textContent = String(N).padStart(2, '0');
+
+    /* ─ Focus mode ─ */
+    function scheduleFocus() {
+      clearTimeout(focusTimeout);
+      focusTimeout = setTimeout(() => {
+        isFocused = true;
+        cardEls.forEach(el => {
+          if (parseFloat(el.style.opacity || '0') < 0.05) return;
+          el.style.transition = 'opacity 0.7s ease';
+          el.style.opacity = el.classList.contains('active') ? '1' : '0.3';
+        });
+      }, 1000);
+    }
+    function resetFocus() {
+      clearTimeout(focusTimeout);
+      focusTimeout = null;
+      if (!isFocused) return;
+      isFocused = false;
+      cardEls.forEach(el => { el.style.transition = ''; el.style.opacity = ''; });
+    }
+
+    /* ─ Cartes ─ */
+    const cardEls = list.map((c, i) => {
+      const el = document.createElement('div');
+      el.className = 'wcard';
+      const photoSrc = c.heroPhoto || c.photo;
+      const inner = document.createElement('div');
+      inner.className = 'wcard-inner';
+      if (photoSrc) {
+        const img = document.createElement('img');
+        img.className = 'wcard-photo'; img.src = photoSrc;
+        img.alt = c.name || ''; img.loading = 'lazy';
+        inner.appendChild(img);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'wcard-placeholder';
+        ph.textContent = (c.name || '').split(' ').pop().charAt(0);
+        inner.appendChild(ph);
+      }
+      const ov = document.createElement('div'); ov.className = 'wcard-overlay';
+      inner.appendChild(ov);
+      const info = document.createElement('div'); info.className = 'wcard-info';
+      info.innerHTML = `<div class="wcard-name">${(c.name||'').split(' ').pop()}</div><div class="wcard-role">${c.role||''}</div>`;
+      inner.appendChild(info);
+      el.appendChild(inner);
+      el.addEventListener('click', () => onWCardClick(i));
+      wheelInner.appendChild(el);
+      return el;
+    });
+
+    /* ─ Render ─ */
+    function render() {
+      if (N === 0) return;
+      const idx = virtualScroll / STEP_PX;
+      cardEls.forEach((el, i) => {
+        let offset = i - idx;
+        offset = offset - N * Math.round(offset / N);
+        const absO = Math.abs(offset);
+        if (absO > SHOW_RADIUS) { el.style.opacity = '0'; el.style.pointerEvents = 'none'; el.style.transform = ''; return; }
+        const sign = offset === 0 ? 0 : (offset > 0 ? 1 : -1);
+        const translateY = offset * 220 + sign * Math.pow(absO, 1.2) * 55;
+        const scale   = Math.max(0.55, 1 - absO * 0.12);
+        const opacity = Math.max(0.08, 1 - absO * 0.26);
+        const rotateX = sign * Math.min(40, absO * 12);
+        el.style.opacity = opacity;
+        el.style.pointerEvents = absO < 0.6 ? 'all' : 'none';
+        el.style.zIndex = Math.round(100 - absO * 10);
+        el.style.transform = `translate(-50%, calc(-50% + ${translateY}px)) scale(${scale}) rotateX(${rotateX}deg)`;
+        el.classList.toggle('active', absO < 0.5);
+        el.style.filter = absO > 0.6 ? `blur(${Math.min(4,(absO-0.6)*4)}px)` : 'none';
+      });
+      const rawActive = virtualScroll / STEP_PX;
+      const base = Math.floor(rawActive);
+      const newActive = ((( (rawActive - base) >= THRESHOLD_IN ? base + 1 : base) % N) + N) % N;
+      if (newActive !== dwActiveIdx) {
+        dwActiveIdx = newActive;
+        idxCur.textContent = String(dwActiveIdx + 1).padStart(2, '0');
+        setBackground(list[dwActiveIdx]);
+      }
+    }
+
+    /* ─ Smooth scroll ─ */
+    function smoothTo(target) {
+      if (snapRaf) cancelAnimationFrame(snapRaf);
+      const start = virtualScroll, diff = target - start;
+      if (Math.abs(diff) < 0.5) { virtualScroll = target; render(); scheduleFocus(); return; }
+      const dur = Math.min(480, 220 + Math.abs(diff / STEP_PX) * 60);
+      const t0  = performance.now();
+      function step(now) {
+        const p    = Math.min(1, (now - t0) / dur);
+        const ease = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2,3)/2;
+        virtualScroll = start + diff * ease;
+        render();
+        if (p < 1) snapRaf = requestAnimationFrame(step);
+        else { snapRaf = null; virtualScroll = target; render(); scheduleFocus(); }
+      }
+      snapRaf = requestAnimationFrame(step);
+    }
+
+    function snapToNearest() {
+      targetPosition = Math.round(virtualScroll / STEP_PX) * STEP_PX;
+      smoothTo(targetPosition);
+    }
+
+    /* ─ Click carte ─ */
+    function onWCardClick(i) {
+      if (i === dwActiveIdx) {
+        const el = cardEls[i];
+        el.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+        el.style.transform   = 'translate(-50%,-50%) scale(1.07)';
+        transition.style.pointerEvents = 'all';
+        setTimeout(() => { transition.style.opacity = '1'; }, 80);
+        setTimeout(() => openProfile(list[i]), 420);
+      } else {
+        const currentFloat = virtualScroll / STEP_PX;
+        let offset = i - currentFloat;
+        offset = offset - N * Math.round(offset / N);
+        targetPosition = Math.round((virtualScroll + offset * STEP_PX) / STEP_PX) * STEP_PX;
+        smoothTo(targetPosition);
+      }
+    }
+
+    /* ─ Réinitialise l'overlay de transition quand on revient du profil ─ */
+    const _origClose = window._profileCloseHook;
+    document.getElementById('profileCloseBtn').addEventListener('click', () => {
+      transition.style.opacity = '0';
+      transition.style.pointerEvents = 'none';
+    }, { capture: true });
+
+    /* ─ Wheel ─ */
+    window.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (document.getElementById('profilePage').classList.contains('open')) return;
+      hint.classList.add('fade');
+      resetFocus();
+      const now = performance.now();
+      if (now - lastWheelTime >= WHEEL_COOLDOWN) {
+        lastWheelTime = now;
+        targetPosition += (e.deltaY > 0 ? 1 : -1) * STEP_PX;
+        targetPosition  = Math.round(targetPosition / STEP_PX) * STEP_PX;
+        smoothTo(targetPosition);
+      }
+      clearTimeout(wheelTimeout);
+      wheelTimeout = setTimeout(() => snapToNearest(), 250);
+    }, { passive: false });
+
+    /* ─ Touch ─ */
+    let tY0 = 0, tY1 = 0, tMoved = false;
+    window.addEventListener('touchstart', (e) => {
+      if (document.getElementById('profilePage').classList.contains('open')) return;
+      tY0 = e.touches[0].clientY; tY1 = tY0; tMoved = false;
+      if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (document.getElementById('profilePage').classList.contains('open')) return;
+      resetFocus(); e.preventDefault();
+      const y = e.touches[0].clientY;
+      virtualScroll += tY1 - y; tY1 = y;
+      if (Math.abs(y - tY0) > 6) tMoved = true;
+      render();
+    }, { passive: false });
+    window.addEventListener('touchend', () => { if (tMoved) snapToNearest(); });
+
+    /* ─ Clavier ─ */
+    window.addEventListener('keydown', (e) => {
+      if (document.getElementById('profilePage').classList.contains('open')) return;
+      if (e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault(); resetFocus(); targetPosition += STEP_PX; smoothTo(targetPosition);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault(); resetFocus(); targetPosition -= STEP_PX; smoothTo(targetPosition);
+      } else if (e.key === 'Enter') { onWCardClick(dwActiveIdx); }
+    });
+
+    window.addEventListener('resize', render);
+
+    /* ─ Apparition ─ */
+    render();
+    setBackground(list[0]);
+    const stageEl = document.getElementById('dWheelInner');
+    stageEl.style.opacity = '0'; stageEl.style.transform = 'translateY(60px)';
+    stageEl.style.transition = 'opacity 0.8s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94)';
+    requestAnimationFrame(() => { stageEl.style.opacity = '1'; stageEl.style.transform = 'translateY(0)'; });
+    scheduleFocus();
+  }
+
   /* ══ CHARGEMENT DES CRÉATEURS depuis creators.json (généré par build.js) ══ */
   fetch('./creators.json')
     .then(r => {
@@ -1102,37 +1363,8 @@
         return;
       }
 
-      /* ── Desktop : coverflow ── */
-      const wrap = document.getElementById('cfWrap');
-
-      creators.forEach(c => {
-        const card = document.createElement('div');
-        card.className = 'cf-card';
-        const mediaHTML = c.photo
-          ? `<img class="cf-photo" src="${c.photo}" alt="${c.name}" loading="lazy">`
-          : `<div class="cf-placeholder">${(c.name || '').split(' ').pop()}</div>`;
-        card.innerHTML = `
-          <div class="cf-card-inner">
-            ${mediaHTML}
-            <div class="cf-overlay"></div>
-            <div class="cf-info">
-              <div class="cf-name">${(c.name || '').split(' ').pop()}</div>
-              <div class="cf-role">${c.role || ''}</div>
-            </div>
-          </div>`;
-        card.addEventListener('mouseenter', () => {
-          setBackground(c);
-          document.getElementById('portraitsTitle').style.opacity = '0.3';
-        });
-        card.addEventListener('mouseleave', () => {
-          document.getElementById('portraitsTitle').style.opacity = '1';
-          clearBackground();
-        });
-        card.addEventListener('click', () => openProfile(c));
-        wrap.appendChild(card);
-      });
-
-      wrap.addEventListener('mouseleave', () => clearBackground());
+      /* ── Desktop : roue verticale CoverFlow ── */
+      buildDesktopWheel(creators);
     })
     .catch(err => console.warn('Créateurs non chargés :', err));
 
