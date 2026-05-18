@@ -273,10 +273,9 @@
   let creators = [];
   let cardEls  = [];
   let activeIdx = -1;
-  let virtualScroll = 0;
-  let targetScroll  = 0;
+  let virtualScroll = 0;   /* position animée courante, non bornée */
+  let targetPosition = 0;  /* cible snap, multiple de STEP_PX, non bornée */
   let snapRaf = null;
-  let lastInteraction = 0;
 
   /* ─ Slug pour lien vers la profile page ─ */
   function nameToSlug(name) {
@@ -329,7 +328,7 @@
 
     idxTotal.textContent = String(creators.length).padStart(2, '0');
     virtualScroll = 0;
-    targetScroll  = 0;
+    targetPosition = 0;
     render();
     /* Apparition : slide-up + fade-in du conteneur entier, sans animation interne de scroll */
     const stageEl = document.querySelector('.wheel-stage-inner');
@@ -344,13 +343,16 @@
 
   /* ─ Rendu visuel : positionne chaque carte dans la pile 3D ─ */
   function render() {
-    const idx = virtualScroll / STEP_PX;  /* float */
+    const N   = creators.length;
+    if (N === 0) return;
+    const idx = virtualScroll / STEP_PX;  /* float, non borné */
 
     cardEls.forEach((el, i) => {
-      const offset = i - idx;                       /* offset en unités de cartes */
-      const absO   = Math.abs(offset);
+      /* Offset infini : chemin le plus court autour de la boucle */
+      let offset = i - idx;
+      offset = offset - N * Math.round(offset / N);
+      const absO = Math.abs(offset);
 
-      /* Hors radius visible → masqué */
       if (absO > SHOW_RADIUS) {
         el.style.opacity = '0';
         el.style.pointerEvents = 'none';
@@ -359,22 +361,13 @@
       }
 
       const sign = offset === 0 ? 0 : (offset > 0 ? 1 : -1);
-
-      /* Translate Y proportionnel à l'offset, avec compression progressive
-         pour empiler les cartes éloignées sans chevauchement */
-      const yBase = offset * 220; /* px par cran de distance */
-      const yPull = sign * Math.pow(absO, 1.2) * 55; /* compression non-linéaire */
+      const yBase     = offset * 220;
+      const yPull     = sign * Math.pow(absO, 1.2) * 55;
       const translateY = yBase + yPull;
-
-      /* Scale et opacité dégressifs */
-      const scale   = Math.max(0.55, 1 - absO * 0.12);
-      const opacity = Math.max(0.08, 1 - absO * 0.26);
-
-      /* Inclinaison perspective : max 40° pour rester lisible */
-      const rotateX = sign * Math.min(40, absO * 12);
-
-      /* z-index décroissant avec la distance pour que l'active soit toujours dessus */
-      const zIndex = Math.round(100 - absO * 10);
+      const scale     = Math.max(0.55, 1 - absO * 0.12);
+      const opacity   = Math.max(0.08, 1 - absO * 0.26);
+      const rotateX   = sign * Math.min(40, absO * 12);
+      const zIndex    = Math.round(100 - absO * 10);
 
       el.style.opacity = opacity;
       el.style.pointerEvents = absO < 0.6 ? 'all' : 'none';
@@ -384,17 +377,11 @@
       el.style.filter = absO > 0.6 ? `blur(${Math.min(4, (absO - 0.6) * 4)}px)` : 'none';
     });
 
-    /* Détection du créateur actif avec hystérésis 90% */
-    const base    = Math.floor(idx);
-    const next    = base + 1;
-    const progress = idx - base;
-    let newActive;
-    if (progress >= THRESHOLD_IN)        newActive = next;
-    else if (progress <= THRESHOLD_OUT)  newActive = base;
-    else if (activeIdx === base || activeIdx === next) newActive = activeIdx;
-    else newActive = base;
-
-    newActive = Math.max(0, Math.min(creators.length - 1, newActive));
+    /* Active index wrappé (infini) */
+    const rawBase = Math.floor(idx);
+    const progress = idx - rawBase;
+    const rawActive = progress >= THRESHOLD_IN ? rawBase + 1 : rawBase;
+    const newActive = ((rawActive % N) + N) % N;
 
     if (newActive !== activeIdx) {
       activeIdx = newActive;
@@ -439,24 +426,29 @@
   /* ─ Click sur carte ─ */
   function onCardClick(i) {
     if (i === activeIdx) {
-      /* déjà active → navigue vers la profile page existante */
       const slug = nameToSlug(creators[i].name);
       window.location.href = '/creators#' + slug;
     } else {
-      /* sinon, snap vers cette carte */
-      smoothTo(i * STEP_PX);
+      /* Chemin le plus court (infini) vers la carte cliquée */
+      const N = creators.length;
+      const currentFloat = virtualScroll / STEP_PX;
+      let offset = i - currentFloat;
+      offset = offset - N * Math.round(offset / N);
+      targetPosition = Math.round((virtualScroll + offset * STEP_PX) / STEP_PX) * STEP_PX;
+      smoothTo(targetPosition);
     }
   }
 
   /* ─ Smooth scroll vers une position ─ */
   function smoothTo(target) {
     if (snapRaf) cancelAnimationFrame(snapRaf);
-    targetScroll = target;
-    const start  = virtualScroll;
-    const diff   = target - start;
+    const start = virtualScroll;
+    const diff  = target - start;
     if (Math.abs(diff) < 0.5) { virtualScroll = target; render(); return; }
-    const dur = 480;
-    const t0  = performance.now();
+    /* Durée proportionnelle à la distance : rapide pour 1 carte, plus long pour plusieurs */
+    const cards = Math.abs(diff / STEP_PX);
+    const dur   = Math.min(500, 260 + cards * 80);
+    const t0    = performance.now();
     function step(now) {
       const p = Math.min(1, (now - t0) / dur);
       const ease = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3) / 2;
@@ -469,30 +461,26 @@
   }
 
   function snapToNearest() {
-    const idx = Math.round(virtualScroll / STEP_PX);
-    const clamped = Math.max(0, Math.min(creators.length - 1, idx));
-    smoothTo(clamped * STEP_PX);
+    targetPosition = Math.round(virtualScroll / STEP_PX) * STEP_PX;
+    smoothTo(targetPosition);
   }
 
-  /* ─ Wheel desktop ─ */
-  let wheelAccumulator = 0;
+  /* ─ Wheel desktop — snap par carte, infini ─ */
   let wheelTimeout = null;
   window.addEventListener('wheel', (e) => {
     e.preventDefault();
     if (creators.length === 0) return;
     scrollHint.classList.add('fade');
-    lastInteraction = Date.now();
 
-    if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
+    const dir   = e.deltaY > 0 ? 1 : -1;
+    const speed = Math.abs(e.deltaY);
+    /* 1 carte pour un cran normal, jusqu'à 4 pour un gros coup de molette/trackpad */
+    const cards = speed > 300 ? Math.min(4, Math.ceil(speed / 150)) : 1;
 
-    /* Accumule pour éviter le snap permanent : un cran de scroll trackpad
-       = un mouvement progressif, on snap quand l'inertie s'arrête */
-    virtualScroll = Math.max(0, Math.min((creators.length - 1) * STEP_PX,
-                              virtualScroll + e.deltaY * 0.8));
-    render();
-
-    clearTimeout(wheelTimeout);
-    wheelTimeout = setTimeout(() => snapToNearest(), 140);
+    targetPosition += dir * cards * STEP_PX;
+    /* Arrondi pour que la cible soit toujours pile sur une carte */
+    targetPosition = Math.round(targetPosition / STEP_PX) * STEP_PX;
+    smoothTo(targetPosition);
   }, { passive: false });
 
   /* ─ Touch mobile / trackpad : delta cumulé ─ */
@@ -510,8 +498,7 @@
     const dy = touchLastY - y;
     touchLastY = y;
     if (Math.abs(y - touchStartY) > 6) touchMoved = true;
-    virtualScroll = Math.max(0, Math.min((creators.length - 1) * STEP_PX,
-                              virtualScroll + dy));
+    virtualScroll = virtualScroll + dy;
     render();
     scrollHint.classList.add('fade');
   }, { passive: false });
@@ -523,11 +510,13 @@
   window.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
       e.preventDefault();
-      smoothTo(Math.min(creators.length - 1, activeIdx + 1) * STEP_PX);
+      targetPosition += STEP_PX;
+      smoothTo(targetPosition);
       scrollHint.classList.add('fade');
     } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
       e.preventDefault();
-      smoothTo(Math.max(0, activeIdx - 1) * STEP_PX);
+      targetPosition -= STEP_PX;
+      smoothTo(targetPosition);
       scrollHint.classList.add('fade');
     } else if (e.key === 'Enter') {
       if (activeIdx >= 0) onCardClick(activeIdx);
