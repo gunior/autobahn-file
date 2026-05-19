@@ -67,8 +67,8 @@ html::-webkit-scrollbar { display: none; } /* Chrome / Safari / Edge */
    COULEURS — MODE CLAIR
    ============================================================ */
 :root {
-  --c-bg:        #f5f4f0;
-  --c-surface:   #e8e6e0;
+  --c-bg:        #ffffff;
+  --c-surface:   #f0eeea;
   --c-ink:       #1a1a18;
   --c-slate:     #6b6860;
   --c-ash:       rgba(26, 26, 24, 0.85);

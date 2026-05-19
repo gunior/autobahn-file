@@ -11,7 +11,7 @@
   <style>
 
     html, body { width: 100%; height: 100%; overflow: hidden; }
-    body { background: #EDE8E3; color: #1a1a18; }
+    body { background: #ffffff; color: #1a1a18; }
     html[data-theme="dark"] body { background: #141412; color: rgba(245,244,240,0.92); }
 
     /* ══ BG VIDÉO ══ */
@@ -362,7 +362,7 @@
   body.video-active .dwheel-info-name { color: rgba(245,244,240,0.95); text-shadow: 0 1px 18px rgba(0,0,0,0.55), 0 0 6px rgba(0,0,0,0.3); }
   .dwheel-info-role {
     font-family: 'Inter', sans-serif;
-    font-weight: 500;
+    font-weight: 700;
     font-size: 11px;
     letter-spacing: 0.13em;
     text-transform: uppercase;
@@ -387,15 +387,13 @@
     border: 1px solid currentColor;
     border-radius: 0;
     cursor: url('./assets/cursor-hand-hover.png') 9 0, pointer;
-    transition: background 0.22s, color 0.22s;
+    transition: background 0.22s, color 0.22s, border-color 0.22s;
     text-shadow: none;
   }
   body:not(.video-active) .dwheel-info-cta { color: rgba(26,26,24,0.65); }
-  body:not(.video-active) .dwheel-info-cta:hover { background: rgba(26,26,24,0.07); }
   html[data-theme="dark"] body:not(.video-active) .dwheel-info-cta { color: rgba(245,244,240,0.6); }
-  html[data-theme="dark"] body:not(.video-active) .dwheel-info-cta:hover { background: rgba(245,244,240,0.08); }
   body.video-active .dwheel-info-cta { color: rgba(245,244,240,0.7); }
-  body.video-active .dwheel-info-cta:hover { background: rgba(245,244,240,0.1); }
+  .dwheel-info-cta:hover { background: #ffffff; color: #1a1a18; border-color: #ffffff; }
 .dwheel-hint { position: fixed; left: clamp(150px, 16vw, 250px); bottom: 56px; transform: translateX(-50%); z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
   .dwheel-hint.fade { opacity: 0; }
   .dwheel-hint::after { content: ''; width: 1px; height: 24px; background: linear-gradient(to bottom, rgba(245,244,240,0.6), transparent); animation: hintPulse 2s ease-in-out infinite; }

@@ -769,6 +769,45 @@
   }
   document.getElementById('labCanvas').addEventListener('click', handleLabClick);
   document.getElementById('labArchive').addEventListener('click', handleLabClick);
+
+  /* ── Bandeau header coloré — light mode uniquement ── */
+  (function() {
+    const PAIRS = [
+      ['#E59194', '#0249F4'],
+      ['#B699F6', '#D44120'],
+      ['#CFF959', '#343C27'],
+      ['#343C27', '#B699F6'],
+      ['#D54020', '#E59194'],
+      ['#0249F4', '#B699F6'],
+    ];
+
+    const header = document.querySelector('.page-header');
+    if (!header) return;
+
+    const pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
+    const title = header.querySelector('.page-title');
+    const desc  = header.querySelector('.page-desc');
+
+    function applyColors() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        header.style.background  = '';
+        if (title) title.style.color = '';
+        if (desc)  desc.style.color  = '';
+      } else {
+        header.style.background  = pair[0];
+        if (title) title.style.color = pair[1];
+        if (desc)  desc.style.color  = pair[1];
+      }
+    }
+
+    applyColors();
+
+    new MutationObserver(applyColors).observe(
+      document.documentElement,
+      { attributes: true, attributeFilter: ['data-theme'] }
+    );
+  })();
   </script>
 
 </body>
