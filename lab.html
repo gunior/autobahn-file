@@ -26,7 +26,7 @@
     }
     .page-desc {
       font-size: 14px; color: var(--c-slate); max-width: 280px;
-      line-height: 1.75; text-align: right; padding-bottom: 8px;
+      line-height: 1.3; font-weight: 500; text-align: right; padding-bottom: 8px;
     }
 
     /* ── Lab canvas ── */
@@ -770,7 +770,7 @@
   document.getElementById('labCanvas').addEventListener('click', handleLabClick);
   document.getElementById('labArchive').addEventListener('click', handleLabClick);
 
-  /* ── Bandeau header coloré — light mode uniquement ── */
+  /* ── Bandeau + nav colorés — light mode uniquement, deux paires différentes ── */
   (function() {
     const PAIRS = [
       ['#E59194', '#0249F4'],
@@ -783,22 +783,76 @@
 
     const header = document.querySelector('.page-header');
     if (!header) return;
-
-    const pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
     const title = header.querySelector('.page-title');
     const desc  = header.querySelector('.page-desc');
 
+    /* Deux indices différents garantis */
+    const idx1 = Math.floor(Math.random() * PAIRS.length);
+    let   idx2 = Math.floor(Math.random() * (PAIRS.length - 1));
+    if (idx2 >= idx1) idx2++;
+    const pair1 = PAIRS[idx1]; /* bandeau header */
+    const pair2 = PAIRS[idx2]; /* nav             */
+
     function applyColors() {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+      /* Supprime le style injecté précédemment */
+      const prev = document.getElementById('lab-dyn-style');
+      if (prev) prev.remove();
+
       if (isDark) {
-        header.style.background  = '';
+        header.style.background      = '';
+        header.style.borderBottomColor = '';
         if (title) title.style.color = '';
         if (desc)  desc.style.color  = '';
-      } else {
-        header.style.background  = pair[0];
-        if (title) title.style.color = pair[1];
-        if (desc)  desc.style.color  = pair[1];
+        return;
       }
+
+      /* ── Bandeau header ── */
+      header.style.background        = pair1[0];
+      header.style.borderBottomColor = 'transparent'; /* retire la ligne basse */
+      if (title) title.style.color   = pair1[1];
+      if (desc)  desc.style.color    = pair1[1];
+
+      /* ── Nav — injection d'un <style> dynamique ── */
+      const s = document.createElement('style');
+      s.id = 'lab-dyn-style';
+      s.textContent = `
+        html[data-theme="light"] nav {
+          background: ${pair2[0]} !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          border-bottom-color: transparent !important;
+        }
+        html[data-theme="light"] nav .nav-links a {
+          color: ${pair2[1]}99 !important;
+          border-bottom-color: transparent !important;
+        }
+        html[data-theme="light"] nav .nav-links a:hover,
+        html[data-theme="light"] nav .nav-links a.active {
+          color: ${pair2[1]} !important;
+          border-bottom-color: ${pair2[1]} !important;
+        }
+        html[data-theme="light"] nav .lang-btn {
+          color: ${pair2[1]}88 !important;
+          border-color: ${pair2[1]}44 !important;
+        }
+        html[data-theme="light"] nav .lang-btn.active {
+          background: ${pair2[1]} !important;
+          color: ${pair2[0]} !important;
+        }
+        html[data-theme="light"] nav .lang-switch {
+          border-color: ${pair2[1]}44 !important;
+        }
+        html[data-theme="light"] nav .theme-toggle {
+          background: ${pair2[1]}22 !important;
+          border-color: ${pair2[1]}44 !important;
+        }
+        html[data-theme="light"] nav .theme-toggle::after {
+          background: ${pair2[1]}cc !important;
+        }
+      `;
+      document.head.appendChild(s);
     }
 
     applyColors();
