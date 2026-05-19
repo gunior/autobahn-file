@@ -70,9 +70,9 @@ html {
   --c-surface:   #e8e6e0;
   --c-ink:       #1a1a18;
   --c-slate:     #6b6860;
-  --c-ash:       #c8c5bc;
+  --c-ash:       rgba(26, 26, 24, 0.85);
   --c-accent:    #0038FF;
-  --c-border:    rgba(26, 26, 24, 0.12);
+  --c-border:    rgba(26, 26, 24, 0.85);
   --nav-bg:      rgba(245, 244, 240, 0.92);
 }
 
