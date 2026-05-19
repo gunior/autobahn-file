@@ -358,38 +358,43 @@
   }
   body:not(.video-active) .dwheel-info-name { color: #1a1a18; }
   html[data-theme="dark"] body:not(.video-active) .dwheel-info-name { color: rgba(245,244,240,0.92); }
-  body.video-active .dwheel-info-name { color: rgba(245,244,240,0.95); }
+  body.video-active .dwheel-info-name { color: rgba(245,244,240,0.95); text-shadow: 0 1px 18px rgba(0,0,0,0.55), 0 0 6px rgba(0,0,0,0.3); }
   .dwheel-info-role {
     font-family: 'Inter', sans-serif;
     font-weight: 300;
     font-size: 11px;
     letter-spacing: 0.13em;
     text-transform: uppercase;
-    margin-top: 12px;
+    margin-top: 5px;
     transition: color 0.6s;
   }
   body:not(.video-active) .dwheel-info-role { color: rgba(26,26,24,0.45); }
   html[data-theme="dark"] body:not(.video-active) .dwheel-info-role { color: rgba(245,244,240,0.4); }
-  body.video-active .dwheel-info-role { color: rgba(245,244,240,0.45); }
+  body.video-active .dwheel-info-role { color: rgba(245,244,240,0.45); text-shadow: 0 1px 12px rgba(0,0,0,0.5); }
   .dwheel-info-cta {
     font-family: 'Inter', sans-serif;
-    font-weight: 400;
-    font-size: 13px;
-    letter-spacing: 0.04em;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     margin-top: 22px;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    text-decoration: none;
+    gap: 8px;
+    padding: 10px 20px;
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 0;
     cursor: url('./assets/cursor-hand-hover.png') 9 0, pointer;
-    transition: opacity 0.2s;
-    border-bottom: 1px solid currentColor;
-    padding-bottom: 2px;
+    transition: background 0.22s, color 0.22s;
+    text-shadow: none;
   }
-  body:not(.video-active) .dwheel-info-cta { color: rgba(26,26,24,0.6); }
-  html[data-theme="dark"] body:not(.video-active) .dwheel-info-cta { color: rgba(245,244,240,0.55); }
-  body.video-active .dwheel-info-cta { color: rgba(245,244,240,0.6); }
-  .dwheel-info-cta:hover { opacity: 0.75; }
+  body:not(.video-active) .dwheel-info-cta { color: rgba(26,26,24,0.65); }
+  body:not(.video-active) .dwheel-info-cta:hover { background: rgba(26,26,24,0.07); }
+  html[data-theme="dark"] body:not(.video-active) .dwheel-info-cta { color: rgba(245,244,240,0.6); }
+  html[data-theme="dark"] body:not(.video-active) .dwheel-info-cta:hover { background: rgba(245,244,240,0.08); }
+  body.video-active .dwheel-info-cta { color: rgba(245,244,240,0.7); }
+  body.video-active .dwheel-info-cta:hover { background: rgba(245,244,240,0.1); }
 .dwheel-hint { position: fixed; left: clamp(150px, 16vw, 250px); bottom: 56px; transform: translateX(-50%); z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
   .dwheel-hint.fade { opacity: 0; }
   .dwheel-hint::after { content: ''; width: 1px; height: 24px; background: linear-gradient(to bottom, rgba(245,244,240,0.6), transparent); animation: hintPulse 2s ease-in-out infinite; }
@@ -1194,13 +1199,13 @@
       const c = list[dwActiveIdx];
       const isFr = document.body.classList.contains('lang-fr');
       const ctaText = isFr ? 'Découvrir le profil' : 'View profile';
+      const firstName = (c.name || '').split(' ')[0];
       infoPanel.innerHTML = `
-        <div class="dwheel-info-name">${c.name || ''}</div>
+        <div class="dwheel-info-name">${firstName}</div>
         <div class="dwheel-info-role">${c.role || ''}</div>
-        <a class="dwheel-info-cta" href="#${nameToSlug(c.name || '')}">${ctaText} ↗</a>
+        <button class="dwheel-info-cta">${ctaText} ↗</button>
       `;
-      infoPanel.querySelector('.dwheel-info-cta').addEventListener('click', (e) => {
-        e.preventDefault();
+      infoPanel.querySelector('.dwheel-info-cta').addEventListener('click', () => {
         onWCardClick(dwActiveIdx);
       });
     }
@@ -1212,8 +1217,15 @@
         isFocused = true;
         cardEls.forEach(el => {
           if (parseFloat(el.style.opacity || '0') < 0.05) return;
-          el.style.transition = 'opacity 0.7s ease';
-          el.style.opacity = el.classList.contains('active') ? '1' : '0.3';
+          if (el.classList.contains('active')) {
+            el.style.transition = 'opacity 0.6s ease, translate 0.55s cubic-bezier(0.25,0.46,0.45,0.94), scale 0.55s cubic-bezier(0.25,0.46,0.45,0.94)';
+            el.style.opacity  = '1';
+            el.style.translate = '26px 0';
+            el.style.scale    = '1.06';
+          } else {
+            el.style.transition = 'opacity 0.7s ease';
+            el.style.opacity = '0.3';
+          }
         });
         updateInfoPanel();
         infoPanel.classList.add('visible');
@@ -1224,7 +1236,7 @@
       focusTimeout = null;
       if (!isFocused) return;
       isFocused = false;
-      cardEls.forEach(el => { el.style.transition = ''; el.style.opacity = ''; });
+      cardEls.forEach(el => { el.style.transition = ''; el.style.opacity = ''; el.style.translate = ''; el.style.scale = ''; });
       infoPanel.classList.remove('visible');
     }
 
