@@ -1214,16 +1214,34 @@
       clearTimeout(focusTimeout);
       focusTimeout = setTimeout(() => {
         isFocused = true;
-        cardEls.forEach(el => {
+        cardEls.forEach((el, i) => {
           if (parseFloat(el.style.opacity || '0') < 0.05) return;
           if (el.classList.contains('active')) {
-            el.style.transition = 'opacity 0.65s ease, translate 0.7s cubic-bezier(0.16,1,0.3,1), scale 0.7s cubic-bezier(0.16,1,0.3,1)';
-            el.style.opacity  = '1';
-            el.style.translate = '42px 0';
-            el.style.scale    = '1.06';
+            /* Carte active : décalage droit + zoom.
+               Le scale(1.06) ferait monter la carte de 3% de sa hauteur
+               (expansion symétrique depuis le centre). On compense en Y
+               pour que le bord haut reste fixe et la carte parte
+               uniquement vers la droite. */
+            const h    = el.getBoundingClientRect().height;
+            const s    = 1.06;
+            const yComp = (h * (s - 1) / 2).toFixed(1); /* pousse légèrement vers le bas */
+            el.style.transition = 'opacity 0.65s ease, translate 0.7s cubic-bezier(0.16,1,0.3,1), scale 0.7s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease';
+            el.style.opacity    = '1';
+            el.style.translate  = `42px ${yComp}px`;
+            el.style.scale      = String(s);
+            el.style.filter     = 'none';
           } else {
-            el.style.transition = 'opacity 0.7s ease';
-            el.style.opacity = '0.3';
+            /* Cartes autour : plus loin = plus à gauche + plus sombre + plus flou */
+            let dist = i - dwActiveIdx;
+            dist = dist - N * Math.round(dist / N); /* distance circulaire */
+            const absD    = Math.abs(dist);
+            const opacity = Math.max(0.04, 0.22 * Math.pow(0.55, absD - 1));
+            const blurPx  = absD * 2;
+            const shiftPx = absD * 14;
+            el.style.transition = 'opacity 0.65s ease, translate 0.65s cubic-bezier(0.16,1,0.3,1), filter 0.65s ease';
+            el.style.opacity    = opacity.toFixed(2);
+            el.style.translate  = `-${shiftPx}px 0`;
+            el.style.filter     = `blur(${blurPx}px)`;
           }
         });
         updateInfoPanel();
@@ -1236,7 +1254,13 @@
       focusTimeout = null;
       if (!isFocused) return;
       isFocused = false;
-      cardEls.forEach(el => { el.style.transition = ''; el.style.opacity = ''; el.style.translate = ''; el.style.scale = ''; });
+      cardEls.forEach(el => {
+        el.style.transition = '';
+        el.style.opacity    = '';
+        el.style.translate  = '';
+        el.style.scale      = '';
+        el.style.filter     = '';
+      });
       /* Fade-out rapide du panneau */
       infoPanel.style.transition = 'opacity 0.15s ease, transform 0.2s ease';
       infoPanel.classList.remove('visible');
