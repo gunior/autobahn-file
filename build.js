@@ -21,13 +21,33 @@ const DATASET    = process.env.SANITY_DATASET || 'production';
  * transformation à la volée (auto=format → WebP/AVIF si supporté, fit=max
  * préserve le ratio, q= la qualité, w= la largeur max). Cache CDN ensuite,
  * donc le coût n'est payé qu'à la 1ʳᵉ requête. */
-const IMG_PHOTO     = '?auto=format&fit=max&q=85&w=400';   // mini-cartes carousel + roue mobile
-const IMG_HERO      = '?auto=format&fit=max&q=85&w=1920';  // bannière profil + poster vidéo + fallback co lente
+const IMG_HERO      = '?auto=format&fit=max&q=85&w=1920';  // bannière profil + poster vidéo
 const IMG_PROJECT   = '?auto=format&fit=max&q=85&w=1200';  // thumbnails portfolio (grille 2 col desktop)
+
+/* Applique le crop Sanity (rect) à l'URL CDN → produit une image 16:9 nette.
+   Si pas de crop défini, fallback sur fit=crop centré avec hotspot. */
+function buildPhotoUrl(baseUrl, crop, hotspot, origW, origH) {
+  if (!baseUrl) return null;
+  if (crop && origW && origH) {
+    const x = Math.round(origW * (crop.left   || 0));
+    const y = Math.round(origH * (crop.top    || 0));
+    const w = Math.round(origW * (1 - (crop.right  || 0) - (crop.left || 0)));
+    const h = Math.round(origH * (1 - (crop.bottom || 0) - (crop.top  || 0)));
+    return `${baseUrl}?rect=${x},${y},${w},${h}&fit=crop&auto=format&q=85&w=1200`;
+  }
+  // Pas de crop manuel : laisse le CDN centrer sur le hotspot si dispo
+  const fpx = hotspot?.x ?? 0.5;
+  const fpy = hotspot?.y ?? 0.5;
+  return `${baseUrl}?fit=crop&crop=focalpoint&fp-x=${fpx}&fp-y=${fpy}&auto=format&q=85&w=1200`;
+}
 
 const GROQ = `*[_type == "creator"] | order(order asc) {
   name, email, role, bio, bioFr,
-  "photo":                  photo.asset->url + "${IMG_PHOTO}",
+  "photoBase":   photo.asset->url,
+  "photoCrop":   photo.crop,
+  "photoHotspot":photo.hotspot,
+  "photoW":      photo.asset->metadata.dimensions.width,
+  "photoH":      photo.asset->metadata.dimensions.height,
   "heroPhoto":              heroPhoto.asset->url + "${IMG_HERO}",
   "showreel":               showreel.asset->url,
   "showreelOptimizedWebm":  showreelOptimizedWebm.asset->url,
@@ -230,8 +250,14 @@ async function build() {
   generateStudioManifest();
 
   // Creators depuis Sanity
-  const creators = await fetchCreators();
-  if (creators !== null) {
+  const rawCreators = await fetchCreators();
+  if (rawCreators !== null) {
+    // Calcule l'URL photo finale avec le crop Sanity appliqué
+    const creators = rawCreators.map(c => {
+      const photo = buildPhotoUrl(c.photoBase, c.photoCrop, c.photoHotspot, c.photoW, c.photoH);
+      const { photoBase, photoCrop, photoHotspot, photoW, photoH, ...rest } = c;
+      return { ...rest, photo };
+    });
     fs.writeFileSync('creators.json', JSON.stringify(creators, null, 2));
     console.log(`✓  Creators — ${creators.length} profils récupérés depuis Sanity`);
   }
