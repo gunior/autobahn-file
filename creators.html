@@ -344,10 +344,11 @@
     z-index: 7;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.6s ease;
+    transition: opacity 0.65s ease, transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
     max-width: clamp(200px, 38vw, 520px);
   }
   .dwheel-info-panel.visible { opacity: 1; pointer-events: all; }
+  .dwheel-info-panel.shifted { transform: translateY(-50%) translateX(42px); }
   .dwheel-info-name {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
@@ -361,7 +362,7 @@
   body.video-active .dwheel-info-name { color: rgba(245,244,240,0.95); text-shadow: 0 1px 18px rgba(0,0,0,0.55), 0 0 6px rgba(0,0,0,0.3); }
   .dwheel-info-role {
     font-family: 'Inter', sans-serif;
-    font-weight: 300;
+    font-weight: 500;
     font-size: 11px;
     letter-spacing: 0.13em;
     text-transform: uppercase;
@@ -1199,7 +1200,7 @@
       const c = list[dwActiveIdx];
       const isFr = document.body.classList.contains('lang-fr');
       const ctaText = isFr ? 'Découvrir le profil' : 'View profile';
-      const firstName = (c.name || '').split(' ')[0];
+      const firstName = (c.name || '').trim().split(' ').pop();
       infoPanel.innerHTML = `
         <div class="dwheel-info-name">${firstName}</div>
         <div class="dwheel-info-role">${c.role || ''}</div>
@@ -1218,9 +1219,9 @@
         cardEls.forEach(el => {
           if (parseFloat(el.style.opacity || '0') < 0.05) return;
           if (el.classList.contains('active')) {
-            el.style.transition = 'opacity 0.6s ease, translate 0.55s cubic-bezier(0.25,0.46,0.45,0.94), scale 0.55s cubic-bezier(0.25,0.46,0.45,0.94)';
+            el.style.transition = 'opacity 0.65s ease, translate 0.6s cubic-bezier(0.25,0.46,0.45,0.94), scale 0.6s cubic-bezier(0.25,0.46,0.45,0.94)';
             el.style.opacity  = '1';
-            el.style.translate = '26px 0';
+            el.style.translate = '42px 0';
             el.style.scale    = '1.06';
           } else {
             el.style.transition = 'opacity 0.7s ease';
@@ -1229,7 +1230,8 @@
         });
         updateInfoPanel();
         infoPanel.classList.add('visible');
-      }, 500);
+        infoPanel.classList.add('shifted');
+      }, 800);
     }
     function resetFocus() {
       clearTimeout(focusTimeout);
@@ -1238,6 +1240,7 @@
       isFocused = false;
       cardEls.forEach(el => { el.style.transition = ''; el.style.opacity = ''; el.style.translate = ''; el.style.scale = ''; });
       infoPanel.classList.remove('visible');
+      infoPanel.classList.remove('shifted');
     }
 
     /* ─ Cartes ─ */

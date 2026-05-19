@@ -155,45 +155,6 @@
       to   { transform: translateY(0);   opacity: 1; }
     }
 
-    /* Méta — bas de page (laisse 48px pour le mini-footer global) */
-    .hero-meta {
-      position: absolute;
-      bottom: 48px;
-      left: var(--space-lg, 48px);
-      right: var(--space-lg, 48px);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-top: 0.5px solid rgba(245, 244, 240, 0.15);
-      padding-top: var(--space-sm, 16px);
-    }
-    .meta-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .meta-item {
-      font-family: 'Inter', sans-serif;
-      font-weight: 300;
-      font-size: var(--fs-micro, 10px);
-      letter-spacing: var(--ls-wide, 0.1em);
-      text-transform: uppercase;
-      color: rgba(245, 244, 240, 0.4);
-    }
-    .meta-dot {
-      width: 2px; height: 2px;
-      border-radius: 50%;
-      background: rgba(245, 244, 240, 0.3);
-    }
-
-    /* Logo meta */
-    .meta-logo {
-      height: 10px;
-      width: auto;
-      display: block;
-      filter: brightness(0) invert(1);
-      opacity: 0.4;
-    }
 
 
   @media (max-width: 768px) {
@@ -205,27 +166,6 @@
     .hero-title {
       font-size: clamp(32px, 9vw, 56px);
     }
-    /* Hero-meta sur mobile : on garde la disposition row (text à gauche +
-       logo à droite) au lieu de basculer en column qui pousserait tout
-       à gauche. Plus serré, fonts plus petites. */
-    .hero-meta {
-      left: var(--space-lg, 20px);
-      right: var(--space-lg, 20px);
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding-top: 10px;
-    }
-    .meta-row {
-      flex-wrap: wrap;
-      gap: 6px;
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-    .meta-item { font-size: 8px; letter-spacing: 0.08em; }
-    .meta-dot  { width: 1.5px; height: 1.5px; }
-    .meta-logo { height: 8px; flex-shrink: 0; }
 
     /* Hero title : sur mobile chaque "line" est decomposée en 2 lignes
        d'animation séparées pour que le reveal stack proprement quand le
@@ -286,22 +226,6 @@
       </h1>
     </div>
 
-    <div class="hero-meta">
-      <div class="meta-row">
-        <span class="meta-item">Nantes, FR</span>
-        <span class="meta-dot"></span>
-        <span class="meta-item">
-          <span class="en">Est. 2021</span>
-          <span class="fr">Fondé en 2021</span>
-        </span>
-        <span class="meta-dot"></span>
-        <span class="meta-item">
-          <span class="en"><span id="creatorCount">—</span> creators</span>
-          <span class="fr"><span id="creatorCountFr">—</span> créateurs</span>
-        </span>
-      </div>
-      <img src="./assets/Asset5.png" class="meta-logo" alt="Autobahn">
-    </div>
 
   </section>
 
@@ -320,15 +244,6 @@
       if (!document.hidden) vid.play().catch(() => {});
     });
 
-    // Compteur créateurs dynamique
-    fetch('./creators.json')
-      .then(r => r.ok ? r.json() : [])
-      .then(list => {
-        const n = list.length || '—';
-        document.getElementById('creatorCount').textContent = n;
-        document.getElementById('creatorCountFr').textContent = n;
-      })
-      .catch(() => {});
   </script>
 
 </body>
