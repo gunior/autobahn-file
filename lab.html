@@ -776,11 +776,11 @@
   /* ── Bandeau + nav colorés — light mode uniquement, deux paires différentes ── */
   (function() {
     const PAIRS = [
-      ['#E59194', '#0249F4'],
+      ['#FCA6ED', '#0249F4'],
       ['#B699F6', '#D44120'],
       ['#CFF959', '#343C27'],
       ['#343C27', '#B699F6'],
-      ['#D54020', '#E59194'],
+      ['#D54020', '#FCA6ED'],
       ['#0249F4', '#B699F6'],
     ];
 
@@ -853,6 +853,23 @@
         }
         html[data-theme="light"] nav .theme-toggle::after {
           background: ${pair2[1]}cc !important;
+        }
+        html[data-theme="light"] .nav-logo > img {
+          opacity: 0 !important;
+        }
+        html[data-theme="light"] .nav-logo::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-color: ${pair2[1]};
+          -webkit-mask-image: url(./assets/Asset8.png);
+          -webkit-mask-repeat: no-repeat;
+          -webkit-mask-size: auto 10px;
+          -webkit-mask-position: left center;
+          mask-image: url(./assets/Asset8.png);
+          mask-repeat: no-repeat;
+          mask-size: auto 10px;
+          mask-position: left center;
         }
       `;
       document.head.appendChild(s);
