@@ -322,8 +322,8 @@
   }
   .wheel-stage-v-inner { position: relative; width: 100%; height: 100%; }
   .wcard {
-    position: absolute; left: 50%; top: 50%;
-    width: clamp(320px, 42vw, 600px); aspect-ratio: 16 / 9;
+    position: absolute; left: clamp(150px, 16vw, 250px); top: 50%;
+    width: clamp(160px, 18vw, 260px); aspect-ratio: 1 / 1;
     transform-origin: center center;
     cursor: url('./assets/cursor-hand-hover.png') 9 0, pointer;
     pointer-events: all; will-change: transform, opacity;
@@ -333,11 +333,64 @@
   .wcard-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 60px; color: rgba(245,244,240,0.15); letter-spacing: -0.02em; }
   .wcard-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 45%, transparent 75%); opacity: 0; transition: opacity 0.4s ease; }
   .wcard.active .wcard-overlay { opacity: 1; }
-  .wcard-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 18px 22px 22px; transform: translateY(8px); opacity: 0; transition: transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94) 0.05s, opacity 0.4s ease 0.05s; }
-  .wcard.active .wcard-info { transform: translateY(0); opacity: 1; }
-  .wcard-name { font-family: 'Inter', sans-serif; font-weight: 600; font-size: clamp(16px,1.4vw,22px); letter-spacing: -0.01em; color: rgba(245,244,240,0.95); line-height: 1.05; }
-  .wcard-role { font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245,244,240,0.55); margin-top: 8px; }
-.dwheel-hint { position: fixed; left: 50%; bottom: 56px; transform: translateX(-50%); z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
+  .wcard-info { display: none; }
+
+  /* ── Panneau info créateur — externe, à droite de la roue ── */
+  .dwheel-info-panel {
+    position: fixed;
+    left: clamp(240px, 30vw, 430px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 7;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    max-width: clamp(200px, 38vw, 520px);
+  }
+  .dwheel-info-panel.visible { opacity: 1; pointer-events: all; }
+  .dwheel-info-name {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: clamp(20px, 2.2vw, 36px);
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    transition: color 0.6s;
+  }
+  body:not(.video-active) .dwheel-info-name { color: #1a1a18; }
+  html[data-theme="dark"] body:not(.video-active) .dwheel-info-name { color: rgba(245,244,240,0.92); }
+  body.video-active .dwheel-info-name { color: rgba(245,244,240,0.95); }
+  .dwheel-info-role {
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    margin-top: 12px;
+    transition: color 0.6s;
+  }
+  body:not(.video-active) .dwheel-info-role { color: rgba(26,26,24,0.45); }
+  html[data-theme="dark"] body:not(.video-active) .dwheel-info-role { color: rgba(245,244,240,0.4); }
+  body.video-active .dwheel-info-role { color: rgba(245,244,240,0.45); }
+  .dwheel-info-cta {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    margin-top: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none;
+    cursor: url('./assets/cursor-hand-hover.png') 9 0, pointer;
+    transition: opacity 0.2s;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 2px;
+  }
+  body:not(.video-active) .dwheel-info-cta { color: rgba(26,26,24,0.6); }
+  html[data-theme="dark"] body:not(.video-active) .dwheel-info-cta { color: rgba(245,244,240,0.55); }
+  body.video-active .dwheel-info-cta { color: rgba(245,244,240,0.6); }
+  .dwheel-info-cta:hover { opacity: 0.75; }
+.dwheel-hint { position: fixed; left: clamp(150px, 16vw, 250px); bottom: 56px; transform: translateX(-50%); z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
   .dwheel-hint.fade { opacity: 0; }
   .dwheel-hint::after { content: ''; width: 1px; height: 24px; background: linear-gradient(to bottom, rgba(245,244,240,0.6), transparent); animation: hintPulse 2s ease-in-out infinite; }
   @keyframes hintPulse { 0%,100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(8px); opacity: 0.2; } }
@@ -347,6 +400,7 @@
     .coverflow-wrap { display: none !important; }
     #portraitsTitle { display: none !important; }
     .page-subtitle  { display: none !important; }
+    .dwheel-info-panel { display: none !important; }
 
     /* ── Wheel polaire mobile ── */
     #mobileWheelContainer {
@@ -1129,6 +1183,27 @@
     let lastWheelTime  = 0;
     let wheelTimeout   = null;
 
+    /* ─ Panneau info créateur (externe, à droite de la roue) ─ */
+    const infoPanel = document.createElement('div');
+    infoPanel.className = 'dwheel-info-panel';
+    infoPanel.id = 'dwheelInfoPanel';
+    document.body.appendChild(infoPanel);
+
+    function updateInfoPanel() {
+      if (dwActiveIdx < 0 || dwActiveIdx >= list.length) return;
+      const c = list[dwActiveIdx];
+      const isFr = document.body.classList.contains('lang-fr');
+      const ctaText = isFr ? 'Découvrir le profil' : 'View profile';
+      infoPanel.innerHTML = `
+        <div class="dwheel-info-name">${c.name || ''}</div>
+        <div class="dwheel-info-role">${c.role || ''}</div>
+        <a class="dwheel-info-cta" href="#${nameToSlug(c.name || '')}">${ctaText} ↗</a>
+      `;
+      infoPanel.querySelector('.dwheel-info-cta').addEventListener('click', (e) => {
+        e.preventDefault();
+        onWCardClick(dwActiveIdx);
+      });
+    }
 
     /* ─ Focus mode ─ */
     function scheduleFocus() {
@@ -1140,7 +1215,9 @@
           el.style.transition = 'opacity 0.7s ease';
           el.style.opacity = el.classList.contains('active') ? '1' : '0.3';
         });
-      }, 1000);
+        updateInfoPanel();
+        infoPanel.classList.add('visible');
+      }, 500);
     }
     function resetFocus() {
       clearTimeout(focusTimeout);
@@ -1148,6 +1225,7 @@
       if (!isFocused) return;
       isFocused = false;
       cardEls.forEach(el => { el.style.transition = ''; el.style.opacity = ''; });
+      infoPanel.classList.remove('visible');
     }
 
     /* ─ Cartes ─ */
@@ -1259,6 +1337,7 @@ setBackground(list[dwActiveIdx]);
     document.getElementById('profileCloseBtn').addEventListener('click', () => {
       transition.style.opacity = '0';
       transition.style.pointerEvents = 'none';
+      scheduleFocus(); /* réaffiche les infos après 0.5s */
     }, { capture: true });
 
     /* ─ Wheel ─ */
