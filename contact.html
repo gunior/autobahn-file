@@ -102,57 +102,74 @@
       border-bottom: var(--border-weight) solid var(--c-border); transition: border-color 0.4s;
       display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
     }
-    /* ── Sélecteur destinataire — couleurs brand (bleu / jaune fluo) ── */
-    /* Light : fond blanc + typo bleue (même bleu que le titre TEAM) */
-    /* Dark  : fond noir + typo jaune fluo (même jaune que le titre TEAM en dark) */
-    .recipient-select {
-      background-color: var(--c-bg);
-      color: #1A2ED5;
-      border: none;
-      font-family: inherit;
-      font-size: inherit;
-      letter-spacing: inherit;
-      text-transform: inherit;
-      font-weight: 600;
-      padding: 6px 26px 6px 12px;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%231A2ED5' stroke-width='1.4' stroke-linecap='round'/></svg>");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      transition: background-color 0.2s, color 0.2s;
-    }
-    .recipient-select:focus { outline: none; }
-    html[data-theme="dark"] .recipient-select {
-      background-color: #000000;
-      color: #E8FF47;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23E8FF47' stroke-width='1.4' stroke-linecap='round'/></svg>");
+    /* ── Dropdown destinataire custom (100% CSS/JS, zéro <select> natif) ──
+       Remplace le <select> natif pour éviter les différences cross-browser
+       (text crop sur Firefox, rendu OS sur Safari, etc.)                   */
+    .rd-wrap {
+      position: relative;
+      display: inline-block;
+      vertical-align: baseline;
     }
 
-    /* Options du dropdown — état par défaut */
-    .recipient-select option {
-      background-color: var(--c-bg);
+    /* Bouton déclencheur — même apparence que l'ancien <select> */
+    .rd-trigger {
+      display: inline-flex; align-items: center; gap: 6px;
       color: #1A2ED5;
+      font-family: inherit; font-size: inherit;
+      letter-spacing: inherit; text-transform: inherit;
       font-weight: 600;
-      padding: 8px 12px;
+      padding: 4px 8px 4px 10px;
+      background: none; border: none;
+      cursor: pointer; white-space: nowrap;
+      transition: color 0.2s;
     }
-    html[data-theme="dark"] .recipient-select option {
-      background-color: #000000;
-      color: #E8FF47;
+    .rd-trigger:focus { outline: none; }
+    html[data-theme="dark"] .rd-trigger { color: #E8FF47; }
+
+    /* Flèche chevron via SVG inline (identique cross-browser) */
+    .rd-arrow {
+      flex-shrink: 0; transition: transform 0.2s;
+      display: block;
+    }
+    .rd-wrap.open .rd-arrow { transform: rotate(180deg); }
+    .rd-arrow path { stroke: #1A2ED5; transition: stroke 0.2s; }
+    html[data-theme="dark"] .rd-arrow path { stroke: #E8FF47; }
+
+    /* Liste déroulante */
+    .rd-list {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 100%;
+      background: var(--c-bg);
+      border: var(--border-weight) solid var(--c-border);
+      list-style: none; margin: 0; padding: 4px 0;
+      z-index: 300;
+      opacity: 0; transform: translateY(-6px);
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      white-space: nowrap;
+    }
+    .rd-wrap.open .rd-list {
+      opacity: 1; transform: translateY(0);
+      pointer-events: all;
     }
 
-    /* Options highlight (hover ou élément sélectionné via clavier) → inverse */
-    /* `linear-gradient` inset force le fond cross-browser (Chrome, Edge, Firefox) */
-    .recipient-select option:checked,
-    .recipient-select option:hover {
-      background: #1A2ED5 linear-gradient(0deg, #1A2ED5 0%, #1A2ED5 100%);
-      color: #ffffff;
+    /* Items */
+    .rd-list li {
+      padding: 9px 18px;
+      font-family: inherit; font-size: inherit;
+      letter-spacing: inherit; text-transform: inherit;
+      font-weight: 600; color: #1A2ED5;
+      cursor: pointer; transition: background 0.12s, color 0.12s;
     }
-    html[data-theme="dark"] .recipient-select option:checked,
-    html[data-theme="dark"] .recipient-select option:hover {
-      background: #E8FF47 linear-gradient(0deg, #E8FF47 0%, #E8FF47 100%);
-      color: #000000;
+    html[data-theme="dark"] .rd-list li { color: #E8FF47; }
+    .rd-list li:hover, .rd-list li[aria-selected="true"] {
+      background: #1A2ED5; color: #fff;
+    }
+    html[data-theme="dark"] .rd-list li:hover,
+    html[data-theme="dark"] .rd-list li[aria-selected="true"] {
+      background: #E8FF47; color: #000;
     }
 
     /* Honeypot anti-spam : invisible aux humains, rempli par les bots */
@@ -346,10 +363,20 @@
     <div class="contact-right">
       <div class="form-title">
         <span class="en">Send a message at</span><span class="fr">Envoyer un message à</span>
-        <select class="recipient-select" id="recipientSelect" aria-label="Recipient">
-          <!-- L'option Autobahn (avec STUDIO_EMAIL) est injectée par le JS au load.
-               Les créateurs avec email sont ajoutés ensuite depuis creators.json. -->
-        </select>
+        <!-- Native select caché — valeur lue au submit par le JS existant -->
+        <select id="recipientSelect" tabindex="-1" aria-hidden="true"
+          style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;overflow:hidden;"></select>
+        <!-- Dropdown visuel custom (cross-browser) -->
+        <span class="rd-wrap" id="rdWrap">
+          <button class="rd-trigger" id="rdTrigger" type="button"
+                  aria-haspopup="listbox" aria-expanded="false" aria-controls="rdList">
+            <span id="rdLabel">…</span>
+            <svg class="rd-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1l4 4 4-4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <ul class="rd-list" id="rdList" role="listbox" aria-label="Recipient"></ul>
+        </span>
       </div>
       <form class="form" id="contactForm" novalidate>
         <!-- Honeypot anti-spam : un humain le laisse vide, les bots le remplissent -->
@@ -433,6 +460,51 @@
     autobahnOption.dataset.name = 'Autobahn';
     autobahnOption.textContent = 'Autobahn';
     recipientSelect.appendChild(autobahnOption);
+
+    /* ── Dropdown custom : sync native <select> ↔ UI visuelle ── */
+    const rdWrap    = document.getElementById('rdWrap');
+    const rdTrigger = document.getElementById('rdTrigger');
+    const rdLabel   = document.getElementById('rdLabel');
+    const rdListEl  = document.getElementById('rdList');
+
+    function rdOpen()  { rdWrap.classList.add('open');    rdTrigger.setAttribute('aria-expanded', 'true');  }
+    function rdClose() { rdWrap.classList.remove('open'); rdTrigger.setAttribute('aria-expanded', 'false'); }
+
+    function rdAddOption(opt) {
+      const li = document.createElement('li');
+      li.textContent = opt.textContent;
+      li.dataset.value = opt.value;
+      li.setAttribute('role', 'option');
+      /* Premier item = sélectionné par défaut */
+      if (rdListEl.children.length === 0) {
+        li.setAttribute('aria-selected', 'true');
+        rdLabel.textContent = opt.textContent;
+      }
+      li.addEventListener('click', () => {
+        recipientSelect.value = opt.value;
+        rdLabel.textContent   = li.textContent;
+        rdListEl.querySelectorAll('li').forEach(el => el.removeAttribute('aria-selected'));
+        li.setAttribute('aria-selected', 'true');
+        rdClose();
+      });
+      rdListEl.appendChild(li);
+    }
+
+    rdTrigger.addEventListener('click', e => {
+      e.stopPropagation();
+      rdWrap.classList.contains('open') ? rdClose() : rdOpen();
+    });
+    document.addEventListener('click', rdClose);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') rdClose(); });
+
+    /* Peupler avec les options déjà présentes (Autobahn) */
+    Array.from(recipientSelect.options).forEach(rdAddOption);
+
+    /* Observer les options ajoutées de façon asynchrone (créateurs) */
+    new MutationObserver(mutations => {
+      mutations.forEach(m => m.addedNodes.forEach(n => { if (n.tagName === 'OPTION') rdAddOption(n); }));
+    }).observe(recipientSelect, { childList: true });
+
     fetch('./creators.json')
       .then(r => r.ok ? r.json() : [])
       .then(creators => {
