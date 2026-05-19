@@ -272,11 +272,10 @@
     .tools-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .tool-pill {
       font-family: 'Inter', sans-serif; font-weight: 300; font-size: var(--fs-label); letter-spacing: 0.06em;
-      border: var(--border-weight) solid var(--c-border); padding: 7px 16px; color: var(--c-ink);
-      transition: background 0.2s, border-color 0.2s, color 0.2s;
-      cursor: url('./assets/cursor-hand-hover.png') 9 0, auto;
+      padding: 7px 16px; border: none;
     }
-    .tool-pill:hover { background: var(--c-ink); color: var(--c-bg); border-color: var(--c-ink); }
+    html[data-theme="dark"]  .tool-pill { background: rgba(245,244,240,0.9); color: #141412; }
+    html[data-theme="light"] .tool-pill { background: rgba(26,26,24,0.85);   color: #f5f4f0; }
     .portfolio-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
     .portfolio-item {
       aspect-ratio: 16/10; background: var(--c-surface); position: relative; overflow: hidden;
@@ -433,8 +432,8 @@
   <nav></nav>
 
   <div class="page-subtitle">
-    <span class="en">Distinct skills, one shared space. Each creator brings their own practice — motion, VFX, sound, and visual identity.</span>
-    <span class="fr">Des compétences distinctes, un espace commun. Chaque créateur apporte sa propre pratique — motion, VFX, son et identité visuelle.</span>
+    <span class="en">Distinct skills, one shared space. Each creator brings their own practice: motion, VFX, sound, and visual identity.</span>
+    <span class="fr">Des compétences distinctes, un espace commun. Chaque créateur apporte sa propre pratique: motion, VFX, son et identité visuelle.</span>
   </div>
 
   <h1 id="portraitsTitle"><span class="en">Team.</span><span class="fr">Tchim.</span></h1>
@@ -963,7 +962,7 @@
       infoEl.innerHTML = `
         <div class="mobile-creator-name">${first ? first + '<br>' : ''}${last}</div>
         <div class="mobile-creator-role">${c.role || ''}</div>
-        <div class="mobile-tap-hint">— tap to open</div>`;
+        <div class="mobile-tap-hint">tap to open</div>`;
     }
 
     /* ── Hystérésis 90% ── */
