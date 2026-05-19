@@ -29,9 +29,7 @@
     /* ══ COLONNE GAUCHE ══ */
     .contact-left {
       padding: 64px 64px 64px var(--space-lg);
-      border-right: var(--border-weight) solid var(--c-border);
       display: flex; flex-direction: column; justify-content: space-between;
-      transition: border-color 0.4s;
     }
 
     .section-label {
@@ -41,7 +39,7 @@
 
     .contact-title {
       font-family: 'Inter', sans-serif;
-      font-size: clamp(48px, 6vw, 80px);
+      font-size: clamp(72px, 9vw, 120px);
       font-weight: 400; line-height: 0.9; letter-spacing: -0.03em;
       margin-bottom: 40px; color: var(--c-ink); transition: color 0.4s;
     }
@@ -49,7 +47,7 @@
     .contact-intro {
       font-family: 'Inter', sans-serif;
       font-weight: 500;
-      font-size: 14px; line-height: 1.8;
+      font-size: 18px; line-height: 1.7;
       color: var(--c-slate); max-width: 380px; margin-bottom: 56px;
     }
 
@@ -281,17 +279,15 @@
 
       .contact-left {
         padding: 40px var(--space-lg) 48px;
-        border-right: none;
-        border-bottom: var(--border-weight) solid var(--c-border);
       }
 
       .contact-title {
-        font-size: clamp(36px, 11vw, 56px);
+        font-size: clamp(52px, 14vw, 80px);
         margin-bottom: 24px;
       }
 
       .contact-intro {
-        font-size: 13px;
+        font-size: 16px;
         margin-bottom: 40px;
         max-width: 100%;
       }
@@ -328,7 +324,6 @@
   <main>
     <div class="contact-left">
       <div class="contact-header">
-        <div class="section-label"></div>
         <h1 class="contact-title">
           <span class="en">Let's talk.</span>
           <span class="fr">Parlons-en.</span>
@@ -340,9 +335,6 @@
       </div>
       <div class="contact-infos">
         <div class="info-block">
-          <div class="info-label">
-            <span class="en">Location</span><span class="fr">Localisation</span>
-          </div>
           <span class="info-value" style="cursor:default;">Nantes, France</span>
           <p class="info-sub">
             <span class="en">Based in Nantes. Working worldwide.</span>
@@ -350,9 +342,6 @@
           </p>
         </div>
         <div class="info-block">
-          <div class="info-label">
-            <span class="en">Follow</span><span class="fr">Suivre</span>
-          </div>
           <div class="social-links">
             <a class="social-link" href="https://www.instagram.com/autobahn_studio/" target="_blank" rel="noopener">Instagram</a>
           </div>
