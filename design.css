@@ -23,8 +23,9 @@
    Pour passer à une image SVG : utilisez nav.js (voir commentaire)
    ============================================================ */
 html {
-  scrollbar-gutter: stable;
+  scrollbar-width: none; /* Firefox */
 }
+html::-webkit-scrollbar { display: none; } /* Chrome / Safari / Edge */
 
 :root {
   --logo-text:    "Autobahn —";

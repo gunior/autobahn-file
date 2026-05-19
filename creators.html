@@ -1219,7 +1219,7 @@
         cardEls.forEach(el => {
           if (parseFloat(el.style.opacity || '0') < 0.05) return;
           if (el.classList.contains('active')) {
-            el.style.transition = 'opacity 0.65s ease, translate 0.6s cubic-bezier(0.25,0.46,0.45,0.94), scale 0.6s cubic-bezier(0.25,0.46,0.45,0.94)';
+            el.style.transition = 'opacity 0.65s ease, translate 0.7s cubic-bezier(0.16,1,0.3,1), scale 0.7s cubic-bezier(0.16,1,0.3,1)';
             el.style.opacity  = '1';
             el.style.translate = '42px 0';
             el.style.scale    = '1.06';
@@ -1231,7 +1231,7 @@
         updateInfoPanel();
         infoPanel.classList.add('visible');
         infoPanel.classList.add('shifted');
-      }, 800);
+      }, 600);
     }
     function resetFocus() {
       clearTimeout(focusTimeout);
@@ -1239,8 +1239,11 @@
       if (!isFocused) return;
       isFocused = false;
       cardEls.forEach(el => { el.style.transition = ''; el.style.opacity = ''; el.style.translate = ''; el.style.scale = ''; });
+      /* Fade-out rapide du panneau */
+      infoPanel.style.transition = 'opacity 0.15s ease, transform 0.2s ease';
       infoPanel.classList.remove('visible');
       infoPanel.classList.remove('shifted');
+      setTimeout(() => { infoPanel.style.transition = ''; }, 220);
     }
 
     /* ─ Cartes ─ */
