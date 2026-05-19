@@ -197,7 +197,7 @@ nav {
 
 .nav-links a {
   font-family: 'Geist', sans-serif !important;
-  font-weight: 300 !important;
+  font-weight: 500 !important;
   font-size: var(--fs-label);
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;

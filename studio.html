@@ -14,12 +14,12 @@
 
     body { background: #0d0d0c; color: rgba(245,244,240,0.92); }
 
-    /* ══ NAV — transparente, toujours sur fond sombre ══ */
+    /* ══ NAV — bande semi-transparente sur fond sombre ══ */
     nav {
-      background: transparent !important;
-      border-bottom-color: transparent !important;
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
+      background: rgba(13,13,12,0.75) !important;
+      border-bottom-color: rgba(245,244,240,0.08) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
     }
 
     /* Logo et liens toujours en clair sur cette page */
@@ -101,7 +101,7 @@
     }
     .bio-text {
       font-family: 'Inter', sans-serif;
-      font-weight: 300;
+      font-weight: 500;
       font-size: 14px; line-height: 1.75;
       color: rgba(245,244,240,0.45); max-width: 480px;
     }
@@ -171,10 +171,6 @@
 
   <div class="bio-block">
     <div class="bio-left">
-      <div class="bio-label">
-        <span class="en">About the studio</span>
-        <span class="fr">À propos du studio</span>
-      </div>
       <div class="bio-title">
         <span class="en">A studio built differently.</span>
         <span class="fr">Un studio pensé autrement.</span>
