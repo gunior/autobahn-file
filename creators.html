@@ -1264,8 +1264,8 @@ setBackground(list[dwActiveIdx]);
 
     /* ─ Wheel ─ */
     window.addEventListener('wheel', (e) => {
-      e.preventDefault();
       if (document.getElementById('profilePage').classList.contains('open')) return;
+      e.preventDefault();
       hint.classList.add('fade');
       resetFocus();
       const now = performance.now();
