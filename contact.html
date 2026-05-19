@@ -48,7 +48,7 @@
 
     .contact-intro {
       font-family: 'Inter', sans-serif;
-      font-weight: 300;
+      font-weight: 500;
       font-size: 14px; line-height: 1.8;
       color: var(--c-slate); max-width: 380px; margin-bottom: 56px;
     }
@@ -64,7 +64,7 @@
 
     .info-value {
       font-family: 'Inter', sans-serif;
-      font-weight: 300;
+      font-weight: 500;
       font-size: 14px; color: var(--c-ink);
       text-decoration: none; display: block; transition: color 0.2s;
     }
@@ -72,7 +72,7 @@
 
     .info-sub {
       font-family: 'Inter', sans-serif;
-      font-weight: 300;
+      font-weight: 500;
       font-size: 13px; color: var(--c-slate); margin-top: 4px; line-height: 1.6;
     }
 
@@ -85,7 +85,7 @@
       display: flex; align-items: center; gap: 5px; transition: color 0.2s;
     }
     .social-link:hover { color: var(--c-accent); }
-    .social-link::after { content: '↗'; font-size: 10px; font-weight: 300; }
+    .social-link::after { content: '↗'; font-size: 10px; font-weight: 500; }
 
     /* ══ COLONNE DROITE — formulaire ══ */
     .contact-right {
@@ -95,7 +95,7 @@
 
     .form-title {
       font-family: 'Inter', sans-serif;
-      font-weight: 300;
+      font-weight: 500;
       font-size: var(--fs-label); letter-spacing: var(--ls-xwide);
       text-transform: uppercase; color: var(--c-slate);
       margin-bottom: 40px; padding-bottom: 16px;
@@ -222,7 +222,7 @@
     .form-input, .form-textarea, .form-select {
       width: 100%; background: transparent; border: none; outline: none;
       font-family: 'Inter', sans-serif;
-      font-weight: 300;
+      font-weight: 500;
       font-size: 15px; color: var(--c-ink);
       padding: 0; resize: none; appearance: none; ;
       transition: color 0.4s;
@@ -244,7 +244,7 @@
     }
     .form-note {
       font-family: 'Inter', sans-serif;
-      font-weight: 300;
+      font-weight: 500;
       font-size: var(--fs-micro); letter-spacing: 0.08em;
       color: var(--c-ash); max-width: 220px; line-height: 1.6;
     }
@@ -633,7 +633,7 @@
         const j = Math.floor(Math.random() * (i + 1));
         [idx[i], idx[j]] = [idx[j], idx[i]];
       }
-      const [pLeft, pRight, pNav, pFoot] = idx.slice(0, 4).map(i => PAIRS[i]);
+      const [pLeft, pRight, pNav, pFoot, pInfo1, pInfo2] = idx.map(i => PAIRS[i]);
 
       const colLeft  = document.querySelector('.contact-left');
       const colRight = document.querySelector('.contact-right');
@@ -660,16 +660,46 @@
         const s = document.createElement('style');
         s.id = 'contact-dyn-style';
         s.textContent = `
-          /* ── Colonne gauche ── */
+          /* ── Colonne gauche (header) ── */
           html[data-theme="light"] .contact-left { border-right-color: ${pLeft[1]}22 !important; }
           html[data-theme="light"] .contact-title { color: ${pLeft[1]} !important; }
           html[data-theme="light"] .contact-intro { color: ${pLeft[1]}99 !important; }
           html[data-theme="light"] .section-label { color: ${pLeft[1]}66 !important; }
-          html[data-theme="light"] .info-label { color: ${pLeft[1]}66 !important; border-bottom-color: ${pLeft[1]}33 !important; }
-          html[data-theme="light"] .info-value { color: ${pLeft[1]} !important; }
-          html[data-theme="light"] .info-sub { color: ${pLeft[1]}88 !important; }
-          html[data-theme="light"] .social-link { color: ${pLeft[1]}88 !important; }
-          html[data-theme="light"] .social-link:hover { color: ${pLeft[1]} !important; }
+
+          /* ── Blocs info : bandeaux pleine largeur ── */
+          html[data-theme="light"] .contact-infos {
+            gap: 0 !important;
+            margin-left: calc(-1 * var(--space-lg)) !important;
+            margin-right: -64px !important;
+            margin-bottom: -64px !important;
+          }
+          @media (max-width: 768px) {
+            html[data-theme="light"] .contact-infos {
+              margin-left: calc(-1 * var(--space-lg)) !important;
+              margin-right: calc(-1 * var(--space-lg)) !important;
+              margin-bottom: -48px !important;
+            }
+          }
+          html[data-theme="light"] .contact-infos .info-block {
+            padding: 24px 64px 24px var(--space-lg) !important;
+          }
+          @media (max-width: 768px) {
+            html[data-theme="light"] .contact-infos .info-block {
+              padding: 20px var(--space-lg) !important;
+            }
+          }
+
+          /* Bloc LOCATION */
+          html[data-theme="light"] .contact-infos .info-block:nth-child(1) { background: ${pInfo1[0]} !important; }
+          html[data-theme="light"] .contact-infos .info-block:nth-child(1) .info-label { color: ${pInfo1[1]}66 !important; border-bottom-color: ${pInfo1[1]}33 !important; }
+          html[data-theme="light"] .contact-infos .info-block:nth-child(1) .info-value { color: ${pInfo1[1]} !important; }
+          html[data-theme="light"] .contact-infos .info-block:nth-child(1) .info-sub { color: ${pInfo1[1]}88 !important; }
+
+          /* Bloc FOLLOW */
+          html[data-theme="light"] .contact-infos .info-block:nth-child(2) { background: ${pInfo2[0]} !important; }
+          html[data-theme="light"] .contact-infos .info-block:nth-child(2) .info-label { color: ${pInfo2[1]}66 !important; border-bottom-color: ${pInfo2[1]}33 !important; }
+          html[data-theme="light"] .contact-infos .info-block:nth-child(2) .social-link { color: ${pInfo2[1]}88 !important; }
+          html[data-theme="light"] .contact-infos .info-block:nth-child(2) .social-link:hover { color: ${pInfo2[1]} !important; }
 
           /* ── Colonne droite ── */
           html[data-theme="light"] .form-title { color: ${pRight[1]}88 !important; border-bottom-color: ${pRight[1]}33 !important; }
