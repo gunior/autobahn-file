@@ -1334,13 +1334,19 @@
         if (absO > SHOW_RADIUS) { el.style.opacity = '0'; el.style.pointerEvents = 'none'; el.style.transform = ''; return; }
         const sign = offset === 0 ? 0 : (offset > 0 ? 1 : -1);
         const translateY = offset * 220 + sign * Math.pow(absO, 1.2) * 55;
+        /* Fake radial : décale les cartes éloignées du centre vers la gauche
+           de manière non-linéaire → l'ensemble forme un arc/comma. La carte
+           active reste à sa position, les voisines glissent légèrement à
+           gauche, les lointaines bien plus. Aucun perspective 3D, juste un
+           translateX pur, donc 0 bug de projection. */
+        const translateX = -Math.pow(absO, 1.6) * 32;
         const scale   = Math.max(0.55, 1 - absO * 0.12);
         const opacity = Math.max(0.08, 1 - absO * 0.26);
         const rotateX = sign * Math.min(40, absO * 12);
         el.style.opacity = opacity;
         el.style.pointerEvents = absO < 0.6 ? 'all' : 'none';
         el.style.zIndex = Math.round(100 - absO * 10);
-        el.style.transform = `translate(-50%, calc(-50% + ${translateY}px)) scale(${scale}) rotateX(${rotateX}deg)`;
+        el.style.transform = `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scale}) rotateX(${rotateX}deg)`;
         el.classList.toggle('active', absO < 0.5);
         el.style.filter = absO > 0.6 ? `blur(${Math.min(4,(absO-0.6)*4)}px)` : 'none';
       });
