@@ -330,18 +330,7 @@
   .wheel-stage-v-inner {
     position: relative; width: 100%; height: 100%;
     transform-style: preserve-3d;
-    /* Pivot d'entrée = pivot de la roue (cx = -146, cy = 50% viewport) */
-    transform-origin: -146px 50%;
-    /* État initial pré-entrance : roue inclinée hors champ */
-    transform: rotate(75deg);
-    opacity: 0;
-  }
-  .wheel-stage-v-inner.entered {
-    transform: rotate(0deg);
-    opacity: 1;
-    transition:
-      transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
-      opacity  0.8s ease;
+    /* L'opacité est pilotée par playEntrance() côté JS pour le fade-in */
   }
   .wcard {
     position: absolute; top: 0; left: 0;
@@ -351,6 +340,10 @@
     pointer-events: all; will-change: transform, opacity;
     backface-visibility: hidden;
     transform-style: preserve-3d;
+    /* Transition CSS toujours active sur le scale individuel → quand
+       playEntrance() / scheduleFocus() / resetFocus() touchent à
+       style.scale, le changement s'anime tout seul sans inline transition. */
+    transition: scale 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .wcard-inner {
     position: relative; width: 100%; height: 100%;
@@ -364,16 +357,23 @@
     font-family: 'Inter', sans-serif; font-weight: 600; font-size: 72px;
     color: rgba(245,244,240,0.15); letter-spacing: -0.02em;
   }
-  .wcard-overlay {
+  /* ── Dim overlay : assombrit les non-actives en mode focus.
+     Element séparé pour ne pas interférer avec le style.opacity piloté
+     par render() (qui contrôle le fade au bord du cone visible). ─ */
+  .wcard-dim {
     position: absolute; inset: 0;
+    background: #141412;
+    opacity: 0; pointer-events: none; z-index: 1;
+    transition: opacity 0.5s ease;
+  }
+  .wheel-stage-v.focused .wcard:not(.active) .wcard-dim { opacity: 0.7; }
+  .wcard-overlay {
+    position: absolute; inset: 0; z-index: 2;
     background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 45%, transparent 75%);
     opacity: 0; transition: opacity 0.4s ease;
   }
   .wcard.active .wcard-overlay { opacity: 1; }
   .wcard-info { display: none; }
-
-  /* ── Focus mode : après 0.3s sur la même carte, les autres → 30% ─ */
-  .wheel-stage-v.focused .wcard:not(.active) { opacity: 0.3 !important; }
 
   /* ── Panneau info créateur — externe, à droite de la roue ── */
   .dwheel-info-panel {
@@ -1293,21 +1293,16 @@
       });
     }
 
-    /* ─ Focus mode : 0.3s sur la même carte → autres à 30% opacity,
-       active scale légèrement (reste sur l'axe horizontal de la roue),
-       panneau info apparaît. ─ */
+    /* ─ Focus mode : 0.3s sur la même carte → autres à 30% (via dim overlay
+       CSS), active scale légèrement (CSS transition sur .wcard handle l'anim),
+       panneau info apparaît. La carte active reste sur l'axe horizontal. ─ */
     function scheduleFocus() {
       clearTimeout(focusTimeout);
       focusTimeout = setTimeout(() => {
         isFocused = true;
         stageEl.classList.add('focused');
-        /* Carte active : zoom léger SANS shift latéral → reste centrée sur l'axe
-           horizontal de la roue (passant par cy). Pas de drift hors de la rim. */
         const activeEl = cardEls[dwActiveIdx];
-        if (activeEl) {
-          activeEl.style.transition = 'scale 0.7s cubic-bezier(0.16,1,0.3,1)';
-          activeEl.style.scale      = '1.08';
-        }
+        if (activeEl) activeEl.style.scale = '1.08';
         updateInfoPanel();
         infoPanel.classList.add('visible', 'shifted');
       }, 300);
@@ -1318,10 +1313,9 @@
       if (!isFocused) return;
       isFocused = false;
       stageEl.classList.remove('focused');
-      cardEls.forEach(el => {
-        el.style.transition = '';
-        el.style.scale      = '';
-      });
+      /* Clear scale uniquement — la transition CSS s'occupe d'animer le
+         retour vers 1 en douceur sur la carte précédemment active. */
+      cardEls.forEach(el => { el.style.scale = ''; });
       infoPanel.style.transition = 'opacity 0.15s ease, transform 0.2s ease';
       infoPanel.classList.remove('visible', 'shifted');
       setTimeout(() => { infoPanel.style.transition = ''; }, 220);
@@ -1344,6 +1338,11 @@
         ph.textContent = ((c.name || '?').trim().split(' ').pop()).charAt(0);
         inner.appendChild(ph);
       }
+      /* Dim overlay (entre photo et gradient bas) — pour le focus mode */
+      const dim = document.createElement('div');
+      dim.className = 'wcard-dim';
+      inner.appendChild(dim);
+
       const ov = document.createElement('div');
       ov.className = 'wcard-overlay';
       inner.appendChild(ov);
@@ -1437,19 +1436,47 @@
       }
     }
 
-    /* ─ Apparition de la roue : rotation autour du pivot central via CSS.
-       L'inner element commence à rotate(75deg) opacity 0 (CSS de base),
-       puis on ajoute .entered → la roue swing en place avec ease-out. ─ */
+    /* ─ Apparition de la roue : fin de rotation type "wheel of fortune".
+       Les cartes sont déjà positionnées sur l'arc (render() est appelé
+       AVANT que l'animation commence), la roue est juste pré-rotée de
+       quelques crans et déroule jusqu'à sa position de repos avec un
+       ease-out qui ralentit comme une vraie roue. ─ */
     function playEntrance() {
-      const inner = wheelInner;
-      inner.classList.remove('entered');
-      /* Force reflow pour que le navigateur applique l'état initial avant la transition */
-      void inner.offsetWidth;
-      requestAnimationFrame(() => {
-        inner.classList.add('entered');
-      });
-      /* Active le focus une fois l'entrée terminée (1.2s + petite marge) */
-      setTimeout(scheduleFocus, 1250);
+      const restPos       = targetPosition;            // position de repos visée
+      const PRE_ROT       = -4 * SCROLL_PER;           // 4 cartes pré-rotées
+      const startPos      = restPos + PRE_ROT;
+      virtualScroll       = startPos;
+
+      /* Premier render : cartes positionnées sur l'arc dans l'état pré-roté
+         AVANT l'apparition. Le fade-in sur l'opacité du conteneur ne révèle
+         donc jamais des cartes empilées en (0,0). */
+      render();
+
+      wheelInner.style.opacity    = '0';
+      wheelInner.style.transition = 'none';
+      /* Force reflow pour que le opacity:0 soit "encaissé" avant la transition */
+      void wheelInner.offsetWidth;
+      wheelInner.style.transition = 'opacity 0.5s ease';
+      requestAnimationFrame(() => { wheelInner.style.opacity = '1'; });
+
+      /* Roule de startPos vers restPos avec ease-out quartique */
+      if (snapRaf) cancelAnimationFrame(snapRaf);
+      const dur = 1300;
+      const t0  = performance.now();
+      function step(now) {
+        const p    = Math.min(1, (now - t0) / dur);
+        const ease = 1 - Math.pow(1 - p, 4);
+        virtualScroll = startPos + (restPos - startPos) * ease;
+        render();
+        if (p < 1) snapRaf = requestAnimationFrame(step);
+        else {
+          snapRaf = null;
+          virtualScroll = restPos;
+          render();
+          scheduleFocus();
+        }
+      }
+      snapRaf = requestAnimationFrame(step);
     }
 
     /* ─ Smooth scroll ─ */
