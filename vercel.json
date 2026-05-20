@@ -3,24 +3,6 @@
   "outputDirectory": ".",
   "cleanUrls": true,
   "trailingSlash": false,
-  "redirects": [
-    { "source": "/creators/:slug*", "destination": "/",  "permanent": false },
-    { "source": "/creators",        "destination": "/",  "permanent": false },
-    { "source": "/lab",             "destination": "/",  "permanent": false },
-    { "source": "/contact",         "destination": "/",  "permanent": false },
-    { "source": "/studio",          "destination": "/",  "permanent": false },
-    { "source": "/mentions-legales","destination": "/",  "permanent": false },
-    { "source": "/preview",         "destination": "/",  "permanent": false },
-    { "source": "/preview-team",    "destination": "/",  "permanent": false },
-    { "source": "/test-wheel",      "destination": "/",  "permanent": false },
-    { "source": "/team_wheel_preview","destination": "/","permanent": false },
-    { "source": "/creators-wheel-spiral","destination": "/","permanent": false },
-    { "source": "/creators.html",   "destination": "/",  "permanent": false },
-    { "source": "/lab.html",        "destination": "/",  "permanent": false },
-    { "source": "/contact.html",    "destination": "/",  "permanent": false },
-    { "source": "/studio.html",     "destination": "/",  "permanent": false },
-    { "source": "/mentions-legales.html","destination": "/","permanent": false }
-  ],
   "rewrites": [
     { "source": "/cms/(.*)", "destination": "/404" }
   ]
