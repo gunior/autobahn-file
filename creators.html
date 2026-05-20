@@ -1406,6 +1406,9 @@
        focusFade. Comme ça pas de switch discret entre cartes — le boost
        transfère continûment de l'ancienne active vers la nouvelle pendant
        le scroll. Dim et overlay pilotés en JS sur la même base. ─ */
+    const N_ANG_HALF = (N * CFG.ang) / 2;  // = 104.5° pour 11 cartes × 19°
+    const WRAP_FADE_RANGE = 12;            // °: zone de fade autour de la boundary
+
     function renderInstance(el, thetaDeg, i, cardW, cardH, cx, cy) {
       /* Répulsion angulaire : pousse les voisines hors zone de l'active */
       const absDeg = Math.abs(thetaDeg);
@@ -1436,7 +1439,13 @@
       scale *= (1 + focusFade * 0.08 * boostFactor);
 
       const edgeFade = Math.max(0, Math.min(1, (cosT - (CFG.cut - 0.20)) / 0.20));
-      const opacity = (0.12 + 0.88 * Math.pow(t, 0.7)) * edgeFade;
+      /* Wrap fade : les cartes qui approchent du point de wrap (±N*ang/2)
+         s'évanouissent dans le derniers ° avant la téléportation, restent
+         invisibles pendant le saut, puis réapparaissent de l'autre côté.
+         Résultat : la téléportation est complètement invisible. */
+      const boundaryDist = N_ANG_HALF - Math.abs(thetaDeg);
+      const wrapFade = Math.max(0, Math.min(1, boundaryDist / WRAP_FADE_RANGE));
+      const opacity = (0.12 + 0.88 * Math.pow(t, 0.7)) * edgeFade * wrapFade;
       const blurPx  = (1 - t) * CFG.blur;
 
       const px  = cx + CFG.r * Math.cos(theta);
@@ -1462,12 +1471,13 @@
       /* Dim & overlay pilotés ici, en sync parfaite avec scale → plus de
          CSS transition à se déphaser. Dim s'efface où il y a un boost
          (carte proche du centre). Overlay (gradient bas) apparaît
-         uniquement sur la carte au centre. */
+         uniquement sur la carte au centre. Tous deux modulés par wrapFade
+         pour rester invisibles pendant la téléportation. */
       if (el._dim) {
-        el._dim.style.opacity = (focusFade * 0.7 * (1 - boostFactor)).toFixed(3);
+        el._dim.style.opacity = (focusFade * 0.7 * (1 - boostFactor) * wrapFade).toFixed(3);
       }
       if (el._overlay) {
-        el._overlay.style.opacity = (focusFade * boostFactor).toFixed(3);
+        el._overlay.style.opacity = (focusFade * boostFactor * wrapFade).toFixed(3);
       }
     }
 
@@ -1547,24 +1557,26 @@
       const t0  = performance.now();
       function step(now) {
         const p    = Math.min(1, (now - t0) / dur);
-        const ease = 1 - Math.pow(1 - p, 4);  // ease-out quartique
+        const ease = 1 - Math.pow(1 - p, 4);  // ease-out quartique (rotation)
         virtualScroll = startPos + (restPos - startPos) * ease;
+        /* focusFade synchronisé avec les 30% derniers de la rotation : reste
+           à 0 pendant les premiers 70% (rotation pure), puis ramp jusqu'à 1
+           pile quand la roue s'arrête. Du coup la carte active est déjà à
+           pleine échelle au moment où l'animation se fige — aucun "snap"
+           perceptible à l'arrivée. */
+        focusFade = Math.max(0, Math.min(1, (p - 0.7) / 0.3));
         render();
         if (p < 1) snapRaf = requestAnimationFrame(step);
         else {
           snapRaf            = null;
           virtualScroll      = restPos;
+          focusFade          = 1;
           render();
-          entranceInProgress = false;  // phase 2 commence
-          /* À la fin de l'entrance, on enclenche DIRECTEMENT le focus mode
-             (pas de délai 300ms — ça donnait l'impression d'un "entre
-             cartes" pendant le vide). Le 0.3s d'attente est conservé pour
-             les scrolls normaux uniquement, là il sert à dire "tu es resté
-             0.3s sur la même carte donc on focus". À l'arrivée, on focus
-             tout de suite parce que la roue s'est arrêtée pour de bon. */
+          entranceInProgress = false;
+          /* Marque le focus comme actif (sans relancer d'animation —
+             focusFade est déjà à 1 grâce à la sync). */
           clearTimeout(focusTimeout);
           isFocused = true;
-          animateFocusFade(1);
           updateInfoPanel();
           infoPanel.classList.add('visible', 'shifted');
         }
