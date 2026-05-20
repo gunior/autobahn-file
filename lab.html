@@ -11,11 +11,12 @@
        STYLES SPÉCIFIQUES À LA PAGE LAB
     ══════════════════════════════════════════ */
 
-    /* ── Logo sans mix-blend-mode sur cette page ── En light mode on
-       retire le filter d'inversion pour que le logo (source dark) reste
-       visible sur fond clair. ── */
+    /* ── Logo sans mix-blend-mode sur cette page ── Le PNG source est
+       blanc, donc en light mode on applique brightness(0) pour le rendre
+       noir (visible sur fond clair). En dark mode, le filter par défaut
+       (brightness 0 + invert 1) le garde blanc. ── */
     .nav-logo { mix-blend-mode: normal !important; }
-    html[data-theme="light"] .nav-logo img { filter: none !important; }
+    html[data-theme="light"] .nav-logo img { filter: brightness(0) !important; }
 
     /* ── Page header ── */
     .page-header {
