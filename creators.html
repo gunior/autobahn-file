@@ -362,15 +362,16 @@
     position: absolute; inset: 0;
     background: #141412;
     opacity: 0; pointer-events: none; z-index: 1;
-    transition: opacity 0.3s ease;
+    /* Opacité contrôlée par JS via renderInstance pour rester en sync
+       avec focusFade et la proximité au centre. Aucune transition CSS. */
   }
-  .wheel-stage-v.focused .wcard:not(.active) .wcard-dim { opacity: 0.7; }
   .wcard-overlay {
     position: absolute; inset: 0; z-index: 2;
     background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 45%, transparent 75%);
-    opacity: 0; transition: opacity 0.4s ease;
+    opacity: 0;
+    /* Opacité aussi contrôlée par JS — apparaît uniquement sur la carte
+       au centre, modulée par focusFade. */
   }
-  .wcard.active .wcard-overlay { opacity: 1; }
   .wcard-info { display: none; }
 
   /* ── Panneau info créateur — externe, à droite de la roue ── */
@@ -1315,14 +1316,14 @@
       focusFadeRaf = requestAnimationFrame(step);
     }
 
-    /* ─ Focus mode : 0.3s sur la même carte → autres à 30% (dim overlay CSS),
-       active scale +8% (focusFade animé par render), panneau info apparaît.
-       La carte active reste sur l'axe horizontal de la roue. ─ */
+    /* ─ Focus mode : 0.3s sur la même carte → focusFade anime 0→1,
+       dim/overlay/scale piloté par renderInstance via focusFade. Pas de
+       classe .focused — tout est continu via focusFade pour éviter les
+       transitions CSS qui se déphasent du rendu JS. ─ */
     function scheduleFocus() {
       clearTimeout(focusTimeout);
       focusTimeout = setTimeout(() => {
         isFocused = true;
-        stageEl.classList.add('focused');
         animateFocusFade(1);
         updateInfoPanel();
         infoPanel.classList.add('visible', 'shifted');
@@ -1331,10 +1332,12 @@
     function resetFocus() {
       clearTimeout(focusTimeout);
       focusTimeout = null;
+      /* On anime toujours focusFade vers 0, même si isFocused était false
+         (cas d'un scroll pendant l'entrance, où focusFade > 0 sans
+         isFocused). */
+      if (focusFade > 0 || focusFadeRaf) animateFocusFade(0);
       if (!isFocused) return;
       isFocused = false;
-      stageEl.classList.remove('focused');
-      animateFocusFade(0);
       infoPanel.style.transition = 'opacity 0.15s ease, transform 0.2s ease';
       infoPanel.classList.remove('visible', 'shifted');
       setTimeout(() => { infoPanel.style.transition = ''; }, 220);
@@ -1370,6 +1373,10 @@
       inner.appendChild(ov);
       el.appendChild(inner);
       el.addEventListener('click', () => onWCardClick(i));
+      /* Cache pour accès rapide dans renderInstance — évite querySelector
+         à chaque frame. */
+      el._dim = dim;
+      el._overlay = ov;
       return el;
     }
 
@@ -1381,20 +1388,20 @@
       return { primary, ghost };
     });
 
-    /* ─ Détection carte active avec hystérésis 90% ─ */
+    /* ─ Carte active = la plus proche du centre (theta = 0). Pas
+       d'hystérésis : pendant un scroll on bascule pile au midpoint, ce qui
+       matche la vision (le boost de focus suit aussi la proximité au
+       centre, donc dwActiveIdx et le visuel sont en phase). ─ */
     function getActiveIndex(scrollTop) {
-      const floatIdx = scrollTop / SCROLL_PER;
-      const base     = ((Math.floor(floatIdx)) % N + N) % N;
-      const next     = (base + 1) % N;
-      const progress = floatIdx - Math.floor(floatIdx);
-      if (progress >= THRESHOLD_IN)  return next;
-      if (progress <= THRESHOLD_OUT) return base;
-      if (dwActiveIdx === base || dwActiveIdx === next) return dwActiveIdx;
-      return base;
+      const idx = Math.round(scrollTop / SCROLL_PER);
+      return ((idx % N) + N) % N;
     }
 
     /* ─ Render une instance de carte (primary OU ghost) à un thetaDeg donné.
-       Calcule position/scale/opacity/rotations à partir de l'angle. ─ */
+       Boost focus basé sur la PROXIMITÉ au centre (theta=0), modulé par
+       focusFade. Comme ça pas de switch discret entre cartes — le boost
+       transfère continûment de l'ancienne active vers la nouvelle pendant
+       le scroll. Dim et overlay pilotés en JS sur la même base. ─ */
     function renderInstance(el, thetaDeg, i, cardW, cardH, cx, cy) {
       /* Répulsion angulaire : pousse les voisines hors zone de l'active */
       const absDeg = Math.abs(thetaDeg);
@@ -1405,22 +1412,25 @@
       const cosT = Math.cos(theta);
       const sinT = Math.sin(theta);
 
-      /* Hard hide bien au-delà du cone — évite les calculs inutiles */
       if (cosT < CFG.cut - 0.20) {
         el.style.opacity = '0';
         el.style.pointerEvents = 'none';
+        if (el._dim)     el._dim.style.opacity     = '0';
+        if (el._overlay) el._overlay.style.opacity = '0';
         return;
       }
 
       const t      = Math.max(0, cosT);
       const tCurve = Math.pow(t, CFG.scaleE);
 
+      /* Proximité au centre : 1 pile au centre, 0 dès qu'on dépasse 60% de
+         l'écart vers une voisine. Transition continue → la "focal" se
+         transfère sans saut entre deux cartes pendant le scroll. */
+      const boostFactor = Math.max(0, 1 - Math.abs(thetaDeg) / (CFG.ang * 0.6));
+
       let scale = CFG.scaleF + (CFG.scaleA - CFG.scaleF) * tCurve;
-      /* Boost focus +8% sur la carte active (sur le primary uniquement). */
-      if (i === dwActiveIdx && Math.abs(thetaDeg) < CFG.ang / 2) {
-        scale *= (1 + focusFade * 0.08);
-      }
-      /* Fade-out doux sur les 0.20 cosT précédant le cutoff : pas de pop */
+      scale *= (1 + focusFade * 0.08 * boostFactor);
+
       const edgeFade = Math.max(0, Math.min(1, (cosT - (CFG.cut - 0.20)) / 0.20));
       const opacity = (0.12 + 0.88 * Math.pow(t, 0.7)) * edgeFade;
       const blurPx  = (1 - t) * CFG.blur;
@@ -1444,6 +1454,17 @@
       el.style.zIndex        = Math.round(t * 300);
       el.style.pointerEvents = cosT > 0.85 ? 'all' : 'none';
       el.style.filter        = blurPx > 0.1 ? `blur(${blurPx.toFixed(2)}px)` : 'none';
+
+      /* Dim & overlay pilotés ici, en sync parfaite avec scale → plus de
+         CSS transition à se déphaser. Dim s'efface où il y a un boost
+         (carte proche du centre). Overlay (gradient bas) apparaît
+         uniquement sur la carte au centre. */
+      if (el._dim) {
+        el._dim.style.opacity = (focusFade * 0.7 * (1 - boostFactor)).toFixed(3);
+      }
+      if (el._overlay) {
+        el._overlay.style.opacity = (focusFade * boostFactor).toFixed(3);
+      }
     }
 
     /* ─ Render radial — distribue les cartes des DEUX côtés de l'active.
@@ -1489,43 +1510,49 @@
     }
 
     /* ─ Apparition de la roue : fin de rotation type "wheel of fortune".
-       Les cartes sont déjà positionnées sur l'arc (render() est appelé
-       AVANT que l'animation commence), la roue est juste pré-rotée de
-       quelques crans et déroule jusqu'à sa position de repos avec un
-       ease-out qui ralentit comme une vraie roue. ─ */
+       Le focusFade est ANIMÉ EN PARALLÈLE de la rotation, ramped via
+       ease-in cubique → la mise en focus est imperceptible au début et
+       arrive doucement à 1 pile quand la roue s'arrête. Aucun "snap"
+       après l'animation parce que tout est déjà à sa place finale. ─ */
     function playEntrance() {
-      const restPos       = targetPosition;            // position de repos visée
-      const PRE_ROT       = -4 * SCROLL_PER;           // 4 cartes pré-rotées
+      const restPos       = targetPosition;
+      const PRE_ROT       = -4 * SCROLL_PER;
       const startPos      = restPos + PRE_ROT;
       virtualScroll       = startPos;
+      focusFade           = 0;
 
-      /* Premier render : cartes positionnées sur l'arc dans l'état pré-roté
-         AVANT l'apparition. Le fade-in sur l'opacité du conteneur ne révèle
-         donc jamais des cartes empilées en (0,0). */
+      /* Premier render : cartes positionnées sur l'arc pré-roté avant le
+         fade-in du conteneur — jamais de cartes empilées en (0,0). */
       render();
 
       wheelInner.style.opacity    = '0';
       wheelInner.style.transition = 'none';
-      /* Force reflow pour que le opacity:0 soit "encaissé" avant la transition */
       void wheelInner.offsetWidth;
       wheelInner.style.transition = 'opacity 0.5s ease';
       requestAnimationFrame(() => { wheelInner.style.opacity = '1'; });
 
-      /* Roule de startPos vers restPos avec ease-out quartique */
-      if (snapRaf) cancelAnimationFrame(snapRaf);
+      if (snapRaf)      cancelAnimationFrame(snapRaf);
+      if (focusFadeRaf) { cancelAnimationFrame(focusFadeRaf); focusFadeRaf = null; }
       const dur = 1300;
       const t0  = performance.now();
       function step(now) {
-        const p    = Math.min(1, (now - t0) / dur);
-        const ease = 1 - Math.pow(1 - p, 4);
-        virtualScroll = startPos + (restPos - startPos) * ease;
+        const p     = Math.min(1, (now - t0) / dur);
+        const eRot  = 1 - Math.pow(1 - p, 4);  // ease-out quartique (rotation)
+        const eFoc  = Math.pow(p, 3);          // ease-in cubique (focus arrive tard)
+        virtualScroll = startPos + (restPos - startPos) * eRot;
+        focusFade     = eFoc;
         render();
         if (p < 1) snapRaf = requestAnimationFrame(step);
         else {
-          snapRaf = null;
+          snapRaf       = null;
           virtualScroll = restPos;
+          focusFade     = 1;
+          isFocused     = true;
           render();
-          scheduleFocus();
+          /* Active le panneau info à l'arrivée — pas de délai supplémentaire,
+             le focusFade est déjà à 1 grâce à la sync ci-dessus. */
+          updateInfoPanel();
+          infoPanel.classList.add('visible', 'shifted');
         }
       }
       snapRaf = requestAnimationFrame(step);
