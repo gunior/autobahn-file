@@ -330,8 +330,18 @@
   .wheel-stage-v-inner {
     position: relative; width: 100%; height: 100%;
     transform-style: preserve-3d;
+    /* Pivot d'entrée = pivot de la roue (cx = -146, cy = 50% viewport) */
+    transform-origin: -146px 50%;
+    /* État initial pré-entrance : roue inclinée hors champ */
+    transform: rotate(75deg);
+    opacity: 0;
+  }
+  .wheel-stage-v-inner.entered {
+    transform: rotate(0deg);
     opacity: 1;
-    transition: opacity 0.5s ease;
+    transition:
+      transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity  0.8s ease;
   }
   .wcard {
     position: absolute; top: 0; left: 0;
@@ -1253,14 +1263,13 @@
     const WHEEL_COOLDOWN = 280;
 
     let virtualScroll  = 0;
+    let targetPosition = 0;   // état persistant pour cumuler les scrolls
     let snapRaf        = null;
     let dwActiveIdx    = -1;
     let isFocused      = false;
     let focusTimeout   = null;
     let lastWheelTime  = 0;
     let wheelTimeout   = null;
-    let enterT         = 0;   // 0 = hors écran, 1 = en place — pour l'entrance
-    let enterRaf       = null;
 
     /* ─ Panneau info créateur ─ */
     const infoPanel = document.createElement('div');
@@ -1284,19 +1293,20 @@
       });
     }
 
-    /* ─ Focus mode : 0.3s sur la même carte → autres à 30%, active zoom + shift,
+    /* ─ Focus mode : 0.3s sur la même carte → autres à 30% opacity,
+       active scale légèrement (reste sur l'axe horizontal de la roue),
        panneau info apparaît. ─ */
     function scheduleFocus() {
       clearTimeout(focusTimeout);
       focusTimeout = setTimeout(() => {
         isFocused = true;
         stageEl.classList.add('focused');
-        /* Carte active : léger zoom + shift droit pour laisser respirer le texte */
+        /* Carte active : zoom léger SANS shift latéral → reste centrée sur l'axe
+           horizontal de la roue (passant par cy). Pas de drift hors de la rim. */
         const activeEl = cardEls[dwActiveIdx];
         if (activeEl) {
-          activeEl.style.transition = 'translate 0.7s cubic-bezier(0.16,1,0.3,1), scale 0.7s cubic-bezier(0.16,1,0.3,1)';
-          activeEl.style.translate  = '36px 0px';
-          activeEl.style.scale      = '1.06';
+          activeEl.style.transition = 'scale 0.7s cubic-bezier(0.16,1,0.3,1)';
+          activeEl.style.scale      = '1.08';
         }
         updateInfoPanel();
         infoPanel.classList.add('visible', 'shifted');
@@ -1310,7 +1320,6 @@
       stageEl.classList.remove('focused');
       cardEls.forEach(el => {
         el.style.transition = '';
-        el.style.translate  = '';
         el.style.scale      = '';
       });
       infoPanel.style.transition = 'opacity 0.15s ease, transform 0.2s ease';
@@ -1356,7 +1365,10 @@
       return base;
     }
 
-    /* ─ Render radial ─ */
+    /* ─ Render radial ─
+       Les cartes hors du cone visible disparaissent en fondu plutôt qu'en pop,
+       et l'arc affiché est suffisamment large pour qu'il y ait toujours des
+       cartes en haut ET en bas de l'active (sentiment infini garanti). ─ */
     function render() {
       if (N === 0) return;
       const cx       = CFG.cx;
@@ -1365,14 +1377,7 @@
       const cardW    = CFG.size;
       const cardH    = CFG.size * CFG.ratio;
 
-      /* Décalage X pour l'entrance : tout part de hors écran à gauche */
-      const enterShiftX = (1 - enterT) * -window.innerWidth * 0.45;
-      const enterOpacity = enterT;
-
       cardEls.forEach((el, i) => {
-        el.style.width  = cardW + 'px';
-        el.style.height = cardH + 'px';
-
         /* Angle dans [-180, 180] */
         let thetaDeg = i * CFG.ang - rotation;
         thetaDeg = ((thetaDeg + 180) % 360 + 360) % 360 - 180;
@@ -1386,7 +1391,8 @@
         const cosT = Math.cos(theta);
         const sinT = Math.sin(theta);
 
-        if (cosT < CFG.cut) {
+        /* Hard hide bien au-delà du cone — évite les calculs inutiles */
+        if (cosT < CFG.cut - 0.20) {
           el.style.opacity = '0';
           el.style.pointerEvents = 'none';
           return;
@@ -1396,10 +1402,12 @@
         const tCurve = Math.pow(t, CFG.scaleE);
 
         const scale   = CFG.scaleF + (CFG.scaleA - CFG.scaleF) * tCurve;
-        const opacity = (0.12 + 0.88 * Math.pow(t, 0.7)) * enterOpacity;
+        /* Fade-out doux sur les 0.20 cosT précédant le cutoff : pas de pop */
+        const edgeFade = Math.max(0, Math.min(1, (cosT - CFG.cut) / 0.20 + 1));
+        const opacity = (0.12 + 0.88 * Math.pow(t, 0.7)) * edgeFade;
         const blurPx  = (1 - t) * CFG.blur;
 
-        const px = cx + CFG.r * Math.cos(theta) + enterShiftX;
+        const px = cx + CFG.r * Math.cos(theta);
         const py = cy + CFG.r * Math.sin(theta);
         const zPx = CFG.zpush * (tCurve - 0.35);
 
@@ -1418,7 +1426,7 @@
         el.style.zIndex        = Math.round(t * 300);
         el.style.pointerEvents = cosT > 0.85 ? 'all' : 'none';
         el.style.filter        = blurPx > 0.1 ? `blur(${blurPx.toFixed(2)}px)` : 'none';
-        el.classList.toggle('active', cosT > 0.97);
+        el.classList.toggle('active', i === dwActiveIdx);
       });
 
       const newActive = getActiveIndex(virtualScroll);
@@ -1429,21 +1437,19 @@
       }
     }
 
-    /* ─ Animation d'apparition de la roue ─ */
+    /* ─ Apparition de la roue : rotation autour du pivot central via CSS.
+       L'inner element commence à rotate(75deg) opacity 0 (CSS de base),
+       puis on ajoute .entered → la roue swing en place avec ease-out. ─ */
     function playEntrance() {
-      if (enterRaf) cancelAnimationFrame(enterRaf);
-      enterT = 0;
-      const dur = 900;
-      const t0 = performance.now();
-      function step(now) {
-        const p = Math.min(1, (now - t0) / dur);
-        /* Ease out cubic */
-        enterT = 1 - Math.pow(1 - p, 3);
-        render();
-        if (p < 1) enterRaf = requestAnimationFrame(step);
-        else { enterRaf = null; enterT = 1; render(); scheduleFocus(); }
-      }
-      enterRaf = requestAnimationFrame(step);
+      const inner = wheelInner;
+      inner.classList.remove('entered');
+      /* Force reflow pour que le navigateur applique l'état initial avant la transition */
+      void inner.offsetWidth;
+      requestAnimationFrame(() => {
+        inner.classList.add('entered');
+      });
+      /* Active le focus une fois l'entrée terminée (1.2s + petite marge) */
+      setTimeout(scheduleFocus, 1250);
     }
 
     /* ─ Smooth scroll ─ */
@@ -1465,7 +1471,8 @@
     }
 
     function snapToNearest() {
-      smoothTo(Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER);
+      targetPosition = Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER;
+      smoothTo(targetPosition);
     }
 
     /* ─ Click carte ─ */
@@ -1481,7 +1488,6 @@
           openProfile(list[i]);
           transition.style.opacity = '0';
           transition.style.pointerEvents = 'none';
-          /* On laisse l'état de l'animation reset au prochain render */
           el.style.transition = '';
           el.style.scale = '';
         }, 420);
@@ -1489,7 +1495,8 @@
         const currentFloat = virtualScroll / SCROLL_PER;
         let offset = i - currentFloat;
         offset = offset - N * Math.round(offset / N);
-        smoothTo(Math.round((virtualScroll + offset * SCROLL_PER) / SCROLL_PER) * SCROLL_PER);
+        targetPosition = Math.round((virtualScroll + offset * SCROLL_PER) / SCROLL_PER) * SCROLL_PER;
+        smoothTo(targetPosition);
       }
     }
 
@@ -1507,7 +1514,8 @@
       wasOpen = open;
     }).observe(profilePage, { attributes: true, attributeFilter: ['class'] });
 
-    /* ─ Wheel ─ */
+    /* ─ Wheel : on cumule sur targetPosition (état persistant), pas sur le
+       virtualScroll interpolé en cours d'animation → enchaînement propre. ─ */
     window.addEventListener('wheel', (e) => {
       if (profilePage.classList.contains('open')) return;
       e.preventDefault();
@@ -1516,9 +1524,9 @@
       const now = performance.now();
       if (now - lastWheelTime >= WHEEL_COOLDOWN) {
         lastWheelTime = now;
-        const tgt = Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER
-                  + (e.deltaY > 0 ? 1 : -1) * SCROLL_PER;
-        smoothTo(tgt);
+        targetPosition += (e.deltaY > 0 ? 1 : -1) * SCROLL_PER;
+        targetPosition  = Math.round(targetPosition / SCROLL_PER) * SCROLL_PER;
+        smoothTo(targetPosition);
       }
       clearTimeout(wheelTimeout);
       wheelTimeout = setTimeout(() => snapToNearest(), 250);
@@ -1539,17 +1547,22 @@
       if (Math.abs(y - tY0) > 6) tMoved = true;
       render();
     }, { passive: false });
-    window.addEventListener('touchend', () => { if (tMoved) snapToNearest(); });
+    window.addEventListener('touchend', () => {
+      if (tMoved) {
+        targetPosition = Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER;
+        smoothTo(targetPosition);
+      }
+    });
 
     /* ─ Clavier ─ */
     window.addEventListener('keydown', (e) => {
       if (profilePage.classList.contains('open')) return;
       if (e.key === 'ArrowDown' || e.key === ' ') {
         e.preventDefault(); resetFocus();
-        smoothTo(Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER + SCROLL_PER);
+        targetPosition += SCROLL_PER; smoothTo(targetPosition);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault(); resetFocus();
-        smoothTo(Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER - SCROLL_PER);
+        targetPosition -= SCROLL_PER; smoothTo(targetPosition);
       } else if (e.key === 'Enter') { onWCardClick(dwActiveIdx); }
     });
 
