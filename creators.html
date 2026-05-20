@@ -325,13 +325,8 @@
   }
   .wheel-stage-v {
     position: fixed; inset: 0; z-index: 6;
-    perspective: 1600px;
-    /* Aligne le vanishing point sur la position de la carte active
-       (cx + r = -146 + 540 = 394px). Sans ça, la perspective tirait
-       les cartes vers la gauche de manière non-uniforme et la carte
-       active projetait à ~360px au lieu de 394 → impression d'être
-       entre deux cartes. */
-    perspective-origin: 394px 50%;
+    /* V1 simplifiée : pas de perspective 3D. Les cartes restent à
+       leurs positions calculées sans distortion. */
     pointer-events: none;
   }
   .wheel-stage-v-inner {
@@ -1242,24 +1237,27 @@
     hint.style.display = '';
     document.body.classList.add('video-active');
 
-    /* ═══ Paramètres de la roue radiale (valeurs validées dans la preview) ═══ */
+    /* ═══ Paramètres de la roue — V1 simplifiée (2D plat) ═══
+       rotY/rotX/zpush forcés à 0 + plus de perspective CSS → aucune
+       transformation 3D, donc plus aucun bug de positionnement induit
+       par la projection perspective. ═══ */
     const CFG = {
-      cx:           -146,   // centre X (px depuis bord gauche)
-      r:            540,    // rayon de l'arc
-      ang:          19,     // espacement angulaire entre cartes (°)
-      size:         218,    // largeur carte (px)
-      ratio:        1.25,   // hauteur / largeur
-      scaleA:       1.08,   // scale carte active
-      scaleF:       0.42,   // scale carte la plus éloignée
-      scaleE:       1.55,   // exposant courbe de scale
-      rotZ:         7,      // tilt 2D max (°)
-      rotY:         14,     // face-camera max (°)
-      rotX:         15,     // bow max (°)
-      repulse:      21,     // répulsion angulaire vs carte active (°)
-      repulseDecay: 0.34,   // atténuation de la répulsion avec la distance
-      zpush:        300,    // px d'avancée Z de l'active vers la caméra
-      blur:         5,      // blur max sur les cartes lointaines
-      cut:          -0.15   // cosT cutoff (cartes au-delà → cachées)
+      cx:           -146,
+      r:            540,
+      ang:          19,
+      size:         218,
+      ratio:        1.25,
+      scaleA:       1.08,
+      scaleF:       0.42,
+      scaleE:       1.55,
+      rotZ:         7,     // tilt 2D conservé (rotation dans le plan)
+      rotY:         0,     // désactivé (nécessitait la perspective)
+      rotX:         0,     // désactivé (nécessitait la perspective)
+      repulse:      21,
+      repulseDecay: 0.34,
+      zpush:        0,     // pas d'avancée Z — design plat
+      blur:         5,
+      cut:          -0.15
     };
 
     const N              = list.length;
