@@ -340,10 +340,8 @@
     pointer-events: all; will-change: transform, opacity;
     backface-visibility: hidden;
     transform-style: preserve-3d;
-    /* Transition CSS toujours active sur le scale individuel → quand
-       playEntrance() / scheduleFocus() / resetFocus() touchent à
-       style.scale, le changement s'anime tout seul sans inline transition. */
-    transition: scale 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Aucune transition CSS — tout est piloté par render() en JS pour
+       éviter que le scroll et le focus se battent sur la même propriété. */
   }
   .wcard-inner {
     position: relative; width: 100%; height: 100%;
@@ -364,7 +362,7 @@
     position: absolute; inset: 0;
     background: #141412;
     opacity: 0; pointer-events: none; z-index: 1;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.3s ease;
   }
   .wheel-stage-v.focused .wcard:not(.active) .wcard-dim { opacity: 0.7; }
   .wcard-overlay {
@@ -1270,6 +1268,12 @@
     let focusTimeout   = null;
     let lastWheelTime  = 0;
     let wheelTimeout   = null;
+    /* focusFade : 0 = pas de boost actif, 1 = active card boostée de +8%.
+       Animée par animateFocusFade(), lue par render() à chaque frame.
+       Comme tout passe par render() en JS, plus de conflit avec le scroll. */
+    let focusFade      = 0;
+    let focusFadeRaf   = null;
+    const FOCUS_FADE_DUR = 280;
 
     /* ─ Panneau info créateur ─ */
     const infoPanel = document.createElement('div');
@@ -1293,16 +1297,33 @@
       });
     }
 
-    /* ─ Focus mode : 0.3s sur la même carte → autres à 30% (via dim overlay
-       CSS), active scale légèrement (CSS transition sur .wcard handle l'anim),
-       panneau info apparaît. La carte active reste sur l'axe horizontal. ─ */
+    /* ─ Anime focusFade vers une cible (0 ou 1) avec son propre RAF.
+       Chaque tick appelle render() qui applique le boost de scale à la
+       carte active courante. Aucune transition CSS sur les cartes. ─ */
+    function animateFocusFade(target) {
+      if (focusFadeRaf) cancelAnimationFrame(focusFadeRaf);
+      const from = focusFade;
+      const t0   = performance.now();
+      function step(now) {
+        const p    = Math.min(1, (now - t0) / FOCUS_FADE_DUR);
+        const ease = 1 - Math.pow(1 - p, 3);
+        focusFade  = from + (target - from) * ease;
+        render();
+        if (p < 1) focusFadeRaf = requestAnimationFrame(step);
+        else { focusFadeRaf = null; focusFade = target; render(); }
+      }
+      focusFadeRaf = requestAnimationFrame(step);
+    }
+
+    /* ─ Focus mode : 0.3s sur la même carte → autres à 30% (dim overlay CSS),
+       active scale +8% (focusFade animé par render), panneau info apparaît.
+       La carte active reste sur l'axe horizontal de la roue. ─ */
     function scheduleFocus() {
       clearTimeout(focusTimeout);
       focusTimeout = setTimeout(() => {
         isFocused = true;
         stageEl.classList.add('focused');
-        const activeEl = cardEls[dwActiveIdx];
-        if (activeEl) activeEl.style.scale = '1.08';
+        animateFocusFade(1);
         updateInfoPanel();
         infoPanel.classList.add('visible', 'shifted');
       }, 300);
@@ -1313,9 +1334,7 @@
       if (!isFocused) return;
       isFocused = false;
       stageEl.classList.remove('focused');
-      /* Clear scale uniquement — la transition CSS s'occupe d'animer le
-         retour vers 1 en douceur sur la carte précédemment active. */
-      cardEls.forEach(el => { el.style.scale = ''; });
+      animateFocusFade(0);
       infoPanel.style.transition = 'opacity 0.15s ease, transform 0.2s ease';
       infoPanel.classList.remove('visible', 'shifted');
       setTimeout(() => { infoPanel.style.transition = ''; }, 220);
@@ -1400,7 +1419,12 @@
         const t      = Math.max(0, cosT);
         const tCurve = Math.pow(t, CFG.scaleE);
 
-        const scale   = CFG.scaleF + (CFG.scaleA - CFG.scaleF) * tCurve;
+        let scale = CFG.scaleF + (CFG.scaleA - CFG.scaleF) * tCurve;
+        /* Boost focus +8% sur la carte active courante, modulé par focusFade
+           (animé en douceur entre 0 et 1 par animateFocusFade). Tout en JS,
+           donc s'enchaîne parfaitement avec le scroll qui modifie aussi
+           scale via le même transform string. */
+        if (i === dwActiveIdx) scale *= (1 + focusFade * 0.08);
         /* Fade-out doux sur les 0.20 cosT précédant le cutoff : pas de pop */
         const edgeFade = Math.max(0, Math.min(1, (cosT - CFG.cut) / 0.20 + 1));
         const opacity = (0.12 + 0.88 * Math.pow(t, 0.7)) * edgeFade;
@@ -1506,8 +1530,9 @@
     function onWCardClick(i) {
       if (i === dwActiveIdx) {
         const el = cardEls[i];
-        /* Petit zoom in juste avant le fade vers la page profil */
-        el.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+        /* Petit zoom in juste avant le fade vers la page profil — transition
+           sur la prop "scale" individuelle (et pas "transform"). */
+        el.style.transition = 'scale 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
         el.style.scale = '1.14';
         transition.style.pointerEvents = 'all';
         setTimeout(() => { transition.style.opacity = '1'; }, 80);
