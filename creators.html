@@ -314,79 +314,41 @@
     .footer-share-btn.copied .footer-share-label  { display: none; }
     .footer-share-btn.copied .footer-share-confirm { display: inline; }
 
-  /* ══ ROUE RADIALE DESKTOP ════════════════════════════════════════
-     Pivot situé près du bord gauche (cx < 0), cartes disposées sur un
-     grand arc. Rotations 3D multi-axes, scale exagérée entre active et
-     lointaines, répulsion angulaire pour éviter les chevauchements,
-     z-push pour faire avancer l'active vers la caméra.
-  ════════════════════════════════════════════════════════════════════ */
+  /* ══ ROUE VERTICALE DESKTOP ══════════════════════════════════════ */
   @media (min-width: 769px) {
     .coverflow-wrap, #portraitsTitle, .page-subtitle { display: none !important; }
   }
   .wheel-stage-v {
     position: fixed; inset: 0; z-index: 6;
-    /* V1 simplifiée : pas de perspective 3D. Les cartes restent à
-       leurs positions calculées sans distortion. */
-    pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    perspective: 1400px; pointer-events: none;
   }
-  .wheel-stage-v-inner {
-    position: relative; width: 100%; height: 100%;
-    transform-style: preserve-3d;
-    /* L'opacité est pilotée par playEntrance() côté JS pour le fade-in */
-  }
+  .wheel-stage-v-inner { position: relative; width: 100%; height: 100%; }
   .wcard {
-    position: absolute; top: 0; left: 0;
-    width: 218px; height: 273px; /* 218 * 1.25 ratio */
+    position: absolute; left: clamp(150px, 16vw, 250px); top: 50%;
+    width: clamp(160px, 18vw, 260px); aspect-ratio: 1 / 1;
     transform-origin: center center;
     cursor: url('./assets/cursor-hand-hover.png') 9 0, pointer;
     pointer-events: all; will-change: transform, opacity;
-    backface-visibility: hidden;
-    transform-style: preserve-3d;
-    /* Aucune transition CSS — tout est piloté par render() en JS pour
-       éviter que le scroll et le focus se battent sur la même propriété. */
   }
-  .wcard-inner {
-    position: relative; width: 100%; height: 100%;
-    overflow: hidden; background: #1a1a18;
-    box-shadow: 0 14px 50px rgba(0,0,0,0.45);
-  }
+  .wcard-inner { position: relative; width: 100%; height: 100%; overflow: hidden; background: #1a1a18; }
   .wcard-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .wcard-placeholder {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 72px;
-    color: rgba(245,244,240,0.15); letter-spacing: -0.02em;
-  }
-  /* ── Dim overlay : assombrit les non-actives en mode focus.
-     Element séparé pour ne pas interférer avec le style.opacity piloté
-     par render() (qui contrôle le fade au bord du cone visible). ─ */
-  .wcard-dim {
-    position: absolute; inset: 0;
-    background: #141412;
-    opacity: 0; pointer-events: none; z-index: 1;
-    /* Opacité contrôlée par JS via renderInstance pour rester en sync
-       avec focusFade et la proximité au centre. Aucune transition CSS. */
-  }
-  .wcard-overlay {
-    position: absolute; inset: 0; z-index: 2;
-    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 45%, transparent 75%);
-    opacity: 0;
-    /* Opacité aussi contrôlée par JS — apparaît uniquement sur la carte
-       au centre, modulée par focusFade. */
-  }
+  .wcard-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 60px; color: rgba(245,244,240,0.15); letter-spacing: -0.02em; }
+  .wcard-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 45%, transparent 75%); opacity: 0; transition: opacity 0.4s ease; }
+  .wcard.active .wcard-overlay { opacity: 1; }
   .wcard-info { display: none; }
 
   /* ── Panneau info créateur — externe, à droite de la roue ── */
   .dwheel-info-panel {
     position: fixed;
-    left: clamp(380px, 40vw, 560px);
+    left: clamp(240px, 30vw, 430px);
     top: 50%;
     transform: translateY(-50%);
     z-index: 7;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.65s ease, transform 0.7s cubic-bezier(0.16,1,0.3,1);
-    max-width: clamp(220px, 38vw, 520px);
+    max-width: clamp(200px, 38vw, 520px);
   }
   .dwheel-info-panel.visible { opacity: 1; pointer-events: all; }
   .dwheel-info-panel.shifted { transform: translateY(-50%) translateX(42px); }
@@ -435,7 +397,7 @@
   html[data-theme="dark"] body:not(.video-active) .dwheel-info-cta { color: rgba(245,244,240,0.6); }
   body.video-active .dwheel-info-cta { color: rgba(245,244,240,0.7); }
   .dwheel-info-cta:hover { background: #ffffff; color: #1a1a18; border-color: #ffffff; }
-.dwheel-hint { position: fixed; left: 80px; bottom: 56px; z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
+.dwheel-hint { position: fixed; left: clamp(150px, 16vw, 250px); bottom: 56px; transform: translateX(-50%); z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
   .dwheel-hint.fade { opacity: 0; }
   .dwheel-hint::after { content: ''; width: 1px; height: 24px; background: linear-gradient(to bottom, rgba(245,244,240,0.6), transparent); animation: hintPulse 2s ease-in-out infinite; }
   @keyframes hintPulse { 0%,100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(8px); opacity: 0.2; } }
@@ -1229,63 +1191,29 @@
   /* ══ ROUE VERTICALE DESKTOP ══════════════════════════════════════════════ */
   function buildDesktopWheel(list) {
     const wheelInner = document.getElementById('dWheelInner');
-    const stageEl    = document.getElementById('dWheelStage');
     const hint       = document.getElementById('dWheelHint');
     const transition = document.getElementById('dWheelTransition');
 
-    stageEl.style.display = '';
+    document.getElementById('dWheelStage').style.display = '';
     hint.style.display = '';
     document.body.classList.add('video-active');
 
-    /* ═══ Paramètres de la roue — V1 simplifiée (2D plat) ═══
-       rotY/rotX/zpush forcés à 0 + plus de perspective CSS → aucune
-       transformation 3D, donc plus aucun bug de positionnement induit
-       par la projection perspective. ═══ */
-    const CFG = {
-      cx:           -146,
-      r:            540,
-      ang:          19,
-      size:         218,
-      ratio:        1.25,
-      scaleA:       1.08,
-      scaleF:       0.42,
-      scaleE:       1.55,
-      rotZ:         7,     // tilt 2D conservé (rotation dans le plan)
-      rotY:         0,     // désactivé (nécessitait la perspective)
-      rotX:         0,     // désactivé (nécessitait la perspective)
-      repulse:      21,
-      repulseDecay: 0.34,
-      zpush:        0,     // pas d'avancée Z — design plat
-      blur:         5,
-      cut:          -0.15
-    };
-
     const N              = list.length;
-    const SCROLL_PER     = 110;
+    const STEP_PX        = 280;
+    const SHOW_RADIUS    = 4;
     const THRESHOLD_IN   = 0.90;
-    const THRESHOLD_OUT  = 0.10;
-    const WHEEL_COOLDOWN = 180;  // était 280 — trop laggy en trackpad
+    const WHEEL_COOLDOWN = 320;
 
-    let virtualScroll  = 0;
-    let targetPosition = 0;   // état persistant pour cumuler les scrolls
+    let virtualScroll = 0;
+    let targetPosition = 0;
     let snapRaf        = null;
     let dwActiveIdx    = -1;
     let isFocused      = false;
     let focusTimeout   = null;
     let lastWheelTime  = 0;
     let wheelTimeout   = null;
-    /* Phase 1 = entrance pure (rotation fluide, aucun focus/zoom/info).
-       Phase 2 = interactif (scroll + focus mode + zoom + info). Le flag
-       bloque le scroll user pendant la phase 1. */
-    let entranceInProgress = false;
-    /* focusFade : 0 = pas de boost actif, 1 = active card boostée de +8%.
-       Animée par animateFocusFade(), lue par render() à chaque frame.
-       Comme tout passe par render() en JS, plus de conflit avec le scroll. */
-    let focusFade      = 0;
-    let focusFadeRaf   = null;
-    const FOCUS_FADE_DUR = 280;
 
-    /* ─ Panneau info créateur ─ */
+    /* ─ Panneau info créateur (externe, à droite de la roue) ─ */
     const infoPanel = document.createElement('div');
     infoPanel.className = 'dwheel-info-panel';
     infoPanel.id = 'dwheelInfoPanel';
@@ -1307,286 +1235,122 @@
       });
     }
 
-    /* ─ Anime focusFade vers une cible (0 ou 1) avec son propre RAF.
-       Chaque tick appelle render() qui applique le boost de scale à la
-       carte active courante. Aucune transition CSS sur les cartes. ─ */
-    function animateFocusFade(target) {
-      if (focusFadeRaf) cancelAnimationFrame(focusFadeRaf);
-      const from = focusFade;
-      const t0   = performance.now();
-      function step(now) {
-        const p    = Math.min(1, (now - t0) / FOCUS_FADE_DUR);
-        const ease = 1 - Math.pow(1 - p, 3);
-        focusFade  = from + (target - from) * ease;
-        render();
-        if (p < 1) focusFadeRaf = requestAnimationFrame(step);
-        else { focusFadeRaf = null; focusFade = target; render(); }
-      }
-      focusFadeRaf = requestAnimationFrame(step);
-    }
-
-    /* ─ Focus mode : 0.3s sur la même carte → focusFade anime 0→1,
-       dim/overlay/scale piloté par renderInstance via focusFade. Pas de
-       classe .focused — tout est continu via focusFade pour éviter les
-       transitions CSS qui se déphasent du rendu JS. ─ */
+    /* ─ Focus mode ─ */
     function scheduleFocus() {
       clearTimeout(focusTimeout);
       focusTimeout = setTimeout(() => {
         isFocused = true;
-        animateFocusFade(1);
+        cardEls.forEach((el, i) => {
+          if (parseFloat(el.style.opacity || '0') < 0.05) return;
+          if (el.classList.contains('active')) {
+            /* Carte active : décalage droit + zoom.
+               Le scale(1.06) ferait monter la carte de 3% de sa hauteur
+               (expansion symétrique depuis le centre). On compense en Y
+               pour que le bord haut reste fixe et la carte parte
+               uniquement vers la droite. */
+            const h    = el.getBoundingClientRect().height;
+            const s    = 1.06;
+            const yComp = (h * (s - 1) / 2).toFixed(1); /* pousse légèrement vers le bas */
+            el.style.transition = 'opacity 0.65s ease, translate 0.7s cubic-bezier(0.16,1,0.3,1), scale 0.7s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease';
+            el.style.opacity    = '1';
+            el.style.translate  = `42px ${yComp}px`;
+            el.style.scale      = String(s);
+            el.style.filter     = 'none';
+          } else {
+            /* Cartes autour : plus loin = plus à gauche + plus sombre + plus flou */
+            let dist = i - dwActiveIdx;
+            dist = dist - N * Math.round(dist / N); /* distance circulaire */
+            const absD    = Math.abs(dist);
+            const opacity = Math.max(0.04, 0.22 * Math.pow(0.55, absD - 1));
+            const blurPx  = absD * 2;
+            const shiftPx = absD * 14;
+            el.style.transition = 'opacity 0.65s ease, translate 0.65s cubic-bezier(0.16,1,0.3,1), filter 0.65s ease';
+            el.style.opacity    = opacity.toFixed(2);
+            el.style.translate  = `-${shiftPx}px 0`;
+            el.style.filter     = `blur(${blurPx}px)`;
+          }
+        });
         updateInfoPanel();
-        infoPanel.classList.add('visible', 'shifted');
+        infoPanel.classList.add('visible');
+        infoPanel.classList.add('shifted');
       }, 300);
     }
     function resetFocus() {
       clearTimeout(focusTimeout);
       focusTimeout = null;
-      /* On anime toujours focusFade vers 0, même si isFocused était false
-         (cas d'un scroll pendant l'entrance, où focusFade > 0 sans
-         isFocused). */
-      if (focusFade > 0 || focusFadeRaf) animateFocusFade(0);
       if (!isFocused) return;
       isFocused = false;
+      cardEls.forEach(el => {
+        el.style.transition = '';
+        el.style.opacity    = '';
+        el.style.translate  = '';
+        el.style.scale      = '';
+        el.style.filter     = '';
+      });
+      /* Fade-out rapide du panneau */
       infoPanel.style.transition = 'opacity 0.15s ease, transform 0.2s ease';
-      infoPanel.classList.remove('visible', 'shifted');
+      infoPanel.classList.remove('visible');
+      infoPanel.classList.remove('shifted');
       setTimeout(() => { infoPanel.style.transition = ''; }, 220);
     }
 
-    /* ─ Cartes ─
-       Chaque créateur a 2 DOM elements : "primary" et "ghost". On les
-       rend simultanément à 2 positions séparées de N*ang. Comme ça quand
-       la carte traverse le point de wrap (±N*ang/2 ≈ ±104° pour 11 cartes ×
-       19°), pas de teleport visible — l'élément qui sort par un bord est
-       déjà visible à l'autre bord via son ghost. ─ */
-    function makeCardEl(c, i) {
+    /* ─ Cartes ─ */
+    const cardEls = list.map((c, i) => {
       const el = document.createElement('div');
       el.className = 'wcard';
+      const photoSrc = c.photo;
       const inner = document.createElement('div');
       inner.className = 'wcard-inner';
-      if (c.photo) {
+      if (photoSrc) {
         const img = document.createElement('img');
-        img.className = 'wcard-photo';
-        img.src = c.photo; img.alt = c.name || ''; img.loading = 'lazy';
+        img.className = 'wcard-photo'; img.src = photoSrc;
+        img.alt = c.name || ''; img.loading = 'lazy';
         inner.appendChild(img);
       } else {
         const ph = document.createElement('div');
         ph.className = 'wcard-placeholder';
-        ph.textContent = ((c.name || '?').trim().split(' ').pop()).charAt(0);
+        ph.textContent = (c.name || '').split(' ').pop().charAt(0);
         inner.appendChild(ph);
       }
-      const dim = document.createElement('div');
-      dim.className = 'wcard-dim';
-      inner.appendChild(dim);
-      const ov = document.createElement('div');
-      ov.className = 'wcard-overlay';
+      const ov = document.createElement('div'); ov.className = 'wcard-overlay';
       inner.appendChild(ov);
+      const info = document.createElement('div'); info.className = 'wcard-info';
+      info.innerHTML = `<div class="wcard-name">${(c.name||'').split(' ').pop()}</div><div class="wcard-role">${c.role||''}</div>`;
+      inner.appendChild(info);
       el.appendChild(inner);
       el.addEventListener('click', () => onWCardClick(i));
-      /* Cache pour accès rapide dans renderInstance — évite querySelector
-         à chaque frame. */
-      el._dim = dim;
-      el._overlay = ov;
+      wheelInner.appendChild(el);
       return el;
-    }
-
-    const cardEls = list.map((c, i) => {
-      const primary = makeCardEl(c, i);
-      const ghost   = makeCardEl(c, i);
-      wheelInner.appendChild(primary);
-      wheelInner.appendChild(ghost);
-      return { primary, ghost };
     });
 
-    /* ─ Carte active = la plus proche du centre (theta = 0). Pas
-       d'hystérésis : pendant un scroll on bascule pile au midpoint, ce qui
-       matche la vision (le boost de focus suit aussi la proximité au
-       centre, donc dwActiveIdx et le visuel sont en phase). ─ */
-    function getActiveIndex(scrollTop) {
-      const idx = Math.round(scrollTop / SCROLL_PER);
-      return ((idx % N) + N) % N;
-    }
-
-    /* ─ Render une instance de carte (primary OU ghost) à un thetaDeg donné.
-       Boost focus basé sur la PROXIMITÉ au centre (theta=0), modulé par
-       focusFade. Comme ça pas de switch discret entre cartes — le boost
-       transfère continûment de l'ancienne active vers la nouvelle pendant
-       le scroll. Dim et overlay pilotés en JS sur la même base. ─ */
-    const N_ANG_HALF = (N * CFG.ang) / 2;  // = 104.5° pour 11 cartes × 19°
-    const WRAP_FADE_RANGE = 12;            // °: zone de fade autour de la boundary
-
-    function renderInstance(el, thetaDeg, i, cardW, cardH, cx, cy) {
-      /* Répulsion angulaire : pousse les voisines hors zone de l'active */
-      const absDeg = Math.abs(thetaDeg);
-      const push   = Math.sign(thetaDeg) * CFG.repulse
-                     * Math.exp(-CFG.repulseDecay * (absDeg / Math.max(CFG.ang, 1)));
-      const theta = (thetaDeg + push) * Math.PI / 180;
-
-      const cosT = Math.cos(theta);
-      const sinT = Math.sin(theta);
-
-      if (cosT < CFG.cut - 0.20) {
-        el.style.opacity = '0';
-        el.style.pointerEvents = 'none';
-        if (el._dim)     el._dim.style.opacity     = '0';
-        if (el._overlay) el._overlay.style.opacity = '0';
-        return;
-      }
-
-      const t      = Math.max(0, cosT);
-      const tCurve = Math.pow(t, CFG.scaleE);
-
-      /* Proximité au centre : 1 pile au centre, 0 dès qu'on dépasse 60% de
-         l'écart vers une voisine. Transition continue → la "focal" se
-         transfère sans saut entre deux cartes pendant le scroll. */
-      const boostFactor = Math.max(0, 1 - Math.abs(thetaDeg) / (CFG.ang * 0.6));
-
-      let scale = CFG.scaleF + (CFG.scaleA - CFG.scaleF) * tCurve;
-      scale *= (1 + focusFade * 0.08 * boostFactor);
-
-      const edgeFade = Math.max(0, Math.min(1, (cosT - (CFG.cut - 0.20)) / 0.20));
-      /* Wrap fade : les cartes qui approchent du point de wrap (±N*ang/2)
-         s'évanouissent dans le derniers ° avant la téléportation, restent
-         invisibles pendant le saut, puis réapparaissent de l'autre côté.
-         Résultat : la téléportation est complètement invisible. */
-      const boundaryDist = N_ANG_HALF - Math.abs(thetaDeg);
-      const wrapFade = Math.max(0, Math.min(1, boundaryDist / WRAP_FADE_RANGE));
-      const opacity = (0.12 + 0.88 * Math.pow(t, 0.7)) * edgeFade * wrapFade;
-      const blurPx  = (1 - t) * CFG.blur;
-
-      const px  = cx + CFG.r * Math.cos(theta);
-      const py  = cy + CFG.r * Math.sin(theta);
-      const zPx = CFG.zpush * (tCurve - 0.35);
-
-      const rotZdeg = sinT * -CFG.rotZ;
-      const rotYdeg = sinT * CFG.rotY;
-      const rotXdeg = (1 - t) * CFG.rotX * (sinT > 0 ? -1 : 1);
-
-      el.style.transform = `
-        translate3d(${px - cardW/2}px, ${py - cardH/2}px, ${zPx}px)
-        scale(${scale})
-        rotateZ(${rotZdeg}deg)
-        rotateY(${rotYdeg}deg)
-        rotateX(${rotXdeg}deg)
-      `;
-      el.style.opacity       = opacity;
-      el.style.zIndex        = Math.round(t * 300);
-      el.style.pointerEvents = cosT > 0.85 ? 'all' : 'none';
-      el.style.filter        = blurPx > 0.1 ? `blur(${blurPx.toFixed(2)}px)` : 'none';
-
-      /* Dim & overlay pilotés ici, en sync parfaite avec scale → plus de
-         CSS transition à se déphaser. Dim s'efface où il y a un boost
-         (carte proche du centre). Overlay (gradient bas) apparaît
-         uniquement sur la carte au centre. Tous deux modulés par wrapFade
-         pour rester invisibles pendant la téléportation. */
-      if (el._dim) {
-        el._dim.style.opacity = (focusFade * 0.7 * (1 - boostFactor) * wrapFade).toFixed(3);
-      }
-      if (el._overlay) {
-        el._overlay.style.opacity = (focusFade * boostFactor * wrapFade).toFixed(3);
-      }
-    }
-
-    /* ─ Render radial — distribue les cartes des DEUX côtés de l'active.
-       Pour chaque carte, on calcule sa position la plus proche de 0° (modulo
-       N*ang) → cards above ET below. On rend AUSSI un ghost à la position
-       looped pour éviter le teleport quand une carte traverse ±N*ang/2. ─ */
+    /* ─ Render ─ */
     function render() {
       if (N === 0) return;
-      const cx       = CFG.cx;
-      const cy       = window.innerHeight * 0.5;
-      const rotation = (virtualScroll / SCROLL_PER) * CFG.ang;
-      const cardW    = CFG.size;
-      const cardH    = CFG.size * CFG.ratio;
-      const N_ANG    = N * CFG.ang;  // période du wheel infini
-
-      cardEls.forEach((entry, i) => {
-        const baseTheta = i * CFG.ang - rotation;
-        /* Position la plus proche de 0 (modulo N_ANG) → distribue les cartes
-           des deux côtés. Pour 11 cartes × 19° et active idx=0 à rotation=0 :
-           card 10 → -19°, card 9 → -38°, … card 6 → -95° (above active).
-           card 1 → +19°, … card 5 → +95° (below active). */
-        const primaryTheta = baseTheta - N_ANG * Math.round(baseTheta / N_ANG);
-        /* Position looped = de l'autre côté du wheel. Quand primaryTheta
-           approche ±N_ANG/2, ghostTheta arrive de l'autre côté → wrap
-           visuellement smooth. */
-        const ghostTheta = primaryTheta + (primaryTheta >= 0 ? -N_ANG : N_ANG);
-
-        renderInstance(entry.primary, primaryTheta, i, cardW, cardH, cx, cy);
-        renderInstance(entry.ghost,   ghostTheta,   i, cardW, cardH, cx, cy);
-
-        /* Classe .active sur le primary uniquement (le ghost est toujours
-           loin du centre, jamais "actif"). */
-        entry.primary.classList.toggle('active', i === dwActiveIdx);
-        entry.ghost.classList.remove('active');
+      const idx = virtualScroll / STEP_PX;
+      cardEls.forEach((el, i) => {
+        let offset = i - idx;
+        offset = offset - N * Math.round(offset / N);
+        const absO = Math.abs(offset);
+        if (absO > SHOW_RADIUS) { el.style.opacity = '0'; el.style.pointerEvents = 'none'; el.style.transform = ''; return; }
+        const sign = offset === 0 ? 0 : (offset > 0 ? 1 : -1);
+        const translateY = offset * 220 + sign * Math.pow(absO, 1.2) * 55;
+        const scale   = Math.max(0.55, 1 - absO * 0.12);
+        const opacity = Math.max(0.08, 1 - absO * 0.26);
+        const rotateX = sign * Math.min(40, absO * 12);
+        el.style.opacity = opacity;
+        el.style.pointerEvents = absO < 0.6 ? 'all' : 'none';
+        el.style.zIndex = Math.round(100 - absO * 10);
+        el.style.transform = `translate(-50%, calc(-50% + ${translateY}px)) scale(${scale}) rotateX(${rotateX}deg)`;
+        el.classList.toggle('active', absO < 0.5);
+        el.style.filter = absO > 0.6 ? `blur(${Math.min(4,(absO-0.6)*4)}px)` : 'none';
       });
-
-      const newActive = getActiveIndex(virtualScroll);
+      const rawActive = virtualScroll / STEP_PX;
+      const base = Math.floor(rawActive);
+      const newActive = ((( (rawActive - base) >= THRESHOLD_IN ? base + 1 : base) % N) + N) % N;
       if (newActive !== dwActiveIdx) {
         dwActiveIdx = newActive;
-        setBackground(list[dwActiveIdx]);
-        if (isFocused) updateInfoPanel();
+setBackground(list[dwActiveIdx]);
       }
-    }
-
-    /* ─ PHASE 1 — Apparition de la roue : fin de rotation type "wheel of
-       fortune", PUREMENT FLUIDE. Aucun focus/zoom/dim/info pendant cette
-       phase. Le scroll user est bloqué jusqu'à ce que l'animation soit
-       terminée. À la fin, on enclenche scheduleFocus comme un scroll
-       normal (300ms d'attente puis fade-in du focus). ─ */
-    function playEntrance() {
-      const restPos       = targetPosition;
-      const PRE_ROT       = -4 * SCROLL_PER;
-      const startPos      = restPos + PRE_ROT;
-      virtualScroll       = startPos;
-      /* Force focus à 0 pour cette phase — aucun boost/dim/overlay visible. */
-      focusFade           = 0;
-      isFocused           = false;
-      entranceInProgress  = true;
-      /* Cancel toute anim focus encore en cours (cas retour depuis profil). */
-      if (focusFadeRaf) { cancelAnimationFrame(focusFadeRaf); focusFadeRaf = null; }
-      /* Cache le panneau info pendant l'entrance. */
-      infoPanel.classList.remove('visible', 'shifted');
-
-      /* Premier render : cartes positionnées sur l'arc pré-roté avant le
-         fade-in du conteneur — jamais de cartes empilées en (0,0). */
-      render();
-
-      wheelInner.style.opacity    = '0';
-      wheelInner.style.transition = 'none';
-      void wheelInner.offsetWidth;
-      wheelInner.style.transition = 'opacity 0.5s ease';
-      requestAnimationFrame(() => { wheelInner.style.opacity = '1'; });
-
-      if (snapRaf) cancelAnimationFrame(snapRaf);
-      const dur = 1100;
-      const t0  = performance.now();
-      function step(now) {
-        const p    = Math.min(1, (now - t0) / dur);
-        /* Ease-out cubique : moins asymptotique que quartique, garde du
-           mouvement perceptible jusqu'à p=0.9 puis se cale proprement à 1.
-           Évite le "stall" en fin d'animation où la roue semblait s'être
-           arrêtée entre deux cartes. */
-        const ease = 1 - Math.pow(1 - p, 3);
-        virtualScroll = startPos + (restPos - startPos) * ease;
-        /* focusFade synchronisé avec les 40% derniers de la rotation. */
-        focusFade = Math.max(0, Math.min(1, (p - 0.6) / 0.4));
-        render();
-        if (p < 1) snapRaf = requestAnimationFrame(step);
-        else {
-          snapRaf            = null;
-          virtualScroll      = restPos;
-          focusFade          = 1;
-          render();
-          entranceInProgress = false;
-          /* Marque le focus comme actif (sans relancer d'animation —
-             focusFade est déjà à 1 grâce à la sync). */
-          clearTimeout(focusTimeout);
-          isFocused = true;
-          updateInfoPanel();
-          infoPanel.classList.add('visible', 'shifted');
-        }
-      }
-      snapRaf = requestAnimationFrame(step);
     }
 
     /* ─ Smooth scroll ─ */
@@ -1594,7 +1358,7 @@
       if (snapRaf) cancelAnimationFrame(snapRaf);
       const start = virtualScroll, diff = target - start;
       if (Math.abs(diff) < 0.5) { virtualScroll = target; render(); scheduleFocus(); return; }
-      const dur = Math.min(480, 220 + Math.abs(diff / SCROLL_PER) * 60);
+      const dur = Math.min(480, 220 + Math.abs(diff / STEP_PX) * 60);
       const t0  = performance.now();
       function step(now) {
         const p    = Math.min(1, (now - t0) / dur);
@@ -1608,114 +1372,94 @@
     }
 
     function snapToNearest() {
-      targetPosition = Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER;
+      targetPosition = Math.round(virtualScroll / STEP_PX) * STEP_PX;
       smoothTo(targetPosition);
     }
 
     /* ─ Click carte ─ */
     function onWCardClick(i) {
       if (i === dwActiveIdx) {
-        const el = cardEls[i].primary;
-        /* Petit zoom in juste avant le fade vers la page profil — transition
-           sur la prop "scale" individuelle (et pas "transform"). */
-        el.style.transition = 'scale 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
-        el.style.scale = '1.14';
+        const el = cardEls[i];
+        el.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
+        el.style.transform   = 'translate(-50%,-50%) scale(1.07)';
         transition.style.pointerEvents = 'all';
         setTimeout(() => { transition.style.opacity = '1'; }, 80);
         setTimeout(() => {
           openProfile(list[i]);
           transition.style.opacity = '0';
           transition.style.pointerEvents = 'none';
-          el.style.transition = '';
-          el.style.scale = '';
         }, 420);
       } else {
-        const currentFloat = virtualScroll / SCROLL_PER;
+        const currentFloat = virtualScroll / STEP_PX;
         let offset = i - currentFloat;
         offset = offset - N * Math.round(offset / N);
-        targetPosition = Math.round((virtualScroll + offset * SCROLL_PER) / SCROLL_PER) * SCROLL_PER;
+        targetPosition = Math.round((virtualScroll + offset * STEP_PX) / STEP_PX) * STEP_PX;
         smoothTo(targetPosition);
       }
     }
 
-    /* ─ Entrance animation quand on revient sur la roue (close profil) ─ */
-    const profilePage = document.getElementById('profilePage');
-    let wasOpen = profilePage.classList.contains('open');
-    new MutationObserver(() => {
-      const open = profilePage.classList.contains('open');
-      if (wasOpen && !open) {
-        /* On revient sur la roue → reset transition overlay + replay entrance */
-        transition.style.opacity = '0';
-        transition.style.pointerEvents = 'none';
-        playEntrance();
-      }
-      wasOpen = open;
-    }).observe(profilePage, { attributes: true, attributeFilter: ['class'] });
+    /* ─ Réinitialise l'overlay de transition quand on revient du profil ─ */
+    const _origClose = window._profileCloseHook;
+    document.getElementById('profileCloseBtn').addEventListener('click', () => {
+      transition.style.opacity = '0';
+      transition.style.pointerEvents = 'none';
+      scheduleFocus(); /* réaffiche les infos après 0.5s */
+    }, { capture: true });
 
-    /* ─ Wheel : on cumule sur targetPosition (état persistant), pas sur le
-       virtualScroll interpolé en cours d'animation → enchaînement propre.
-       Bloqué pendant la phase 1 (entrance) pour la laisser se jouer pure. ─ */
+    /* ─ Wheel ─ */
     window.addEventListener('wheel', (e) => {
-      if (profilePage.classList.contains('open')) return;
-      if (entranceInProgress) { e.preventDefault(); return; }
+      if (document.getElementById('profilePage').classList.contains('open')) return;
       e.preventDefault();
       hint.classList.add('fade');
       resetFocus();
       const now = performance.now();
       if (now - lastWheelTime >= WHEEL_COOLDOWN) {
         lastWheelTime = now;
-        targetPosition += (e.deltaY > 0 ? 1 : -1) * SCROLL_PER;
-        targetPosition  = Math.round(targetPosition / SCROLL_PER) * SCROLL_PER;
+        targetPosition += (e.deltaY > 0 ? 1 : -1) * STEP_PX;
+        targetPosition  = Math.round(targetPosition / STEP_PX) * STEP_PX;
         smoothTo(targetPosition);
       }
       clearTimeout(wheelTimeout);
       wheelTimeout = setTimeout(() => snapToNearest(), 250);
     }, { passive: false });
 
-    /* ─ Touch ─ Bloqué pendant la phase 1. */
+    /* ─ Touch ─ */
     let tY0 = 0, tY1 = 0, tMoved = false;
     window.addEventListener('touchstart', (e) => {
-      if (profilePage.classList.contains('open')) return;
-      if (entranceInProgress) return;
+      if (document.getElementById('profilePage').classList.contains('open')) return;
       tY0 = e.touches[0].clientY; tY1 = tY0; tMoved = false;
       if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
     }, { passive: true });
     window.addEventListener('touchmove', (e) => {
-      if (profilePage.classList.contains('open')) return;
-      if (entranceInProgress) { e.preventDefault(); return; }
+      if (document.getElementById('profilePage').classList.contains('open')) return;
       resetFocus(); e.preventDefault();
       const y = e.touches[0].clientY;
       virtualScroll += tY1 - y; tY1 = y;
       if (Math.abs(y - tY0) > 6) tMoved = true;
       render();
     }, { passive: false });
-    window.addEventListener('touchend', () => {
-      if (entranceInProgress) return;
-      if (tMoved) {
-        targetPosition = Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER;
-        smoothTo(targetPosition);
-      }
-    });
+    window.addEventListener('touchend', () => { if (tMoved) snapToNearest(); });
 
-    /* ─ Clavier ─ Bloqué pendant la phase 1. */
+    /* ─ Clavier ─ */
     window.addEventListener('keydown', (e) => {
-      if (profilePage.classList.contains('open')) return;
-      if (entranceInProgress) return;
+      if (document.getElementById('profilePage').classList.contains('open')) return;
       if (e.key === 'ArrowDown' || e.key === ' ') {
-        e.preventDefault(); resetFocus();
-        targetPosition += SCROLL_PER; smoothTo(targetPosition);
+        e.preventDefault(); resetFocus(); targetPosition += STEP_PX; smoothTo(targetPosition);
       } else if (e.key === 'ArrowUp') {
-        e.preventDefault(); resetFocus();
-        targetPosition -= SCROLL_PER; smoothTo(targetPosition);
+        e.preventDefault(); resetFocus(); targetPosition -= STEP_PX; smoothTo(targetPosition);
       } else if (e.key === 'Enter') { onWCardClick(dwActiveIdx); }
     });
 
     window.addEventListener('resize', render);
 
-    /* ─ Init + apparition ─ */
-    dwActiveIdx = 0;
+    /* ─ Apparition ─ */
+    render();
     setBackground(list[0]);
-    playEntrance();
+    const stageEl = document.getElementById('dWheelInner');
+    stageEl.style.opacity = '0'; stageEl.style.transform = 'translateY(60px)';
+    stageEl.style.transition = 'opacity 0.8s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94)';
+    requestAnimationFrame(() => { stageEl.style.opacity = '1'; stageEl.style.transform = 'translateY(0)'; });
+    scheduleFocus();
   }
 
   /* ══ CHARGEMENT DES CRÉATEURS depuis creators.json (généré par build.js) ══ */
