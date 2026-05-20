@@ -11,8 +11,11 @@
        STYLES SPÉCIFIQUES À LA PAGE LAB
     ══════════════════════════════════════════ */
 
-    /* ── Logo sans mix-blend-mode sur cette page ── */
+    /* ── Logo sans mix-blend-mode sur cette page ── En light mode on
+       retire le filter d'inversion pour que le logo (source dark) reste
+       visible sur fond clair. ── */
     .nav-logo { mix-blend-mode: normal !important; }
+    html[data-theme="light"] .nav-logo img { filter: none !important; }
 
     /* ── Page header ── */
     .page-header {
@@ -119,7 +122,8 @@
       margin-top: 80px; transition: border-color 0.4s;
     }
     .footer-copy, .footer-tag {
-      font-family: var(--f-mono); font-size: var(--fs-label);
+      font-family: var(--f-display); font-weight: var(--fw-regular);
+      font-size: var(--fs-label);
       color: var(--c-ash); letter-spacing: var(--ls-normal);
     }
 

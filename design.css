@@ -308,7 +308,8 @@ footer {
 .footer-copy,
 .footer-tag,
 .footer-legal {
-  font-family: var(--f-mono);
+  font-family: var(--f-display);
+  font-weight: var(--fw-regular);
   font-size: var(--fs-label);
   color: var(--c-ash);
   letter-spacing: var(--ls-normal);
@@ -332,7 +333,8 @@ footer {
   padding: 0 var(--space-lg);
   background: #0d0d0c;
   color: #f5f4f0;
-  font-family: var(--f-mono);
+  font-family: var(--f-display);
+  font-weight: var(--fw-regular);
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
