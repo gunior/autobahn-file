@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Wheel Test</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0d0d0c; }
+
+    /* ── Background ── */
+    #bg {
+      position: fixed; inset: 0; z-index: 0;
+      background-size: cover; background-position: center;
+      opacity: 0; transition: opacity 0.7s ease;
+    }
+    #bg.visible { opacity: 0.45; }
+    #bg-overlay {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: linear-gradient(to right,
+        rgba(13,13,12,0.55) 0%,
+        rgba(13,13,12,0.1) 60%,
+        rgba(13,13,12,0.35) 100%
+      );
+    }
+
+    /* ── Wheel container ── */
+    #wheel-container {
+      position: fixed; inset: 0; z-index: 2;
+      pointer-events: none;
+    }
+    .wheel-card {
+      position: absolute;
+      width: 100px;
+      height: 132px;
+      border-radius: 3px;
+      overflow: hidden;
+      pointer-events: all;
+      cursor: pointer;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+      transition: box-shadow 0.3s ease;
+    }
+    .wheel-card img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+    }
+    .wheel-card-placeholder {
+      width: 100%; height: 100%;
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-family: monospace; font-size: 9px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* ── Creator info ── */
+    #creator-info {
+      position: fixed;
+      right: 28px;
+      top: 50%; transform: translateY(-50%);
+      z-index: 10;
+      text-align: right;
+      pointer-events: none;
+      max-width: 48vw;
+    }
+    #creator-name {
+      font-family: 'Inter', sans-serif;
+      font-weight: 800;
+      font-size: clamp(24px, 7vw, 36px);
+      color: #fff;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      text-shadow: 0 2px 24px rgba(0,0,0,0.5);
+    }
+    #creator-role {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(245,244,240,0.45);
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+    #tap-hint {
+      font-family: monospace;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(245,244,240,0.22);
+      margin-top: 18px;
+    }
+
+    /* ── Scroll proxy ── */
+    #scroll-proxy {
+      position: fixed; inset: 0;
+      overflow-y: scroll; scrollbar-width: none;
+      z-index: 20; pointer-events: all;
+    }
+    #scroll-proxy::-webkit-scrollbar { display: none; }
+    /* Right half is clickable, left half goes to cards */
+    #scroll-proxy { pointer-events: none; }
+    #scroll-touch-zone {
+      position: fixed;
+      top: 0; left: 0;
+      width: 58vw; height: 100%;
+      z-index: 20;
+      overflow-y: scroll;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    #scroll-touch-zone::-webkit-scrollbar { display: none; }
+    #scroll-inner { /* height set by JS */ }
+
+    /* ── Nav placeholder ── */
+    #nav-bar {
+      position: fixed; top: 0; left: 0; right: 0;
+      padding: 20px 24px;
+      z-index: 30;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    #nav-logo {
+      font-family: monospace; font-size: 11px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+    #nav-menu {
+      font-family: monospace; font-size: 11px;
+      letter-spacing: 0.1em; color: rgba(255,255,255,0.5);
+    }
+  </style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="bg-overlay"></div>
+<div id="wheel-container"></div>
+
+<div id="creator-info">
+  <div id="creator-name"></div>
+  <div id="creator-role"></div>
+  <div id="tap-hint">— tap to open</div>
+</div>
+
+<div id="scroll-touch-zone">
+  <div id="scroll-inner"></div>
+</div>
+
+<div id="nav-bar">
+  <div id="nav-logo">Autobahn —</div>
+  <div id="nav-menu">≡</div>
+</div>
+
+<script>
+/* ── Creators data ── */
+const creators = [
+  { name: 'ESTRADE Guillaume',    role: 'Motion Designer & Director',          photo: './creators/guillaume/creator-pp-guillaume.jpg',  bg: './creators/guillaume/creator-hero-guillaume.png' },
+  { name: 'REBIC Antonin',        role: 'Creative Technologist – Motion & VFX', photo: './creators/antonin/creator-pp-antonin.jpg',      bg: '' },
+  { name: 'Marine',               role: 'Creative Producer IA & 3D Motion',    photo: './creators/marine/creator-pp-marine.png',         bg: './creators/marine/creator-hover-marine.jpg' },
+  { name: 'DURENDEAU Simon',      role: '3D Artist',                           photo: './creators/simon/creator-pp-simon.png',           bg: './creators/simon/creator-hero-simon.png' },
+  { name: 'LE GAD Clément',       role: '3D Artist',                           photo: './creators/clement/creator-pp-clement.png',       bg: './creators/clement/creator-hero-clement.png' },
+  { name: 'PETIT Johan',          role: 'Motion Designer & Art Director',       photo: './creators/johan/creator-pp-johan.jpg',           bg: './creators/johan/creator-hero-johan.jpg' },
+  { name: 'PESSET Océane',        role: 'Motion design & Illustration',         photo: './creators/oceane/creator-pp-oceane.webp',        bg: './creators/oceane/creator-hero-oceane.png' },
+  { name: 'BRIOIS Delphy',        role: 'Motion & Graphic Design',             photo: './creators/delphy/creator-pp-delphy.jpg',         bg: '' },
+  { name: 'MAÎTRE Victor',        role: 'Music & Sound design',                photo: './creators/victor/creator-pp-victor.jpg',         bg: './creators/victor/creator-hero-victor.webp' },
+  { name: 'DIJON Romain',         role: 'VFX Artist',                          photo: './creators/antonin/creator-pp-antonin.jpg',       bg: '' },
+  { name: 'PARAGEAUD Alexandre',  role: 'Motion & Graphic Designer 3D',        photo: './creators/antonin/creator-pp-antonin.jpg',       bg: '' },
+];
+
+const N = creators.length;
+const CARD_W  = 100;
+const CARD_H  = 132;
+
+/* ── Wheel geometry ──
+   Centre du cercle bien à gauche de l'écran,
+   on ne voit que le côté droit de la roue (l'arc).
+*/
+const R = 185;                           // rayon — réduit pour mobile
+const getCX = () => -85;                 // centre X (plus à gauche pour dégager le texte)
+const getCY = () => window.innerHeight * 0.5;
+
+/* Angle de départ : carte 0 part du haut, descend au "3h" = position avant */
+const ANGLE_STEP  = 360 / N;            // degrés entre chaque carte
+const FRONT_ANGLE = 0;                   // 0° = droite = position avant
+
+/* Scroll : SCROLL_PER scrolls d'un cran */
+const SCROLL_PER  = 110;
+const TOTAL_H     = N * SCROLL_PER + window.innerHeight;
+document.getElementById('scroll-inner').style.height = TOTAL_H + 'px';
+
+/* ── Build cards ── */
+const container = document.getElementById('wheel-container');
+const cardEls   = creators.map((c, i) => {
+  const el = document.createElement('div');
+  el.className = 'wheel-card';
+
+  if (c.photo) {
+    const img = document.createElement('img');
+    img.src = c.photo; img.loading = 'eager';
+    el.appendChild(img);
+  } else {
+    const ph = document.createElement('div');
+    ph.className = 'wheel-card-placeholder';
+    ph.textContent = c.name.split(' ').pop();
+    el.appendChild(ph);
+  }
+
+  el.addEventListener('click', () => {
+    alert('Ouvrir profil : ' + c.name);
+  });
+
+  container.appendChild(el);
+  return el;
+});
+
+/* ── State ── */
+let currentActive = -1;
+const bgEl     = document.getElementById('bg');
+const nameEl   = document.getElementById('creator-name');
+const roleEl   = document.getElementById('creator-role');
+
+function activateCreator(i) {
+  if (i === currentActive) return;
+  currentActive = i;
+  const c = creators[i];
+
+  /* Info */
+  const parts = c.name.trim().split(' ');
+  const last  = parts[parts.length - 1];
+  const first = parts.slice(0, -1).join(' ');
+  nameEl.innerHTML = first ? `${first}<br>${last}` : last;
+  roleEl.textContent = c.role;
+
+  /* Background */
+  const src = c.bg || c.photo || '';
+  if (src) {
+    bgEl.style.backgroundImage = `url('${src}')`;
+    bgEl.classList.add('visible');
+  } else {
+    bgEl.classList.remove('visible');
+  }
+}
+
+/* ── Hystérésis : le nom/fond ne change qu'à 90% du scroll vers la carte suivante
+   (dans les deux sens — scroll down ET scroll up)
+   ──────────────────────────────────────────────────────────────────────────────
+   floatIdx = position continue (ex: 1.73 = entre carte 1 et carte 2, à 73%)
+   baseIdx  = carte "de départ" pour ce segment
+   nextIdx  = carte "d'arrivée"
+   progress = 0 → 1 dans ce segment
+
+   Zone  0% – 10%  → affiche baseIdx    (vient d'arriver ou revient depuis nextIdx)
+   Zone 10% – 90%  → hystérésis : garde le créateur déjà affiché
+   Zone 90% – 100% → affiche nextIdx    (proche d'arriver)
+── */
+const THRESHOLD_IN  = 0.90;   // dépasse → active la carte suivante
+const THRESHOLD_OUT = 0.10;   // descend sous → revient à la carte précédente
+
+function getActiveIndex(scrollTop) {
+  const floatIdx = scrollTop / SCROLL_PER;
+  const base     = Math.floor(floatIdx);
+  const baseIdx  = base % N;
+  const nextIdx  = (base + 1) % N;
+  const progress = floatIdx - base;          // 0 → 1 dans ce segment
+
+  if (progress >= THRESHOLD_IN)  return nextIdx;
+  if (progress <= THRESHOLD_OUT) return baseIdx;
+
+  /* Zone intermédiaire : on reste sur le créateur déjà affiché si valide */
+  if (currentActive === baseIdx || currentActive === nextIdx) return currentActive;
+  return baseIdx;  /* premier rendu ou valeur inattendue */
+}
+
+/* ── Render wheel ── */
+function renderWheel(scrollTop) {
+  const cx = getCX();
+  const cy = getCY();
+
+  /* rotation totale en degrés : un SCROLL_PER = un ANGLE_STEP */
+  const rotation = (scrollTop / SCROLL_PER) * ANGLE_STEP;
+
+  cardEls.forEach((el, i) => {
+    /* Angle de cette carte dans le cercle */
+    const theta = (i * ANGLE_STEP - rotation) * Math.PI / 180;
+
+    /* Position sur le cercle */
+    const px = cx + R * Math.cos(theta);
+    const py = cy + R * Math.sin(theta);
+
+    /* cos(theta) : 1 = devant (droite), -1 = derrière (gauche) */
+    const cosT = Math.cos(theta);
+
+    /* Masque les cartes derrière (côté gauche du cercle) */
+    if (cosT < -0.15) {
+      el.style.opacity = '0';
+      el.style.pointerEvents = 'none';
+      return;
+    }
+
+    /* Scale & opacité selon profondeur */
+    const t       = Math.max(0, cosT);           // 0 → 1
+    const scale   = 0.55 + 0.45 * t;
+    const opacity = 0.2  + 0.8  * t;
+    const zIndex  = Math.round(t * 200);
+
+    /* Légère rotation de la carte (effet naturel de roue) */
+    const tiltDeg = Math.sin(theta) * -14;
+
+    el.style.transform  = `translate(${px - CARD_W / 2}px, ${py - CARD_H / 2}px) scale(${scale}) rotate(${tiltDeg}deg)`;
+    el.style.opacity    = opacity;
+    el.style.zIndex     = zIndex;
+    el.style.pointerEvents = 'all';
+    el.style.boxShadow  = cosT > 0.9
+      ? '0 12px 40px rgba(0,0,0,0.55)'
+      : 'none';
+  });
+
+  /* Activation nom/fond avec hystérésis à 90% */
+  activateCreator(getActiveIndex(scrollTop));
+}
+
+/* ── Scroll zone ── */
+const touchZone = document.getElementById('scroll-touch-zone');
+
+/* ─────────────────────────────────────────────────────────────
+   SNAP ENGINE
+   smoothScrollTo → anime touchZone.scrollTop vers targetPx
+   targetCardIdx  → carte visée (incrémente/décrémente au wheel)
+───────────────────────────────────────────────────────────── */
+let targetCardIdx = 0;
+let snapRaf       = null;
+
+function smoothScrollTo(targetPx) {
+  if (snapRaf) cancelAnimationFrame(snapRaf);
+  const startPx = touchZone.scrollTop;
+  const diff    = targetPx - startPx;
+  if (Math.abs(diff) < 0.5) return;
+
+  const dur = 420;
+  const t0  = performance.now();
+
+  function step(now) {
+    const p    = Math.min(1, (now - t0) / dur);
+    /* ease-in-out cubic */
+    const ease = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3) / 2;
+    touchZone.scrollTop = startPx + diff * ease;
+    renderWheel(touchZone.scrollTop);
+    if (p < 1) snapRaf = requestAnimationFrame(step);
+    else        snapRaf = null;
+  }
+  snapRaf = requestAnimationFrame(step);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MOLETTE : 1 cran = 1 carte
+   Chaque event wheel avance/recule d'une carte et relance l'anim.
+   En scrollant vite, targetCardIdx s'accumule → plusieurs cartes.
+───────────────────────────────────────────────────────────── */
+document.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const dir = e.deltaY > 0 ? 1 : e.deltaY < 0 ? -1 : 0;
+  if (dir === 0) return;
+  targetCardIdx = Math.max(0, Math.min(N - 1, targetCardIdx + dir));
+  smoothScrollTo(targetCardIdx * SCROLL_PER);
+}, { passive: false });
+
+/* ─────────────────────────────────────────────────────────────
+   TOUCH : scroll libre + snap à l'arrêt (150 ms d'inactivité)
+───────────────────────────────────────────────────────────── */
+let snapTimer = null;
+touchZone.addEventListener('scroll', () => {
+  /* pendant le scroll touch (snapRaf = null) on met à jour le rendu */
+  if (!snapRaf) renderWheel(touchZone.scrollTop);
+
+  /* snap dès que le scroll s'arrête */
+  clearTimeout(snapTimer);
+  snapTimer = setTimeout(() => {
+    const nearest   = Math.max(0, Math.min(N - 1,
+                        Math.round(touchZone.scrollTop / SCROLL_PER)));
+    targetCardIdx   = nearest;
+    smoothScrollTo(nearest * SCROLL_PER);
+  }, 150);
+}, { passive: true });
+
+/* ── Initial render ── */
+renderWheel(0);
+</script>
+</body>
+</html>

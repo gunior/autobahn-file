@@ -314,41 +314,68 @@
     .footer-share-btn.copied .footer-share-label  { display: none; }
     .footer-share-btn.copied .footer-share-confirm { display: inline; }
 
-  /* ══ ROUE VERTICALE DESKTOP ══════════════════════════════════════ */
+  /* ══ ROUE RADIALE DESKTOP ════════════════════════════════════════
+     Pivot situé près du bord gauche (cx < 0), cartes disposées sur un
+     grand arc. Rotations 3D multi-axes, scale exagérée entre active et
+     lointaines, répulsion angulaire pour éviter les chevauchements,
+     z-push pour faire avancer l'active vers la caméra.
+  ════════════════════════════════════════════════════════════════════ */
   @media (min-width: 769px) {
     .coverflow-wrap, #portraitsTitle, .page-subtitle { display: none !important; }
   }
   .wheel-stage-v {
     position: fixed; inset: 0; z-index: 6;
-    display: flex; align-items: center; justify-content: center;
-    perspective: 1400px; pointer-events: none;
+    perspective: 1600px; pointer-events: none;
   }
-  .wheel-stage-v-inner { position: relative; width: 100%; height: 100%; }
+  .wheel-stage-v-inner {
+    position: relative; width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+  }
   .wcard {
-    position: absolute; left: clamp(150px, 16vw, 250px); top: 50%;
-    width: clamp(160px, 18vw, 260px); aspect-ratio: 1 / 1;
+    position: absolute; top: 0; left: 0;
+    width: 218px; height: 273px; /* 218 * 1.25 ratio */
     transform-origin: center center;
     cursor: url('./assets/cursor-hand-hover.png') 9 0, pointer;
     pointer-events: all; will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
   }
-  .wcard-inner { position: relative; width: 100%; height: 100%; overflow: hidden; background: #1a1a18; }
+  .wcard-inner {
+    position: relative; width: 100%; height: 100%;
+    overflow: hidden; background: #1a1a18;
+    box-shadow: 0 14px 50px rgba(0,0,0,0.45);
+  }
   .wcard-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .wcard-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 60px; color: rgba(245,244,240,0.15); letter-spacing: -0.02em; }
-  .wcard-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 45%, transparent 75%); opacity: 0; transition: opacity 0.4s ease; }
+  .wcard-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 72px;
+    color: rgba(245,244,240,0.15); letter-spacing: -0.02em;
+  }
+  .wcard-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 45%, transparent 75%);
+    opacity: 0; transition: opacity 0.4s ease;
+  }
   .wcard.active .wcard-overlay { opacity: 1; }
   .wcard-info { display: none; }
+
+  /* ── Focus mode : après 0.3s sur la même carte, les autres → 30% ─ */
+  .wheel-stage-v.focused .wcard:not(.active) { opacity: 0.3 !important; }
 
   /* ── Panneau info créateur — externe, à droite de la roue ── */
   .dwheel-info-panel {
     position: fixed;
-    left: clamp(240px, 30vw, 430px);
+    left: clamp(380px, 40vw, 560px);
     top: 50%;
     transform: translateY(-50%);
     z-index: 7;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.65s ease, transform 0.7s cubic-bezier(0.16,1,0.3,1);
-    max-width: clamp(200px, 38vw, 520px);
+    max-width: clamp(220px, 38vw, 520px);
   }
   .dwheel-info-panel.visible { opacity: 1; pointer-events: all; }
   .dwheel-info-panel.shifted { transform: translateY(-50%) translateX(42px); }
@@ -397,7 +424,7 @@
   html[data-theme="dark"] body:not(.video-active) .dwheel-info-cta { color: rgba(245,244,240,0.6); }
   body.video-active .dwheel-info-cta { color: rgba(245,244,240,0.7); }
   .dwheel-info-cta:hover { background: #ffffff; color: #1a1a18; border-color: #ffffff; }
-.dwheel-hint { position: fixed; left: clamp(150px, 16vw, 250px); bottom: 56px; transform: translateX(-50%); z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
+.dwheel-hint { position: fixed; left: 80px; bottom: 56px; z-index: 50; font-family: 'Inter', sans-serif; font-weight: 300; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,244,240,0.4); pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.4s ease; }
   .dwheel-hint.fade { opacity: 0; }
   .dwheel-hint::after { content: ''; width: 1px; height: 24px; background: linear-gradient(to bottom, rgba(245,244,240,0.6), transparent); animation: hintPulse 2s ease-in-out infinite; }
   @keyframes hintPulse { 0%,100% { transform: translateY(0); opacity: 0.7; } 50% { transform: translateY(8px); opacity: 0.2; } }
@@ -1191,29 +1218,51 @@
   /* ══ ROUE VERTICALE DESKTOP ══════════════════════════════════════════════ */
   function buildDesktopWheel(list) {
     const wheelInner = document.getElementById('dWheelInner');
+    const stageEl    = document.getElementById('dWheelStage');
     const hint       = document.getElementById('dWheelHint');
     const transition = document.getElementById('dWheelTransition');
 
-    document.getElementById('dWheelStage').style.display = '';
+    stageEl.style.display = '';
     hint.style.display = '';
     document.body.classList.add('video-active');
 
-    const N              = list.length;
-    const STEP_PX        = 280;
-    const SHOW_RADIUS    = 4;
-    const THRESHOLD_IN   = 0.90;
-    const WHEEL_COOLDOWN = 320;
+    /* ═══ Paramètres de la roue radiale (valeurs validées dans la preview) ═══ */
+    const CFG = {
+      cx:           -146,   // centre X (px depuis bord gauche)
+      r:            540,    // rayon de l'arc
+      ang:          19,     // espacement angulaire entre cartes (°)
+      size:         218,    // largeur carte (px)
+      ratio:        1.25,   // hauteur / largeur
+      scaleA:       1.08,   // scale carte active
+      scaleF:       0.42,   // scale carte la plus éloignée
+      scaleE:       1.55,   // exposant courbe de scale
+      rotZ:         7,      // tilt 2D max (°)
+      rotY:         14,     // face-camera max (°)
+      rotX:         15,     // bow max (°)
+      repulse:      21,     // répulsion angulaire vs carte active (°)
+      repulseDecay: 0.34,   // atténuation de la répulsion avec la distance
+      zpush:        300,    // px d'avancée Z de l'active vers la caméra
+      blur:         5,      // blur max sur les cartes lointaines
+      cut:          -0.15   // cosT cutoff (cartes au-delà → cachées)
+    };
 
-    let virtualScroll = 0;
-    let targetPosition = 0;
+    const N              = list.length;
+    const SCROLL_PER     = 110;
+    const THRESHOLD_IN   = 0.90;
+    const THRESHOLD_OUT  = 0.10;
+    const WHEEL_COOLDOWN = 280;
+
+    let virtualScroll  = 0;
     let snapRaf        = null;
     let dwActiveIdx    = -1;
     let isFocused      = false;
     let focusTimeout   = null;
     let lastWheelTime  = 0;
     let wheelTimeout   = null;
+    let enterT         = 0;   // 0 = hors écran, 1 = en place — pour l'entrance
+    let enterRaf       = null;
 
-    /* ─ Panneau info créateur (externe, à droite de la roue) ─ */
+    /* ─ Panneau info créateur ─ */
     const infoPanel = document.createElement('div');
     infoPanel.className = 'dwheel-info-panel';
     infoPanel.id = 'dwheelInfoPanel';
@@ -1235,44 +1284,22 @@
       });
     }
 
-    /* ─ Focus mode ─ */
+    /* ─ Focus mode : 0.3s sur la même carte → autres à 30%, active zoom + shift,
+       panneau info apparaît. ─ */
     function scheduleFocus() {
       clearTimeout(focusTimeout);
       focusTimeout = setTimeout(() => {
         isFocused = true;
-        cardEls.forEach((el, i) => {
-          if (parseFloat(el.style.opacity || '0') < 0.05) return;
-          if (el.classList.contains('active')) {
-            /* Carte active : décalage droit + zoom.
-               Le scale(1.06) ferait monter la carte de 3% de sa hauteur
-               (expansion symétrique depuis le centre). On compense en Y
-               pour que le bord haut reste fixe et la carte parte
-               uniquement vers la droite. */
-            const h    = el.getBoundingClientRect().height;
-            const s    = 1.06;
-            const yComp = (h * (s - 1) / 2).toFixed(1); /* pousse légèrement vers le bas */
-            el.style.transition = 'opacity 0.65s ease, translate 0.7s cubic-bezier(0.16,1,0.3,1), scale 0.7s cubic-bezier(0.16,1,0.3,1), filter 0.5s ease';
-            el.style.opacity    = '1';
-            el.style.translate  = `42px ${yComp}px`;
-            el.style.scale      = String(s);
-            el.style.filter     = 'none';
-          } else {
-            /* Cartes autour : plus loin = plus à gauche + plus sombre + plus flou */
-            let dist = i - dwActiveIdx;
-            dist = dist - N * Math.round(dist / N); /* distance circulaire */
-            const absD    = Math.abs(dist);
-            const opacity = Math.max(0.04, 0.22 * Math.pow(0.55, absD - 1));
-            const blurPx  = absD * 2;
-            const shiftPx = absD * 14;
-            el.style.transition = 'opacity 0.65s ease, translate 0.65s cubic-bezier(0.16,1,0.3,1), filter 0.65s ease';
-            el.style.opacity    = opacity.toFixed(2);
-            el.style.translate  = `-${shiftPx}px 0`;
-            el.style.filter     = `blur(${blurPx}px)`;
-          }
-        });
+        stageEl.classList.add('focused');
+        /* Carte active : léger zoom + shift droit pour laisser respirer le texte */
+        const activeEl = cardEls[dwActiveIdx];
+        if (activeEl) {
+          activeEl.style.transition = 'translate 0.7s cubic-bezier(0.16,1,0.3,1), scale 0.7s cubic-bezier(0.16,1,0.3,1)';
+          activeEl.style.translate  = '36px 0px';
+          activeEl.style.scale      = '1.06';
+        }
         updateInfoPanel();
-        infoPanel.classList.add('visible');
-        infoPanel.classList.add('shifted');
+        infoPanel.classList.add('visible', 'shifted');
       }, 300);
     }
     function resetFocus() {
@@ -1280,17 +1307,14 @@
       focusTimeout = null;
       if (!isFocused) return;
       isFocused = false;
+      stageEl.classList.remove('focused');
       cardEls.forEach(el => {
         el.style.transition = '';
-        el.style.opacity    = '';
         el.style.translate  = '';
         el.style.scale      = '';
-        el.style.filter     = '';
       });
-      /* Fade-out rapide du panneau */
       infoPanel.style.transition = 'opacity 0.15s ease, transform 0.2s ease';
-      infoPanel.classList.remove('visible');
-      infoPanel.classList.remove('shifted');
+      infoPanel.classList.remove('visible', 'shifted');
       setTimeout(() => { infoPanel.style.transition = ''; }, 220);
     }
 
@@ -1298,59 +1322,128 @@
     const cardEls = list.map((c, i) => {
       const el = document.createElement('div');
       el.className = 'wcard';
-      const photoSrc = c.photo;
       const inner = document.createElement('div');
       inner.className = 'wcard-inner';
-      if (photoSrc) {
+      if (c.photo) {
         const img = document.createElement('img');
-        img.className = 'wcard-photo'; img.src = photoSrc;
-        img.alt = c.name || ''; img.loading = 'lazy';
+        img.className = 'wcard-photo';
+        img.src = c.photo; img.alt = c.name || ''; img.loading = 'lazy';
         inner.appendChild(img);
       } else {
         const ph = document.createElement('div');
         ph.className = 'wcard-placeholder';
-        ph.textContent = (c.name || '').split(' ').pop().charAt(0);
+        ph.textContent = ((c.name || '?').trim().split(' ').pop()).charAt(0);
         inner.appendChild(ph);
       }
-      const ov = document.createElement('div'); ov.className = 'wcard-overlay';
+      const ov = document.createElement('div');
+      ov.className = 'wcard-overlay';
       inner.appendChild(ov);
-      const info = document.createElement('div'); info.className = 'wcard-info';
-      info.innerHTML = `<div class="wcard-name">${(c.name||'').split(' ').pop()}</div><div class="wcard-role">${c.role||''}</div>`;
-      inner.appendChild(info);
       el.appendChild(inner);
       el.addEventListener('click', () => onWCardClick(i));
       wheelInner.appendChild(el);
       return el;
     });
 
-    /* ─ Render ─ */
+    /* ─ Détection carte active avec hystérésis 90% ─ */
+    function getActiveIndex(scrollTop) {
+      const floatIdx = scrollTop / SCROLL_PER;
+      const base     = ((Math.floor(floatIdx)) % N + N) % N;
+      const next     = (base + 1) % N;
+      const progress = floatIdx - Math.floor(floatIdx);
+      if (progress >= THRESHOLD_IN)  return next;
+      if (progress <= THRESHOLD_OUT) return base;
+      if (dwActiveIdx === base || dwActiveIdx === next) return dwActiveIdx;
+      return base;
+    }
+
+    /* ─ Render radial ─ */
     function render() {
       if (N === 0) return;
-      const idx = virtualScroll / STEP_PX;
+      const cx       = CFG.cx;
+      const cy       = window.innerHeight * 0.5;
+      const rotation = (virtualScroll / SCROLL_PER) * CFG.ang;
+      const cardW    = CFG.size;
+      const cardH    = CFG.size * CFG.ratio;
+
+      /* Décalage X pour l'entrance : tout part de hors écran à gauche */
+      const enterShiftX = (1 - enterT) * -window.innerWidth * 0.45;
+      const enterOpacity = enterT;
+
       cardEls.forEach((el, i) => {
-        let offset = i - idx;
-        offset = offset - N * Math.round(offset / N);
-        const absO = Math.abs(offset);
-        if (absO > SHOW_RADIUS) { el.style.opacity = '0'; el.style.pointerEvents = 'none'; el.style.transform = ''; return; }
-        const sign = offset === 0 ? 0 : (offset > 0 ? 1 : -1);
-        const translateY = offset * 220 + sign * Math.pow(absO, 1.2) * 55;
-        const scale   = Math.max(0.55, 1 - absO * 0.12);
-        const opacity = Math.max(0.08, 1 - absO * 0.26);
-        const rotateX = sign * Math.min(40, absO * 12);
-        el.style.opacity = opacity;
-        el.style.pointerEvents = absO < 0.6 ? 'all' : 'none';
-        el.style.zIndex = Math.round(100 - absO * 10);
-        el.style.transform = `translate(-50%, calc(-50% + ${translateY}px)) scale(${scale}) rotateX(${rotateX}deg)`;
-        el.classList.toggle('active', absO < 0.5);
-        el.style.filter = absO > 0.6 ? `blur(${Math.min(4,(absO-0.6)*4)}px)` : 'none';
+        el.style.width  = cardW + 'px';
+        el.style.height = cardH + 'px';
+
+        /* Angle dans [-180, 180] */
+        let thetaDeg = i * CFG.ang - rotation;
+        thetaDeg = ((thetaDeg + 180) % 360 + 360) % 360 - 180;
+
+        /* Répulsion angulaire : pousse les voisines hors zone de l'active */
+        const absDeg = Math.abs(thetaDeg);
+        const push   = Math.sign(thetaDeg) * CFG.repulse
+                       * Math.exp(-CFG.repulseDecay * (absDeg / Math.max(CFG.ang, 1)));
+        const theta = (thetaDeg + push) * Math.PI / 180;
+
+        const cosT = Math.cos(theta);
+        const sinT = Math.sin(theta);
+
+        if (cosT < CFG.cut) {
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+          return;
+        }
+
+        const t      = Math.max(0, cosT);
+        const tCurve = Math.pow(t, CFG.scaleE);
+
+        const scale   = CFG.scaleF + (CFG.scaleA - CFG.scaleF) * tCurve;
+        const opacity = (0.12 + 0.88 * Math.pow(t, 0.7)) * enterOpacity;
+        const blurPx  = (1 - t) * CFG.blur;
+
+        const px = cx + CFG.r * Math.cos(theta) + enterShiftX;
+        const py = cy + CFG.r * Math.sin(theta);
+        const zPx = CFG.zpush * (tCurve - 0.35);
+
+        const rotZdeg = sinT * -CFG.rotZ;
+        const rotYdeg = sinT * CFG.rotY;
+        const rotXdeg = (1 - t) * CFG.rotX * (sinT > 0 ? -1 : 1);
+
+        el.style.transform = `
+          translate3d(${px - cardW/2}px, ${py - cardH/2}px, ${zPx}px)
+          scale(${scale})
+          rotateZ(${rotZdeg}deg)
+          rotateY(${rotYdeg}deg)
+          rotateX(${rotXdeg}deg)
+        `;
+        el.style.opacity       = opacity;
+        el.style.zIndex        = Math.round(t * 300);
+        el.style.pointerEvents = cosT > 0.85 ? 'all' : 'none';
+        el.style.filter        = blurPx > 0.1 ? `blur(${blurPx.toFixed(2)}px)` : 'none';
+        el.classList.toggle('active', cosT > 0.97);
       });
-      const rawActive = virtualScroll / STEP_PX;
-      const base = Math.floor(rawActive);
-      const newActive = ((( (rawActive - base) >= THRESHOLD_IN ? base + 1 : base) % N) + N) % N;
+
+      const newActive = getActiveIndex(virtualScroll);
       if (newActive !== dwActiveIdx) {
         dwActiveIdx = newActive;
-setBackground(list[dwActiveIdx]);
+        setBackground(list[dwActiveIdx]);
+        if (isFocused) updateInfoPanel();
       }
+    }
+
+    /* ─ Animation d'apparition de la roue ─ */
+    function playEntrance() {
+      if (enterRaf) cancelAnimationFrame(enterRaf);
+      enterT = 0;
+      const dur = 900;
+      const t0 = performance.now();
+      function step(now) {
+        const p = Math.min(1, (now - t0) / dur);
+        /* Ease out cubic */
+        enterT = 1 - Math.pow(1 - p, 3);
+        render();
+        if (p < 1) enterRaf = requestAnimationFrame(step);
+        else { enterRaf = null; enterT = 1; render(); scheduleFocus(); }
+      }
+      enterRaf = requestAnimationFrame(step);
     }
 
     /* ─ Smooth scroll ─ */
@@ -1358,7 +1451,7 @@ setBackground(list[dwActiveIdx]);
       if (snapRaf) cancelAnimationFrame(snapRaf);
       const start = virtualScroll, diff = target - start;
       if (Math.abs(diff) < 0.5) { virtualScroll = target; render(); scheduleFocus(); return; }
-      const dur = Math.min(480, 220 + Math.abs(diff / STEP_PX) * 60);
+      const dur = Math.min(480, 220 + Math.abs(diff / SCROLL_PER) * 60);
       const t0  = performance.now();
       function step(now) {
         const p    = Math.min(1, (now - t0) / dur);
@@ -1372,52 +1465,60 @@ setBackground(list[dwActiveIdx]);
     }
 
     function snapToNearest() {
-      targetPosition = Math.round(virtualScroll / STEP_PX) * STEP_PX;
-      smoothTo(targetPosition);
+      smoothTo(Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER);
     }
 
     /* ─ Click carte ─ */
     function onWCardClick(i) {
       if (i === dwActiveIdx) {
         const el = cardEls[i];
+        /* Petit zoom in juste avant le fade vers la page profil */
         el.style.transition = 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
-        el.style.transform   = 'translate(-50%,-50%) scale(1.07)';
+        el.style.scale = '1.14';
         transition.style.pointerEvents = 'all';
         setTimeout(() => { transition.style.opacity = '1'; }, 80);
         setTimeout(() => {
           openProfile(list[i]);
           transition.style.opacity = '0';
           transition.style.pointerEvents = 'none';
+          /* On laisse l'état de l'animation reset au prochain render */
+          el.style.transition = '';
+          el.style.scale = '';
         }, 420);
       } else {
-        const currentFloat = virtualScroll / STEP_PX;
+        const currentFloat = virtualScroll / SCROLL_PER;
         let offset = i - currentFloat;
         offset = offset - N * Math.round(offset / N);
-        targetPosition = Math.round((virtualScroll + offset * STEP_PX) / STEP_PX) * STEP_PX;
-        smoothTo(targetPosition);
+        smoothTo(Math.round((virtualScroll + offset * SCROLL_PER) / SCROLL_PER) * SCROLL_PER);
       }
     }
 
-    /* ─ Réinitialise l'overlay de transition quand on revient du profil ─ */
-    const _origClose = window._profileCloseHook;
-    document.getElementById('profileCloseBtn').addEventListener('click', () => {
-      transition.style.opacity = '0';
-      transition.style.pointerEvents = 'none';
-      scheduleFocus(); /* réaffiche les infos après 0.5s */
-    }, { capture: true });
+    /* ─ Entrance animation quand on revient sur la roue (close profil) ─ */
+    const profilePage = document.getElementById('profilePage');
+    let wasOpen = profilePage.classList.contains('open');
+    new MutationObserver(() => {
+      const open = profilePage.classList.contains('open');
+      if (wasOpen && !open) {
+        /* On revient sur la roue → reset transition overlay + replay entrance */
+        transition.style.opacity = '0';
+        transition.style.pointerEvents = 'none';
+        playEntrance();
+      }
+      wasOpen = open;
+    }).observe(profilePage, { attributes: true, attributeFilter: ['class'] });
 
     /* ─ Wheel ─ */
     window.addEventListener('wheel', (e) => {
-      if (document.getElementById('profilePage').classList.contains('open')) return;
+      if (profilePage.classList.contains('open')) return;
       e.preventDefault();
       hint.classList.add('fade');
       resetFocus();
       const now = performance.now();
       if (now - lastWheelTime >= WHEEL_COOLDOWN) {
         lastWheelTime = now;
-        targetPosition += (e.deltaY > 0 ? 1 : -1) * STEP_PX;
-        targetPosition  = Math.round(targetPosition / STEP_PX) * STEP_PX;
-        smoothTo(targetPosition);
+        const tgt = Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER
+                  + (e.deltaY > 0 ? 1 : -1) * SCROLL_PER;
+        smoothTo(tgt);
       }
       clearTimeout(wheelTimeout);
       wheelTimeout = setTimeout(() => snapToNearest(), 250);
@@ -1426,12 +1527,12 @@ setBackground(list[dwActiveIdx]);
     /* ─ Touch ─ */
     let tY0 = 0, tY1 = 0, tMoved = false;
     window.addEventListener('touchstart', (e) => {
-      if (document.getElementById('profilePage').classList.contains('open')) return;
+      if (profilePage.classList.contains('open')) return;
       tY0 = e.touches[0].clientY; tY1 = tY0; tMoved = false;
       if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
     }, { passive: true });
     window.addEventListener('touchmove', (e) => {
-      if (document.getElementById('profilePage').classList.contains('open')) return;
+      if (profilePage.classList.contains('open')) return;
       resetFocus(); e.preventDefault();
       const y = e.touches[0].clientY;
       virtualScroll += tY1 - y; tY1 = y;
@@ -1442,24 +1543,22 @@ setBackground(list[dwActiveIdx]);
 
     /* ─ Clavier ─ */
     window.addEventListener('keydown', (e) => {
-      if (document.getElementById('profilePage').classList.contains('open')) return;
+      if (profilePage.classList.contains('open')) return;
       if (e.key === 'ArrowDown' || e.key === ' ') {
-        e.preventDefault(); resetFocus(); targetPosition += STEP_PX; smoothTo(targetPosition);
+        e.preventDefault(); resetFocus();
+        smoothTo(Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER + SCROLL_PER);
       } else if (e.key === 'ArrowUp') {
-        e.preventDefault(); resetFocus(); targetPosition -= STEP_PX; smoothTo(targetPosition);
+        e.preventDefault(); resetFocus();
+        smoothTo(Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER - SCROLL_PER);
       } else if (e.key === 'Enter') { onWCardClick(dwActiveIdx); }
     });
 
     window.addEventListener('resize', render);
 
-    /* ─ Apparition ─ */
-    render();
+    /* ─ Init + apparition ─ */
+    dwActiveIdx = 0;
     setBackground(list[0]);
-    const stageEl = document.getElementById('dWheelInner');
-    stageEl.style.opacity = '0'; stageEl.style.transform = 'translateY(60px)';
-    stageEl.style.transition = 'opacity 0.8s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.8s cubic-bezier(0.25,0.46,0.45,0.94)';
-    requestAnimationFrame(() => { stageEl.style.opacity = '1'; stageEl.style.transform = 'translateY(0)'; });
-    scheduleFocus();
+    playEntrance();
   }
 
   /* ══ CHARGEMENT DES CRÉATEURS depuis creators.json (généré par build.js) ══ */

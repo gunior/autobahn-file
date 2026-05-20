@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autobahn — Radial Wheel Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; margin: 0; }
+    body {
+      background: #141412;
+      color: rgba(245,244,240,0.92);
+      font-family: 'Inter', sans-serif;
+    }
+
+    #vignette {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.55) 100%),
+        linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 25%, transparent 50%, rgba(0,0,0,0.75) 100%);
+    }
+
+    /* ══ ROUE RADIALE DESKTOP ══════════════════════════════════ */
+    #wheelContainer {
+      position: fixed; inset: 0; z-index: 6;
+      perspective: 1600px;
+      pointer-events: none;
+    }
+    #wheelInner {
+      position: relative; width: 100%; height: 100%;
+      transform-style: preserve-3d;
+    }
+    .rcard {
+      position: absolute; top: 0; left: 0;
+      width: 220px; height: 290px;
+      transform-origin: center center;
+      pointer-events: all; cursor: pointer;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+      transform-style: preserve-3d;
+    }
+    .rcard-inner {
+      position: relative; width: 100%; height: 100%;
+      overflow: hidden; background: #1a1a18;
+      box-shadow: 0 12px 50px rgba(0,0,0,0.4);
+    }
+    .rcard-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .rcard-placeholder {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 72px;
+      color: rgba(245,244,240,0.15); letter-spacing: -0.02em;
+    }
+    .rcard-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 45%, transparent 75%);
+      opacity: 0; transition: opacity 0.4s ease;
+    }
+    .rcard.active .rcard-overlay { opacity: 1; }
+
+    /* Panneau info */
+    .info-panel {
+      position: fixed;
+      left: clamp(280px, 36vw, 520px);
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 7;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.65s ease, transform 0.7s cubic-bezier(0.16,1,0.3,1);
+      max-width: clamp(200px, 38vw, 520px);
+    }
+    .info-panel.visible { opacity: 1; pointer-events: all; }
+    .info-panel.shifted { transform: translateY(-50%) translateX(42px); }
+    .info-name {
+      font-weight: 600; font-size: clamp(22px, 2.6vw, 42px);
+      letter-spacing: -0.025em; line-height: 1.05;
+      color: rgba(245,244,240,0.92);
+    }
+    .info-role {
+      font-weight: 700; font-size: 11px;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      margin-top: 6px; color: rgba(245,244,240,0.4);
+    }
+
+    .hint {
+      position: fixed; left: 80px; bottom: 56px;
+      z-index: 50;
+      font-weight: 300; font-size: 10px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: rgba(245,244,240,0.4);
+      pointer-events: none;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      transition: opacity 0.4s ease;
+    }
+    .hint.fade { opacity: 0; }
+    .hint::after {
+      content: ''; width: 1px; height: 24px;
+      background: linear-gradient(to bottom, rgba(245,244,240,0.6), transparent);
+      animation: hintPulse 2s ease-in-out infinite;
+    }
+    @keyframes hintPulse {
+      0%,100% { transform: translateY(0); opacity: 0.7; }
+      50%     { transform: translateY(8px); opacity: 0.2; }
+    }
+
+    /* ══ Panneau de contrôles ─────────────────────────────── */
+    .ctrl {
+      position: fixed; top: 20px; right: 20px; z-index: 1000;
+      width: 290px; padding: 16px 18px;
+      background: rgba(20,20,18,0.85);
+      border: 1px solid rgba(245,244,240,0.1);
+      backdrop-filter: blur(12px);
+      font-size: 11px; color: rgba(245,244,240,0.85);
+      user-select: none;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+    .ctrl h2 {
+      margin: 0 0 12px; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: rgba(245,244,240,0.5);
+    }
+    .ctrl h3 {
+      margin: 14px 0 8px; font-size: 9px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(232,255,71,0.7);
+    }
+    .ctrl-row { margin-bottom: 9px; display: flex; flex-direction: column; gap: 3px; }
+    .ctrl-row label {
+      display: flex; justify-content: space-between;
+      font-size: 10px; letter-spacing: 0.04em;
+      color: rgba(245,244,240,0.65);
+    }
+    .ctrl-row label span.val { color: #E8FF47; font-variant-numeric: tabular-nums; }
+    .ctrl input[type="range"] {
+      width: 100%; height: 4px; background: rgba(245,244,240,0.1);
+      -webkit-appearance: none; appearance: none; outline: none;
+    }
+    .ctrl input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 12px;
+      background: #E8FF47; cursor: pointer; border-radius: 50%;
+    }
+    .ctrl input[type="range"]::-moz-range-thumb {
+      width: 12px; height: 12px; background: #E8FF47;
+      cursor: pointer; border: none; border-radius: 50%;
+    }
+    .ctrl-presets { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .ctrl-presets button {
+      flex: 1; min-width: 60px;
+      padding: 6px 8px; background: transparent;
+      border: 1px solid rgba(245,244,240,0.15);
+      color: rgba(245,244,240,0.7);
+      font-family: inherit; font-size: 9px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .ctrl-presets button:hover {
+      border-color: #E8FF47; color: #E8FF47;
+    }
+    .ctrl-note {
+      margin-top: 12px; padding-top: 10px;
+      border-top: 1px solid rgba(245,244,240,0.08);
+      font-size: 10px; line-height: 1.5;
+      color: rgba(245,244,240,0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="vignette"></div>
+
+  <div id="wheelContainer">
+    <div id="wheelInner"></div>
+  </div>
+  <div class="hint" id="hint">Scroll</div>
+
+  <div class="ctrl" id="ctrlPanel">
+    <h2>Radial Wheel — Live Preview</h2>
+
+    <h3>Géométrie</h3>
+    <div class="ctrl-row">
+      <label>Centre X (px depuis bord gauche) <span class="val" id="vCx">-80</span></label>
+      <input type="range" id="cx" min="-400" max="300" value="-80">
+    </div>
+    <div class="ctrl-row">
+      <label>Rayon (px) <span class="val" id="vR">440</span></label>
+      <input type="range" id="r" min="200" max="800" value="440">
+    </div>
+    <div class="ctrl-row">
+      <label>Espacement angulaire (°) <span class="val" id="vAng">22</span></label>
+      <input type="range" id="ang" min="6" max="45" value="22">
+    </div>
+    <div class="ctrl-row">
+      <label>Taille carte (px) <span class="val" id="vSize">220</span></label>
+      <input type="range" id="size" min="120" max="340" value="220">
+    </div>
+    <div class="ctrl-row">
+      <label>Ratio carte (H/W) <span class="val" id="vRatio">1.32</span></label>
+      <input type="range" id="ratio" min="80" max="180" value="132">
+    </div>
+
+    <h3>Scale (accentué)</h3>
+    <div class="ctrl-row">
+      <label>Scale carte active <span class="val" id="vScaleA">1.40</span></label>
+      <input type="range" id="scaleA" min="80" max="200" value="140">
+    </div>
+    <div class="ctrl-row">
+      <label>Scale carte lointaine <span class="val" id="vScaleF">0.25</span></label>
+      <input type="range" id="scaleF" min="5" max="80" value="25">
+    </div>
+    <div class="ctrl-row">
+      <label>Courbe scale (exposant) <span class="val" id="vScaleE">1.8</span></label>
+      <input type="range" id="scaleE" min="50" max="400" value="180">
+    </div>
+
+    <h3>Rotations</h3>
+    <div class="ctrl-row">
+      <label>RotateZ — tilt 2D (°) <span class="val" id="vRotZ">14</span></label>
+      <input type="range" id="rotZ" min="0" max="60" value="14">
+    </div>
+    <div class="ctrl-row">
+      <label>RotateY — face caméra (°) <span class="val" id="vRotY">28</span></label>
+      <input type="range" id="rotY" min="0" max="70" value="28">
+    </div>
+    <div class="ctrl-row">
+      <label>RotateX — bow (°) <span class="val" id="vRotX">6</span></label>
+      <input type="range" id="rotX" min="0" max="40" value="6">
+    </div>
+
+    <h3>Espacement</h3>
+    <div class="ctrl-row">
+      <label>Répulsion angulaire (°) <span class="val" id="vRepulse">14</span></label>
+      <input type="range" id="repulse" min="0" max="40" value="14">
+    </div>
+    <div class="ctrl-row">
+      <label>Atténuation répulsion <span class="val" id="vRepulseDecay">1.2</span></label>
+      <input type="range" id="repulseDecay" min="20" max="400" value="120">
+    </div>
+    <div class="ctrl-row">
+      <label>Z-push active (px) <span class="val" id="vZpush">80</span></label>
+      <input type="range" id="zpush" min="0" max="300" value="80">
+    </div>
+
+    <h3>Atmosphère</h3>
+    <div class="ctrl-row">
+      <label>Blur max (px) <span class="val" id="vBlur">5</span></label>
+      <input type="range" id="blur" min="0" max="20" value="5">
+    </div>
+    <div class="ctrl-row">
+      <label>Cone visible (cosT cutoff) <span class="val" id="vCut">-0.15</span></label>
+      <input type="range" id="cut" min="-50" max="50" value="-15">
+    </div>
+
+    <div class="ctrl-presets">
+      <button data-preset="subtle">Subtle</button>
+      <button data-preset="medium">Medium</button>
+      <button data-preset="strong">Strong</button>
+      <button data-preset="cinema">Cinema</button>
+    </div>
+
+    <div class="ctrl-note">
+      Scroll / flèches / touch pour faire défiler.<br>
+      La roue tourne autour d'un centre situé près du bord gauche.
+    </div>
+  </div>
+
+  <div class="info-panel" id="infoPanel"></div>
+
+  <script>
+  /* ─────────────────────────────────────────────────────────
+     DONNÉES — photos locales depuis ./creators/<name>/
+     ───────────────────────────────────────────────────────── */
+  const CREATORS = [
+    { name: 'Antonin',   role: 'Motion Designer',  photo: './creators/antonin/creator-pp-antonin.jpg' },
+    { name: 'Clément',   role: 'Motion Designer',  photo: './creators/clement/creator-pp-clement.png' },
+    { name: 'Delphy',    role: 'Designer',         photo: './creators/delphy/creator-pp-delphy.jpg' },
+    { name: 'Guillaume', role: 'Sound Designer',   photo: './creators/guillaume/creator-pp-guillaume.jpg' },
+    { name: 'Johan',     role: 'Motion Designer',  photo: './creators/johan/creator-pp-johan.jpg' },
+    { name: 'Marine',    role: 'Producer',         photo: './creators/marine/creator-pp-marine.png' },
+    { name: 'Océane',    role: 'Motion Designer',  photo: './creators/oceane/creator-pp-oceane.webp' },
+    { name: 'Simon',     role: 'Motion Designer',  photo: './creators/simon/creator-pp-simon.png' },
+    { name: 'Victor',    role: 'VFX Artist',       photo: './creators/victor/creator-pp-victor.jpg' },
+    { name: 'Alexandre', role: 'Designer',         photo: null },
+    { name: 'Romain',    role: 'Motion Designer',  photo: null }
+  ];
+
+  /* ─────────────────────────────────────────────────────────
+     CONFIG — modifiée par les sliders
+     ───────────────────────────────────────────────────────── */
+  const cfg = {
+    cx:      -80,    // centre X (px depuis bord gauche)
+    r:       440,    // rayon
+    ang:     22,     // espacement angulaire entre cartes (°)
+    size:    220,    // largeur carte (px)
+    ratio:   1.32,   // hauteur / largeur
+    scaleA:  1.40,   // scale carte active
+    scaleF:  0.25,   // scale carte la plus éloignée
+    scaleE:  1.8,    // exposant de la courbe de scale
+    rotZ:    14,     // tilt 2D max
+    rotY:    28,     // face-camera max
+    rotX:    6,      // bow max
+    repulse: 14,     // ° de push supplémentaire sur les voisines proches de l'active
+    repulseDecay: 1.2, // vitesse de disparition du push avec la distance
+    zpush:   80,     // px d'avancée Z de l'active vers la caméra
+    blur:    5,      // blur max
+    cut:     -0.15   // cosT cutoff (cartes au-delà cachées)
+  };
+
+  /* ─────────────────────────────────────────────────────────
+     WHEEL RADIAL DESKTOP
+     ───────────────────────────────────────────────────────── */
+  function buildRadialWheel(list) {
+    const container = document.getElementById('wheelContainer');
+    const inner     = document.getElementById('wheelInner');
+    const hint      = document.getElementById('hint');
+    const infoPanel = document.getElementById('infoPanel');
+
+    const N = list.length;
+    const SCROLL_PER     = 110;
+    const THRESHOLD_IN   = 0.90;
+    const THRESHOLD_OUT  = 0.10;
+    const WHEEL_COOLDOWN = 280;
+
+    let virtualScroll = 0;
+    let targetIdx     = 0;
+    let snapRaf       = null;
+    let activeIdx     = -1;
+    let isFocused     = false;
+    let focusTimeout  = null;
+    let lastWheelTime = 0;
+    let wheelTimeout  = null;
+
+    /* ── Cartes ── */
+    const cardEls = list.map((c) => {
+      const el = document.createElement('div');
+      el.className = 'rcard';
+      const inn = document.createElement('div');
+      inn.className = 'rcard-inner';
+      if (c.photo) {
+        const img = document.createElement('img');
+        img.className = 'rcard-photo';
+        img.src = c.photo; img.alt = c.name || ''; img.loading = 'lazy';
+        img.onerror = () => {
+          img.remove();
+          const ph = document.createElement('div');
+          ph.className = 'rcard-placeholder';
+          ph.textContent = (c.name || '?').charAt(0);
+          inn.prepend(ph);
+        };
+        inn.appendChild(img);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'rcard-placeholder';
+        ph.textContent = (c.name || '?').charAt(0);
+        inn.appendChild(ph);
+      }
+      const ov = document.createElement('div');
+      ov.className = 'rcard-overlay';
+      inn.appendChild(ov);
+      el.appendChild(inn);
+      inner.appendChild(el);
+      return el;
+    });
+
+    function updateInfoPanel() {
+      if (activeIdx < 0 || activeIdx >= list.length) return;
+      const c = list[activeIdx];
+      const firstName = (c.name || '').trim().split(' ').pop();
+      infoPanel.innerHTML = `
+        <div class="info-name">${firstName}</div>
+        <div class="info-role">${c.role || ''}</div>
+      `;
+    }
+    function scheduleFocus() {
+      clearTimeout(focusTimeout);
+      focusTimeout = setTimeout(() => {
+        isFocused = true;
+        updateInfoPanel();
+        infoPanel.classList.add('visible', 'shifted');
+      }, 300);
+    }
+    function resetFocus() {
+      clearTimeout(focusTimeout);
+      focusTimeout = null;
+      if (!isFocused) return;
+      isFocused = false;
+      infoPanel.style.transition = 'opacity 0.15s ease, transform 0.2s ease';
+      infoPanel.classList.remove('visible', 'shifted');
+      setTimeout(() => { infoPanel.style.transition = ''; }, 220);
+    }
+
+    /* ── Détermination de la carte active (hystérésis 90%) ── */
+    function getActiveIndex(scrollTop) {
+      const floatIdx = scrollTop / SCROLL_PER;
+      const base     = ((Math.floor(floatIdx)) % N + N) % N;
+      const next     = (base + 1) % N;
+      const progress = floatIdx - Math.floor(floatIdx);
+      if (progress >= THRESHOLD_IN)  return next;
+      if (progress <= THRESHOLD_OUT) return base;
+      if (activeIdx === base || activeIdx === next) return activeIdx;
+      return base;
+    }
+
+    /* ── Render ── */
+    function render() {
+      const cx       = cfg.cx;
+      const cy       = window.innerHeight * 0.5;
+      const rotation = (virtualScroll / SCROLL_PER) * cfg.ang;
+      const cardW    = cfg.size;
+      const cardH    = cfg.size * cfg.ratio;
+
+      /* Mise à jour des dimensions visuelles */
+      cardEls.forEach(el => {
+        el.style.width  = cardW + 'px';
+        el.style.height = cardH + 'px';
+      });
+
+      cardEls.forEach((el, i) => {
+        /* Angle brut, en degrés, par rapport à la position "active" (0°) */
+        let thetaDeg = i * cfg.ang - rotation;
+        /* Normalise dans [-180, 180] pour que la répulsion choisisse le côté le plus court */
+        thetaDeg = ((thetaDeg + 180) % 360 + 360) % 360 - 180;
+
+        /* ── Répulsion angulaire : pousse les voisines de la carte active hors de sa zone ──
+           - Force max = cfg.repulse (°), atteinte à la frontière immédiate de l'active
+           - Décroît exponentiellement avec la distance (cfg.repulseDecay)
+           - La carte active elle-même (theta ≈ 0) reçoit 0 push → reste au centre */
+        const absDeg = Math.abs(thetaDeg);
+        const push   = Math.sign(thetaDeg) * cfg.repulse
+                       * Math.exp(-cfg.repulseDecay * (absDeg / Math.max(cfg.ang, 1)));
+        const pushedDeg = thetaDeg + push;
+        const theta = pushedDeg * Math.PI / 180;
+
+        const cosT = Math.cos(theta);
+        const sinT = Math.sin(theta);
+
+        if (cosT < cfg.cut) {
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+          return;
+        }
+
+        /* t = 1 quand la carte est en face (theta=0), 0 quand elle est sur le côté */
+        const t      = Math.max(0, cosT);
+        /* Courbe non-linéaire pour creuser l'écart entre actif et lointain */
+        const tCurve = Math.pow(t, cfg.scaleE);
+
+        const scale   = cfg.scaleF + (cfg.scaleA - cfg.scaleF) * tCurve;
+        const opacity = 0.12 + 0.88 * Math.pow(t, 0.7);
+        const blurPx  = (1 - t) * cfg.blur;
+
+        /* Position sur l'arc (avec répulsion appliquée) */
+        const px = cx + cfg.r * Math.cos(theta);
+        const py = cy + cfg.r * Math.sin(theta);
+
+        /* Z-push : l'active avance vers la caméra, les voisines reculent un peu */
+        const zPx = cfg.zpush * (tCurve - 0.35);
+
+        /* Rotations couplées au sinus → axes multiples */
+        const rotZdeg = sinT * -cfg.rotZ;             // tilt 2D (cartes "penchent")
+        const rotYdeg = sinT * cfg.rotY;              // les cartes hautes/basses se tournent vers le centre
+        const rotXdeg = (1 - t) * cfg.rotX * (sinT > 0 ? -1 : 1);
+
+        el.style.transform = `
+          translate3d(${px - cardW/2}px, ${py - cardH/2}px, ${zPx}px)
+          scale(${scale})
+          rotateZ(${rotZdeg}deg)
+          rotateY(${rotYdeg}deg)
+          rotateX(${rotXdeg}deg)
+        `;
+        el.style.opacity       = opacity;
+        el.style.zIndex        = Math.round(t * 300);
+        el.style.pointerEvents = cosT > 0.85 ? 'all' : 'none';
+        el.style.filter        = blurPx > 0.1 ? `blur(${blurPx.toFixed(2)}px)` : 'none';
+        el.classList.toggle('active', cosT > 0.97);
+      });
+
+      const newActive = getActiveIndex(virtualScroll);
+      if (newActive !== activeIdx) {
+        activeIdx = newActive;
+        if (isFocused) updateInfoPanel();
+      }
+    }
+
+    /* ── Smooth scroll ── */
+    function smoothTo(target) {
+      if (snapRaf) cancelAnimationFrame(snapRaf);
+      const start = virtualScroll, diff = target - start;
+      if (Math.abs(diff) < 0.5) { virtualScroll = target; render(); scheduleFocus(); return; }
+      const dur = Math.min(480, 220 + Math.abs(diff / SCROLL_PER) * 60);
+      const t0  = performance.now();
+      function step(now) {
+        const p    = Math.min(1, (now - t0) / dur);
+        const ease = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3) / 2;
+        virtualScroll = start + diff * ease;
+        render();
+        if (p < 1) snapRaf = requestAnimationFrame(step);
+        else { snapRaf = null; virtualScroll = target; render(); scheduleFocus(); }
+      }
+      snapRaf = requestAnimationFrame(step);
+    }
+    function snapToNearest() {
+      const tgt = Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER;
+      smoothTo(tgt);
+    }
+
+    /* ── Wheel ── */
+    window.addEventListener('wheel', (e) => {
+      if (e.target.closest('.ctrl')) return;
+      e.preventDefault();
+      hint.classList.add('fade');
+      resetFocus();
+      const now = performance.now();
+      if (now - lastWheelTime >= WHEEL_COOLDOWN) {
+        lastWheelTime = now;
+        const tgt = Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER
+                  + (e.deltaY > 0 ? 1 : -1) * SCROLL_PER;
+        smoothTo(tgt);
+      }
+      clearTimeout(wheelTimeout);
+      wheelTimeout = setTimeout(() => snapToNearest(), 250);
+    }, { passive: false });
+
+    /* ── Clavier ── */
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault(); resetFocus();
+        smoothTo(Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER + SCROLL_PER);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault(); resetFocus();
+        smoothTo(Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER - SCROLL_PER);
+      }
+    });
+
+    /* ── Touch ── */
+    let tY0 = 0, tY1 = 0, tMoved = false;
+    window.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.ctrl')) return;
+      tY0 = e.touches[0].clientY; tY1 = tY0; tMoved = false;
+      if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (e.target.closest('.ctrl')) return;
+      resetFocus(); e.preventDefault();
+      const y = e.touches[0].clientY;
+      virtualScroll += tY1 - y; tY1 = y;
+      if (Math.abs(y - tY0) > 6) tMoved = true;
+      render();
+    }, { passive: false });
+    window.addEventListener('touchend', () => { if (tMoved) snapToNearest(); });
+
+    window.addEventListener('resize', render);
+
+    render();
+    scheduleFocus();
+    return { render };
+  }
+
+  const wheel = buildRadialWheel(CREATORS);
+
+  /* ─────────────────────────────────────────────────────────
+     WIRING DES SLIDERS
+     ───────────────────────────────────────────────────────── */
+  function wireSlider(id, valId, target, scale = 1, fmt = v => v) {
+    const input = document.getElementById(id);
+    const val   = document.getElementById(valId);
+    function sync() {
+      const v = parseFloat(input.value) * scale;
+      cfg[target] = v;
+      val.textContent = fmt(v);
+      wheel.render();
+    }
+    input.addEventListener('input', sync);
+    sync();
+  }
+
+  wireSlider('cx',     'vCx',     'cx',     1,    v => v.toFixed(0));
+  wireSlider('r',      'vR',      'r',      1,    v => v.toFixed(0));
+  wireSlider('ang',    'vAng',    'ang',    1,    v => v.toFixed(0));
+  wireSlider('size',   'vSize',   'size',   1,    v => v.toFixed(0));
+  wireSlider('ratio',  'vRatio',  'ratio',  0.01, v => v.toFixed(2));
+  wireSlider('scaleA', 'vScaleA', 'scaleA', 0.01, v => v.toFixed(2));
+  wireSlider('scaleF', 'vScaleF', 'scaleF', 0.01, v => v.toFixed(2));
+  wireSlider('scaleE', 'vScaleE', 'scaleE', 0.01, v => v.toFixed(2));
+  wireSlider('rotZ',   'vRotZ',   'rotZ',   1,    v => v.toFixed(0));
+  wireSlider('rotY',   'vRotY',   'rotY',   1,    v => v.toFixed(0));
+  wireSlider('rotX',   'vRotX',   'rotX',   1,    v => v.toFixed(0));
+  wireSlider('repulse',      'vRepulse',      'repulse',      1,    v => v.toFixed(0));
+  wireSlider('repulseDecay', 'vRepulseDecay', 'repulseDecay', 0.01, v => v.toFixed(2));
+  wireSlider('zpush',        'vZpush',        'zpush',        1,    v => v.toFixed(0));
+  wireSlider('blur',   'vBlur',   'blur',   1,    v => v.toFixed(0));
+  wireSlider('cut',    'vCut',    'cut',    0.01, v => v.toFixed(2));
+
+  /* ─ Presets ─ */
+  const PRESETS = {
+    subtle: { cx: -60,  r: 480, ang: 18, size: 200, ratio: 1.32,
+              scaleA: 1.20, scaleF: 0.45, scaleE: 1.3,
+              rotZ: 8,  rotY: 14, rotX: 3,
+              repulse: 8,  repulseDecay: 1.4, zpush: 40,
+              blur: 3,  cut: -0.20 },
+    medium: { cx: -80,  r: 440, ang: 22, size: 220, ratio: 1.32,
+              scaleA: 1.40, scaleF: 0.25, scaleE: 1.8,
+              rotZ: 14, rotY: 28, rotX: 6,
+              repulse: 14, repulseDecay: 1.2, zpush: 80,
+              blur: 5,  cut: -0.15 },
+    strong: { cx: -120, r: 380, ang: 28, size: 240, ratio: 1.40,
+              scaleA: 1.65, scaleF: 0.12, scaleE: 2.4,
+              rotZ: 22, rotY: 45, rotX: 12,
+              repulse: 22, repulseDecay: 1.0, zpush: 140,
+              blur: 8,  cut: -0.10 },
+    cinema: { cx: -200, r: 500, ang: 16, size: 260, ratio: 1.45,
+              scaleA: 1.55, scaleF: 0.30, scaleE: 2.0,
+              rotZ: 10, rotY: 35, rotX: 8,
+              repulse: 18, repulseDecay: 1.1, zpush: 120,
+              blur: 6,  cut: -0.20 }
+  };
+  document.querySelectorAll('.ctrl-presets button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = PRESETS[btn.dataset.preset];
+      if (!p) return;
+      const setSlider = (id, valId, value, isFloat = false, scale = 1) => {
+        const slider = document.getElementById(id);
+        const valEl  = document.getElementById(valId);
+        slider.value = Math.round(value / scale);
+        valEl.textContent = isFloat ? value.toFixed(2) : value.toFixed(0);
+      };
+      Object.assign(cfg, p);
+      setSlider('cx',           'vCx',           p.cx);
+      setSlider('r',            'vR',            p.r);
+      setSlider('ang',          'vAng',          p.ang);
+      setSlider('size',         'vSize',         p.size);
+      setSlider('ratio',        'vRatio',        p.ratio,        true,  0.01);
+      setSlider('scaleA',       'vScaleA',       p.scaleA,       true,  0.01);
+      setSlider('scaleF',       'vScaleF',       p.scaleF,       true,  0.01);
+      setSlider('scaleE',       'vScaleE',       p.scaleE,       true,  0.01);
+      setSlider('rotZ',         'vRotZ',         p.rotZ);
+      setSlider('rotY',         'vRotY',         p.rotY);
+      setSlider('rotX',         'vRotX',         p.rotX);
+      setSlider('repulse',      'vRepulse',      p.repulse);
+      setSlider('repulseDecay', 'vRepulseDecay', p.repulseDecay, true,  0.01);
+      setSlider('zpush',        'vZpush',        p.zpush);
+      setSlider('blur',         'vBlur',         p.blur);
+      setSlider('cut',          'vCut',          p.cut,          true,  0.01);
+      wheel.render();
+    });
+  });
+  </script>
+</body>
+</html>

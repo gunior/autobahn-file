@@ -51,13 +51,11 @@ export default {
     {
       name: 'photo',
       title: 'Photo de profil (carte 16:9)',
-      description: 'Recadre au format 16:9 — c'est exactement le format des cartes dans la roue des créateurs.',
+      description: "Recadre au format 16:9 — c'est exactement le format des cartes dans la roue des créateurs.",
       type: 'image',
       options: {
         hotspot: {
-          previews: [
-            { title: '16:9', aspectRatio: 16 / 9 },
-          ],
+          previews: [{ title: '16:9', aspectRatio: 16 / 9 }],
         },
       },
       components: { input: Photo169Input },
