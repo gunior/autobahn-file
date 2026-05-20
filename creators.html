@@ -1340,8 +1340,13 @@
       setTimeout(() => { infoPanel.style.transition = ''; }, 220);
     }
 
-    /* ─ Cartes ─ */
-    const cardEls = list.map((c, i) => {
+    /* ─ Cartes ─
+       Chaque créateur a 2 DOM elements : "primary" et "ghost". On les
+       rend simultanément à 2 positions séparées de N*ang. Comme ça quand
+       la carte traverse le point de wrap (±N*ang/2 ≈ ±104° pour 11 cartes ×
+       19°), pas de teleport visible — l'élément qui sort par un bord est
+       déjà visible à l'autre bord via son ghost. ─ */
+    function makeCardEl(c, i) {
       const el = document.createElement('div');
       el.className = 'wcard';
       const inner = document.createElement('div');
@@ -1357,18 +1362,23 @@
         ph.textContent = ((c.name || '?').trim().split(' ').pop()).charAt(0);
         inner.appendChild(ph);
       }
-      /* Dim overlay (entre photo et gradient bas) — pour le focus mode */
       const dim = document.createElement('div');
       dim.className = 'wcard-dim';
       inner.appendChild(dim);
-
       const ov = document.createElement('div');
       ov.className = 'wcard-overlay';
       inner.appendChild(ov);
       el.appendChild(inner);
       el.addEventListener('click', () => onWCardClick(i));
-      wheelInner.appendChild(el);
       return el;
+    }
+
+    const cardEls = list.map((c, i) => {
+      const primary = makeCardEl(c, i);
+      const ghost   = makeCardEl(c, i);
+      wheelInner.appendChild(primary);
+      wheelInner.appendChild(ghost);
+      return { primary, ghost };
     });
 
     /* ─ Détection carte active avec hystérésis 90% ─ */
@@ -1383,10 +1393,63 @@
       return base;
     }
 
-    /* ─ Render radial ─
-       Les cartes hors du cone visible disparaissent en fondu plutôt qu'en pop,
-       et l'arc affiché est suffisamment large pour qu'il y ait toujours des
-       cartes en haut ET en bas de l'active (sentiment infini garanti). ─ */
+    /* ─ Render une instance de carte (primary OU ghost) à un thetaDeg donné.
+       Calcule position/scale/opacity/rotations à partir de l'angle. ─ */
+    function renderInstance(el, thetaDeg, i, cardW, cardH, cx, cy) {
+      /* Répulsion angulaire : pousse les voisines hors zone de l'active */
+      const absDeg = Math.abs(thetaDeg);
+      const push   = Math.sign(thetaDeg) * CFG.repulse
+                     * Math.exp(-CFG.repulseDecay * (absDeg / Math.max(CFG.ang, 1)));
+      const theta = (thetaDeg + push) * Math.PI / 180;
+
+      const cosT = Math.cos(theta);
+      const sinT = Math.sin(theta);
+
+      /* Hard hide bien au-delà du cone — évite les calculs inutiles */
+      if (cosT < CFG.cut - 0.20) {
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+        return;
+      }
+
+      const t      = Math.max(0, cosT);
+      const tCurve = Math.pow(t, CFG.scaleE);
+
+      let scale = CFG.scaleF + (CFG.scaleA - CFG.scaleF) * tCurve;
+      /* Boost focus +8% sur la carte active (sur le primary uniquement). */
+      if (i === dwActiveIdx && Math.abs(thetaDeg) < CFG.ang / 2) {
+        scale *= (1 + focusFade * 0.08);
+      }
+      /* Fade-out doux sur les 0.20 cosT précédant le cutoff : pas de pop */
+      const edgeFade = Math.max(0, Math.min(1, (cosT - (CFG.cut - 0.20)) / 0.20));
+      const opacity = (0.12 + 0.88 * Math.pow(t, 0.7)) * edgeFade;
+      const blurPx  = (1 - t) * CFG.blur;
+
+      const px  = cx + CFG.r * Math.cos(theta);
+      const py  = cy + CFG.r * Math.sin(theta);
+      const zPx = CFG.zpush * (tCurve - 0.35);
+
+      const rotZdeg = sinT * -CFG.rotZ;
+      const rotYdeg = sinT * CFG.rotY;
+      const rotXdeg = (1 - t) * CFG.rotX * (sinT > 0 ? -1 : 1);
+
+      el.style.transform = `
+        translate3d(${px - cardW/2}px, ${py - cardH/2}px, ${zPx}px)
+        scale(${scale})
+        rotateZ(${rotZdeg}deg)
+        rotateY(${rotYdeg}deg)
+        rotateX(${rotXdeg}deg)
+      `;
+      el.style.opacity       = opacity;
+      el.style.zIndex        = Math.round(t * 300);
+      el.style.pointerEvents = cosT > 0.85 ? 'all' : 'none';
+      el.style.filter        = blurPx > 0.1 ? `blur(${blurPx.toFixed(2)}px)` : 'none';
+    }
+
+    /* ─ Render radial — distribue les cartes des DEUX côtés de l'active.
+       Pour chaque carte, on calcule sa position la plus proche de 0° (modulo
+       N*ang) → cards above ET below. On rend AUSSI un ghost à la position
+       looped pour éviter le teleport quand une carte traverse ±N*ang/2. ─ */
     function render() {
       if (N === 0) return;
       const cx       = CFG.cx;
@@ -1394,62 +1457,27 @@
       const rotation = (virtualScroll / SCROLL_PER) * CFG.ang;
       const cardW    = CFG.size;
       const cardH    = CFG.size * CFG.ratio;
+      const N_ANG    = N * CFG.ang;  // période du wheel infini
 
-      cardEls.forEach((el, i) => {
-        /* Angle dans [-180, 180] */
-        let thetaDeg = i * CFG.ang - rotation;
-        thetaDeg = ((thetaDeg + 180) % 360 + 360) % 360 - 180;
+      cardEls.forEach((entry, i) => {
+        const baseTheta = i * CFG.ang - rotation;
+        /* Position la plus proche de 0 (modulo N_ANG) → distribue les cartes
+           des deux côtés. Pour 11 cartes × 19° et active idx=0 à rotation=0 :
+           card 10 → -19°, card 9 → -38°, … card 6 → -95° (above active).
+           card 1 → +19°, … card 5 → +95° (below active). */
+        const primaryTheta = baseTheta - N_ANG * Math.round(baseTheta / N_ANG);
+        /* Position looped = de l'autre côté du wheel. Quand primaryTheta
+           approche ±N_ANG/2, ghostTheta arrive de l'autre côté → wrap
+           visuellement smooth. */
+        const ghostTheta = primaryTheta + (primaryTheta >= 0 ? -N_ANG : N_ANG);
 
-        /* Répulsion angulaire : pousse les voisines hors zone de l'active */
-        const absDeg = Math.abs(thetaDeg);
-        const push   = Math.sign(thetaDeg) * CFG.repulse
-                       * Math.exp(-CFG.repulseDecay * (absDeg / Math.max(CFG.ang, 1)));
-        const theta = (thetaDeg + push) * Math.PI / 180;
+        renderInstance(entry.primary, primaryTheta, i, cardW, cardH, cx, cy);
+        renderInstance(entry.ghost,   ghostTheta,   i, cardW, cardH, cx, cy);
 
-        const cosT = Math.cos(theta);
-        const sinT = Math.sin(theta);
-
-        /* Hard hide bien au-delà du cone — évite les calculs inutiles */
-        if (cosT < CFG.cut - 0.20) {
-          el.style.opacity = '0';
-          el.style.pointerEvents = 'none';
-          return;
-        }
-
-        const t      = Math.max(0, cosT);
-        const tCurve = Math.pow(t, CFG.scaleE);
-
-        let scale = CFG.scaleF + (CFG.scaleA - CFG.scaleF) * tCurve;
-        /* Boost focus +8% sur la carte active courante, modulé par focusFade
-           (animé en douceur entre 0 et 1 par animateFocusFade). Tout en JS,
-           donc s'enchaîne parfaitement avec le scroll qui modifie aussi
-           scale via le même transform string. */
-        if (i === dwActiveIdx) scale *= (1 + focusFade * 0.08);
-        /* Fade-out doux sur les 0.20 cosT précédant le cutoff : pas de pop */
-        const edgeFade = Math.max(0, Math.min(1, (cosT - CFG.cut) / 0.20 + 1));
-        const opacity = (0.12 + 0.88 * Math.pow(t, 0.7)) * edgeFade;
-        const blurPx  = (1 - t) * CFG.blur;
-
-        const px = cx + CFG.r * Math.cos(theta);
-        const py = cy + CFG.r * Math.sin(theta);
-        const zPx = CFG.zpush * (tCurve - 0.35);
-
-        const rotZdeg = sinT * -CFG.rotZ;
-        const rotYdeg = sinT * CFG.rotY;
-        const rotXdeg = (1 - t) * CFG.rotX * (sinT > 0 ? -1 : 1);
-
-        el.style.transform = `
-          translate3d(${px - cardW/2}px, ${py - cardH/2}px, ${zPx}px)
-          scale(${scale})
-          rotateZ(${rotZdeg}deg)
-          rotateY(${rotYdeg}deg)
-          rotateX(${rotXdeg}deg)
-        `;
-        el.style.opacity       = opacity;
-        el.style.zIndex        = Math.round(t * 300);
-        el.style.pointerEvents = cosT > 0.85 ? 'all' : 'none';
-        el.style.filter        = blurPx > 0.1 ? `blur(${blurPx.toFixed(2)}px)` : 'none';
-        el.classList.toggle('active', i === dwActiveIdx);
+        /* Classe .active sur le primary uniquement (le ghost est toujours
+           loin du centre, jamais "actif"). */
+        entry.primary.classList.toggle('active', i === dwActiveIdx);
+        entry.ghost.classList.remove('active');
       });
 
       const newActive = getActiveIndex(virtualScroll);
@@ -1529,7 +1557,7 @@
     /* ─ Click carte ─ */
     function onWCardClick(i) {
       if (i === dwActiveIdx) {
-        const el = cardEls[i];
+        const el = cardEls[i].primary;
         /* Petit zoom in juste avant le fade vers la page profil — transition
            sur la prop "scale" individuelle (et pas "transform"). */
         el.style.transition = 'scale 0.38s cubic-bezier(0.25,0.46,0.45,0.94)';
