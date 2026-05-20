@@ -325,7 +325,14 @@
   }
   .wheel-stage-v {
     position: fixed; inset: 0; z-index: 6;
-    perspective: 1600px; pointer-events: none;
+    perspective: 1600px;
+    /* Aligne le vanishing point sur la position de la carte active
+       (cx + r = -146 + 540 = 394px). Sans ça, la perspective tirait
+       les cartes vers la gauche de manière non-uniforme et la carte
+       active projetait à ~360px au lieu de 394 → impression d'être
+       entre deux cartes. */
+    perspective-origin: 394px 50%;
+    pointer-events: none;
   }
   .wheel-stage-v-inner {
     position: relative; width: 100%; height: 100%;
@@ -1553,18 +1560,18 @@
       requestAnimationFrame(() => { wheelInner.style.opacity = '1'; });
 
       if (snapRaf) cancelAnimationFrame(snapRaf);
-      const dur = 1300;
+      const dur = 1100;
       const t0  = performance.now();
       function step(now) {
         const p    = Math.min(1, (now - t0) / dur);
-        const ease = 1 - Math.pow(1 - p, 4);  // ease-out quartique (rotation)
+        /* Ease-out cubique : moins asymptotique que quartique, garde du
+           mouvement perceptible jusqu'à p=0.9 puis se cale proprement à 1.
+           Évite le "stall" en fin d'animation où la roue semblait s'être
+           arrêtée entre deux cartes. */
+        const ease = 1 - Math.pow(1 - p, 3);
         virtualScroll = startPos + (restPos - startPos) * ease;
-        /* focusFade synchronisé avec les 30% derniers de la rotation : reste
-           à 0 pendant les premiers 70% (rotation pure), puis ramp jusqu'à 1
-           pile quand la roue s'arrête. Du coup la carte active est déjà à
-           pleine échelle au moment où l'animation se fige — aucun "snap"
-           perceptible à l'arrivée. */
-        focusFade = Math.max(0, Math.min(1, (p - 0.7) / 0.3));
+        /* focusFade synchronisé avec les 40% derniers de la rotation. */
+        focusFade = Math.max(0, Math.min(1, (p - 0.6) / 0.4));
         render();
         if (p < 1) snapRaf = requestAnimationFrame(step);
         else {
