@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autobahn — Design, Technologie & Image en mouvement</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./design.css">
+  <style>
+
+    /* ── PAGE INDEX : fond vidéo plein écran ── */
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: #0d0d0c;
+      color: var(--c-offwhite, #f5f4f0);
+    }
+
+    /* ── VIDÉO SHOWREEL — fond fixe derrière tout ── */
+    #showreel {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      /* Le poster est visible dès le premier pixel, la vidéo prend le relais */
+      opacity: 1;
+    }
+    /* La vidéo joue sur mobile aussi (muted + playsinline → autorisé partout) */
+
+    /* ── VIGNETTE — assombrit les bords pour lisibilité ── */
+    #vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.55) 100%),
+        linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 65%, rgba(0,0,0,0.55) 100%);
+    }
+
+    /* ── NAV : adaptée au fond sombre ── */
+    nav {
+      background: rgba(0, 0, 0, 0.2) !important;
+      border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+      z-index: 10;
+    }
+    nav .nav-links a,
+    nav .lang-btn { color: rgba(245, 244, 240, 0.85); }
+    nav .nav-links a:hover,
+    nav .nav-links a.active { color: #fff; border-bottom-color: #fff; }
+    nav .lang-btn.active { background: rgba(245,244,240,0.9); color: #1a1a18; }
+    nav .lang-switch,
+    nav .lang-btn { border-color: rgba(255,255,255,0.18); }
+    nav .theme-toggle {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    /* ── HERO — tout le contenu flottant ── */
+    .hero {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      grid-template-columns: 1fr auto;
+      pointer-events: none;
+    }
+
+    /* Discipline — centré au milieu de l'écran */
+    .hero-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .hero-discipline {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: var(--fs-micro, 10px);
+      letter-spacing: var(--ls-xwide, 0.15em);
+      text-transform: uppercase;
+      color: rgba(245, 244, 240, 0.5);
+    }
+
+    /* Liens sociaux — colonne à droite, centrée verticalement */
+    .hero-side {
+      position: absolute;
+      right: var(--space-lg, 48px);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      pointer-events: all;
+    }
+    .side-link {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: var(--fs-micro, 10px);
+      letter-spacing: var(--ls-wide, 0.1em);
+      text-transform: uppercase;
+      color: rgba(245, 244, 240, 0.5);
+      text-decoration: none;
+      writing-mode: vertical-rl;
+      transition: color 0.2s;
+    }
+    .side-link:hover { color: #fff; }
+    .accent-dot {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: rgba(245, 244, 240, 0.3);
+    }
+
+    /* Titre principal — bas gauche */
+    .hero-title-wrap {
+      position: absolute;
+      bottom: calc(36px + var(--space-lg, 48px));
+      left: var(--space-lg, 48px);
+      pointer-events: none;
+    }
+    .hero-title {
+      font-family: var(--f-display);
+      font-size: var(--fs-hero, clamp(48px, 7vw, 96px));
+      font-weight: var(--fw-medium, 400);
+      line-height: 1.0;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    .hero-title-line {
+      display: block;
+      overflow: hidden;
+    }
+    .hero-title-line span {
+      display: block;
+      animation: reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .hero-title-line:nth-child(1) span { animation-delay: 0.10s; }
+    .hero-title-line:nth-child(2) span { animation-delay: 0.20s; }
+    .hero-title-line:nth-child(3) span { animation-delay: 0.30s; }
+    .hero-title-line:nth-child(4) span { animation-delay: 0.40s; }
+    @keyframes reveal {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);   opacity: 1; }
+    }
+
+
+
+  @media (max-width: 768px) {
+    .hero-title-wrap {
+      bottom: 110px;
+      left: var(--space-lg, 20px);
+      right: var(--space-lg, 20px);
+    }
+    .hero-title {
+      font-size: clamp(32px, 9vw, 56px);
+    }
+
+    /* Hero title : sur mobile chaque "line" est decomposée en 2 lignes
+       d'animation séparées pour que le reveal stack proprement quand le
+       texte wrap. */
+    .title-desktop { display: none; }
+    .title-mobile  { display: block; }
+  }
+  /* Au-dessus de 768px : on affiche la version 2 lignes (desktop) */
+  @media (min-width: 769px) {
+    .title-desktop { display: block; }
+    .title-mobile  { display: none; }
+  }
+
+  </style>
+</head>
+<body>
+
+  <!-- Fond vidéo showreel — poster immédiat, vidéo optimisée -->
+  <video id="showreel" autoplay muted loop playsinline
+         poster="./videos/poster.jpg"
+         preload="auto">
+    <source src="./videos/mini-vid-opt.webm" type="video/webm">
+    <source src="./videos/mini-vid-opt.mp4"  type="video/mp4">
+  </video>
+
+  <!-- Vignette -->
+  <div id="vignette"></div>
+
+  <!-- Navigation (injectée par nav.js) -->
+  <nav></nav>
+
+  <!-- Hero -->
+  <section class="hero">
+
+    
+
+    <div class="hero-title-wrap">
+      <h1 class="hero-title">
+        <!-- Version desktop : 2 lignes par langue (visible >768px) -->
+        <span class="title-desktop">
+          <span class="hero-title-line en"><span>A multidisciplinary creative studio</span></span>
+          <span class="hero-title-line en"><span>shaping visual experiences.</span></span>
+          <span class="hero-title-line fr"><span>Un studio créatif multidisciplinaire</span></span>
+          <span class="hero-title-line fr"><span>façonnant des expériences visuelles.</span></span>
+        </span>
+        <!-- Version mobile : 4 lignes par langue pour que l'animation reveal
+             match la coupe naturelle du texte (visible ≤768px) -->
+        <span class="title-mobile">
+          <span class="hero-title-line en"><span>A multidisciplinary</span></span>
+          <span class="hero-title-line en"><span>creative studio</span></span>
+          <span class="hero-title-line en"><span>shaping visual</span></span>
+          <span class="hero-title-line en"><span>experiences.</span></span>
+          <span class="hero-title-line fr"><span>Un studio créatif</span></span>
+          <span class="hero-title-line fr"><span>multidisciplinaire</span></span>
+          <span class="hero-title-line fr"><span>façonnant des</span></span>
+          <span class="hero-title-line fr"><span>expériences visuelles.</span></span>
+        </span>
+      </h1>
+    </div>
+
+
+  </section>
+
+  <!-- Navigation partagée -->
+  <script src="./nav.js"></script>
+
+  <script>
+    // La vidéo s'auto-lance partout (muted + playsinline → autorisé sur mobile aussi)
+    const vid = document.getElementById('showreel');
+
+    // iOS Safari suspend parfois la vidéo après quelques secondes → on la relance
+    vid.addEventListener('pause', () => {
+      if (!document.hidden) vid.play().catch(() => {});
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) vid.play().catch(() => {});
+    });
+
+  </script>
+
+</body>
+</html>
