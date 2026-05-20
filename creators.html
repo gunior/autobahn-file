@@ -1333,14 +1333,15 @@
         const absO = Math.abs(offset);
         if (absO > SHOW_RADIUS) { el.style.opacity = '0'; el.style.pointerEvents = 'none'; el.style.transform = ''; return; }
         const sign = offset === 0 ? 0 : (offset > 0 ? 1 : -1);
-        const translateY = offset * 220 + sign * Math.pow(absO, 1.2) * 55;
+        /* Espacement vertical réduit pour que les cartes se rapprochent du
+           centre plus on s'en éloigne. */
+        const translateY = offset * 175 + sign * Math.pow(absO, 1.2) * 28;
         /* Fake radial : décale les cartes éloignées du centre vers la gauche
-           de manière non-linéaire → l'ensemble forme un arc/comma. La carte
-           active reste à sa position, les voisines glissent légèrement à
-           gauche, les lointaines bien plus. Aucun perspective 3D, juste un
-           translateX pur, donc 0 bug de projection. */
+           de manière non-linéaire → l'ensemble forme un arc/comma. */
         const translateX = -Math.pow(absO, 1.6) * 32;
-        const scale   = Math.max(0.55, 1 - absO * 0.12);
+        /* Scale plus agressive : la carte active à 1, chute plus rapide pour
+           les éloignées (minimum 0.42). Proportionnel à la distance. */
+        const scale   = Math.max(0.42, 1 - absO * 0.17);
         const opacity = Math.max(0.08, 1 - absO * 0.26);
         const rotateX = sign * Math.min(40, absO * 12);
         el.style.opacity = opacity;
