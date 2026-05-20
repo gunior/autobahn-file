@@ -1259,7 +1259,7 @@
     const SCROLL_PER     = 110;
     const THRESHOLD_IN   = 0.90;
     const THRESHOLD_OUT  = 0.10;
-    const WHEEL_COOLDOWN = 280;
+    const WHEEL_COOLDOWN = 180;  // était 280 — trop laggy en trackpad
 
     let virtualScroll  = 0;
     let targetPosition = 0;   // état persistant pour cumuler les scrolls
@@ -1556,9 +1556,17 @@
           virtualScroll      = restPos;
           render();
           entranceInProgress = false;  // phase 2 commence
-          /* Maintenant on déclenche le mode focus comme après un scroll
-             normal : 300ms d'attente, puis fade-in du boost/dim/info. */
-          scheduleFocus();
+          /* À la fin de l'entrance, on enclenche DIRECTEMENT le focus mode
+             (pas de délai 300ms — ça donnait l'impression d'un "entre
+             cartes" pendant le vide). Le 0.3s d'attente est conservé pour
+             les scrolls normaux uniquement, là il sert à dire "tu es resté
+             0.3s sur la même carte donc on focus". À l'arrivée, on focus
+             tout de suite parce que la roue s'est arrêtée pour de bon. */
+          clearTimeout(focusTimeout);
+          isFocused = true;
+          animateFocusFade(1);
+          updateInfoPanel();
+          infoPanel.classList.add('visible', 'shifted');
         }
       }
       snapRaf = requestAnimationFrame(step);
