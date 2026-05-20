@@ -1269,6 +1269,10 @@
     let focusTimeout   = null;
     let lastWheelTime  = 0;
     let wheelTimeout   = null;
+    /* Phase 1 = entrance pure (rotation fluide, aucun focus/zoom/info).
+       Phase 2 = interactif (scroll + focus mode + zoom + info). Le flag
+       bloque le scroll user pendant la phase 1. */
+    let entranceInProgress = false;
     /* focusFade : 0 = pas de boost actif, 1 = active card boostée de +8%.
        Animée par animateFocusFade(), lue par render() à chaque frame.
        Comme tout passe par render() en JS, plus de conflit avec le scroll. */
@@ -1509,17 +1513,24 @@
       }
     }
 
-    /* ─ Apparition de la roue : fin de rotation type "wheel of fortune".
-       Le focusFade est ANIMÉ EN PARALLÈLE de la rotation, ramped via
-       ease-in cubique → la mise en focus est imperceptible au début et
-       arrive doucement à 1 pile quand la roue s'arrête. Aucun "snap"
-       après l'animation parce que tout est déjà à sa place finale. ─ */
+    /* ─ PHASE 1 — Apparition de la roue : fin de rotation type "wheel of
+       fortune", PUREMENT FLUIDE. Aucun focus/zoom/dim/info pendant cette
+       phase. Le scroll user est bloqué jusqu'à ce que l'animation soit
+       terminée. À la fin, on enclenche scheduleFocus comme un scroll
+       normal (300ms d'attente puis fade-in du focus). ─ */
     function playEntrance() {
       const restPos       = targetPosition;
       const PRE_ROT       = -4 * SCROLL_PER;
       const startPos      = restPos + PRE_ROT;
       virtualScroll       = startPos;
+      /* Force focus à 0 pour cette phase — aucun boost/dim/overlay visible. */
       focusFade           = 0;
+      isFocused           = false;
+      entranceInProgress  = true;
+      /* Cancel toute anim focus encore en cours (cas retour depuis profil). */
+      if (focusFadeRaf) { cancelAnimationFrame(focusFadeRaf); focusFadeRaf = null; }
+      /* Cache le panneau info pendant l'entrance. */
+      infoPanel.classList.remove('visible', 'shifted');
 
       /* Premier render : cartes positionnées sur l'arc pré-roté avant le
          fade-in du conteneur — jamais de cartes empilées en (0,0). */
@@ -1531,28 +1542,23 @@
       wheelInner.style.transition = 'opacity 0.5s ease';
       requestAnimationFrame(() => { wheelInner.style.opacity = '1'; });
 
-      if (snapRaf)      cancelAnimationFrame(snapRaf);
-      if (focusFadeRaf) { cancelAnimationFrame(focusFadeRaf); focusFadeRaf = null; }
+      if (snapRaf) cancelAnimationFrame(snapRaf);
       const dur = 1300;
       const t0  = performance.now();
       function step(now) {
-        const p     = Math.min(1, (now - t0) / dur);
-        const eRot  = 1 - Math.pow(1 - p, 4);  // ease-out quartique (rotation)
-        const eFoc  = Math.pow(p, 3);          // ease-in cubique (focus arrive tard)
-        virtualScroll = startPos + (restPos - startPos) * eRot;
-        focusFade     = eFoc;
+        const p    = Math.min(1, (now - t0) / dur);
+        const ease = 1 - Math.pow(1 - p, 4);  // ease-out quartique
+        virtualScroll = startPos + (restPos - startPos) * ease;
         render();
         if (p < 1) snapRaf = requestAnimationFrame(step);
         else {
-          snapRaf       = null;
-          virtualScroll = restPos;
-          focusFade     = 1;
-          isFocused     = true;
+          snapRaf            = null;
+          virtualScroll      = restPos;
           render();
-          /* Active le panneau info à l'arrivée — pas de délai supplémentaire,
-             le focusFade est déjà à 1 grâce à la sync ci-dessus. */
-          updateInfoPanel();
-          infoPanel.classList.add('visible', 'shifted');
+          entranceInProgress = false;  // phase 2 commence
+          /* Maintenant on déclenche le mode focus comme après un scroll
+             normal : 300ms d'attente, puis fade-in du boost/dim/info. */
+          scheduleFocus();
         }
       }
       snapRaf = requestAnimationFrame(step);
@@ -1622,9 +1628,11 @@
     }).observe(profilePage, { attributes: true, attributeFilter: ['class'] });
 
     /* ─ Wheel : on cumule sur targetPosition (état persistant), pas sur le
-       virtualScroll interpolé en cours d'animation → enchaînement propre. ─ */
+       virtualScroll interpolé en cours d'animation → enchaînement propre.
+       Bloqué pendant la phase 1 (entrance) pour la laisser se jouer pure. ─ */
     window.addEventListener('wheel', (e) => {
       if (profilePage.classList.contains('open')) return;
+      if (entranceInProgress) { e.preventDefault(); return; }
       e.preventDefault();
       hint.classList.add('fade');
       resetFocus();
@@ -1639,15 +1647,17 @@
       wheelTimeout = setTimeout(() => snapToNearest(), 250);
     }, { passive: false });
 
-    /* ─ Touch ─ */
+    /* ─ Touch ─ Bloqué pendant la phase 1. */
     let tY0 = 0, tY1 = 0, tMoved = false;
     window.addEventListener('touchstart', (e) => {
       if (profilePage.classList.contains('open')) return;
+      if (entranceInProgress) return;
       tY0 = e.touches[0].clientY; tY1 = tY0; tMoved = false;
       if (snapRaf) { cancelAnimationFrame(snapRaf); snapRaf = null; }
     }, { passive: true });
     window.addEventListener('touchmove', (e) => {
       if (profilePage.classList.contains('open')) return;
+      if (entranceInProgress) { e.preventDefault(); return; }
       resetFocus(); e.preventDefault();
       const y = e.touches[0].clientY;
       virtualScroll += tY1 - y; tY1 = y;
@@ -1655,15 +1665,17 @@
       render();
     }, { passive: false });
     window.addEventListener('touchend', () => {
+      if (entranceInProgress) return;
       if (tMoved) {
         targetPosition = Math.round(virtualScroll / SCROLL_PER) * SCROLL_PER;
         smoothTo(targetPosition);
       }
     });
 
-    /* ─ Clavier ─ */
+    /* ─ Clavier ─ Bloqué pendant la phase 1. */
     window.addEventListener('keydown', (e) => {
       if (profilePage.classList.contains('open')) return;
+      if (entranceInProgress) return;
       if (e.key === 'ArrowDown' || e.key === ' ') {
         e.preventDefault(); resetFocus();
         targetPosition += SCROLL_PER; smoothTo(targetPosition);
