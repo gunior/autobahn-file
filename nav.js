@@ -145,11 +145,62 @@
   }
   updateThemeIcon();
 
+  // Favicon suit le toggle avec un léger crossfade (rendu via canvas).
+  document.querySelectorAll('link[rel="icon"][media]').forEach(l => l.remove());
+  let favicon = document.querySelector('link[rel="icon"]');
+  if (!favicon) {
+    favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.type = 'image/png';
+    document.head.appendChild(favicon);
+  }
+  const faviconImgs = { dark: new Image(), light: new Image() };
+  faviconImgs.dark.src  = 'assets/a-w.png';
+  faviconImgs.light.src = 'assets/a-b.png';
+  const faviconCanvas = document.createElement('canvas');
+  faviconCanvas.width = faviconCanvas.height = 64;
+  const fctx = faviconCanvas.getContext('2d');
+  let faviconAnimId = 0;
+  function drawFaviconFrame(fromImg, toImg, t) {
+    fctx.clearRect(0, 0, 64, 64);
+    if (fromImg.complete && fromImg.naturalWidth) {
+      fctx.globalAlpha = 1 - t;
+      fctx.drawImage(fromImg, 0, 0, 64, 64);
+    }
+    if (toImg.complete && toImg.naturalWidth) {
+      fctx.globalAlpha = t;
+      fctx.drawImage(toImg, 0, 0, 64, 64);
+    }
+    fctx.globalAlpha = 1;
+    favicon.href = faviconCanvas.toDataURL('image/png');
+  }
+  function setFavicon(theme, animate) {
+    const toImg   = theme === 'dark' ? faviconImgs.dark : faviconImgs.light;
+    const fromImg = theme === 'dark' ? faviconImgs.light : faviconImgs.dark;
+    cancelAnimationFrame(faviconAnimId);
+    if (!animate) { drawFaviconFrame(fromImg, toImg, 1); return; }
+    const start = performance.now();
+    const dur = 260;
+    (function step(now) {
+      const t = Math.min(1, (now - start) / dur);
+      drawFaviconFrame(fromImg, toImg, t);
+      if (t < 1) faviconAnimId = requestAnimationFrame(step);
+    })(start);
+  }
+  let faviconReady = 0;
+  function onFaviconImgLoad() {
+    faviconReady++;
+    if (faviconReady === 2) setFavicon(html.getAttribute('data-theme'), false);
+  }
+  faviconImgs.dark.onload  = onFaviconImgLoad;
+  faviconImgs.light.onload = onFaviconImgLoad;
+
   function toggleTheme() {
     const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
     html.setAttribute('data-theme', next);
     localStorage.setItem('autobahn-theme', next);
     updateThemeIcon();
+    setFavicon(next, true);
   }
 
   document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
