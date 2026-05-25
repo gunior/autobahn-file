@@ -20,7 +20,7 @@
   ];
 
   /* ── PAGES SANS DARK TOGGLE (fond fixe) ─────────────────── */
-  const NO_THEME_TOGGLE = ['/studio', '/'];
+  const NO_THEME_TOGGLE = ['/studio', '/', '/creators'];
 
   /* ──────────────────────────────────────────────────────────
      Construction du HTML de navigation
