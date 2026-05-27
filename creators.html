@@ -1043,8 +1043,8 @@
       currentActive = i;
       const c = creators[i];
       setBackground(c);
-      // Mobile : on n'affiche que le prénom (premier mot du nom).
-      const firstName = (c.name || '').trim().split(' ')[0];
+      // Mobile : on n'affiche que le prénom (dernier mot — la donnée est "NOM Prénom").
+      const firstName = (c.name || '').trim().split(' ').pop();
       infoEl.innerHTML = `
         <div class="mobile-creator-name">${firstName}</div>
         <div class="mobile-creator-role">${c.role || ''}</div>
