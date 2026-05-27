@@ -6,9 +6,10 @@
 (function () {
 
   /* ── CONFIGURATION LOGO ──────────────────────────────────── */
-  const LOGO_IMAGE_SRC    = './assets/Asset8.png';   // desktop
-  const LOGO_IMAGE_MOBILE = './assets/Asset5.png';   // mobile
-  const LOGO_IMAGE_ALT    = 'Autobahn';
+  const LOGO_IMAGE_SRC          = './assets/Asset8.png'; // desktop (mix-blend)
+  const LOGO_IMAGE_MOBILE_LIGHT = './assets/a-b.png';    // mobile, light mode
+  const LOGO_IMAGE_MOBILE_DARK  = './assets/a-w.png';    // mobile, dark mode
+  const LOGO_IMAGE_ALT          = 'Autobahn';
 
   /* ── PAGES & LIENS ───────────────────────────────────────── */
   /* URLs propres : Vercel cleanUrls sert /creators → creators.html, etc. */
@@ -67,7 +68,11 @@
     navEl.style.setProperty('-webkit-backdrop-filter', 'none',     'important');
     navEl.style.setProperty('border-bottom',        'none',        'important');
   }
-  const logoSrc    = isMobile ? LOGO_IMAGE_MOBILE : LOGO_IMAGE_SRC;
+  // Sur mobile, le logo dépend du thème : a-b en light, a-w en dark.
+  // Sur desktop on garde l'asset unique + mix-blend-mode défini en CSS.
+  const initialTheme = localStorage.getItem('autobahn-theme') || 'dark';
+  const mobileLogoFor = (theme) => theme === 'light' ? LOGO_IMAGE_MOBILE_LIGHT : LOGO_IMAGE_MOBILE_DARK;
+  const logoSrc    = isMobile ? mobileLogoFor(initialTheme) : LOGO_IMAGE_SRC;
   const logoHeight = isMobile ? 14 : 10;
   const logoEl = document.createElement('a');
   logoEl.href = 'index.html';
@@ -201,6 +206,10 @@
     localStorage.setItem('autobahn-theme', next);
     updateThemeIcon();
     setFavicon(next, true);
+    if (isMobile) {
+      const img = logoEl.querySelector('img');
+      if (img) img.src = mobileLogoFor(next);
+    }
   }
 
   document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);

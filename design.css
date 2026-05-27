@@ -519,8 +519,10 @@ body.lang-en span.en { display: inline; }
   .nav-controls { display: none !important; }
   .nav-hamburger { display: flex; }
 
-  /* Logo : force en blanc pour que mix-blend-mode:difference fonctionne sur tout fond */
-  .nav-logo img { filter: brightness(0) invert(1); }
+  /* Logo mobile : on utilise les PNG dédiés (a-b en light, a-w en dark, swap
+     géré par nav.js). On annule donc le mix-blend et le filter du desktop. */
+  .nav-logo { mix-blend-mode: normal; }
+  .nav-logo img { filter: none; }
 
   /* Nav : fond et blur supprimés sur mobile (logo + burger sont fixed indépendants) */
   nav {
