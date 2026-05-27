@@ -94,7 +94,7 @@
   const mobileMenuEl = document.createElement('div');
   mobileMenuEl.id = 'mobileMenu';
   mobileMenuEl.innerHTML = `
-    <nav class="mobile-nav-links">${mobileMenuLinks}</nav>
+    <div class="mobile-nav-links">${mobileMenuLinks}</div>
     <div class="mobile-menu-bottom">
       <div class="mobile-lang">
         <button class="mobile-lang-btn" id="mBtnEN" onclick="setLang('en')">EN</button>
