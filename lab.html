@@ -742,7 +742,13 @@
         </div>`;
     });
 
+  // Ignore les "resize" déclenchés par l'apparition/disparition de la barre
+  // d'URL mobile (la hauteur change mais pas la largeur) — sinon le collage
+  // se re-shuffle à chaque scroll. On ne re-build que si la largeur change.
+  let lastResizeWidth = window.innerWidth;
   window.addEventListener('resize', () => {
+    if (window.innerWidth === lastResizeWidth) return;
+    lastResizeWidth = window.innerWidth;
     fetch('./lab/manifest.json')
       .then(r => r.ok ? r.json() : [])
       .then(items => {

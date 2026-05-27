@@ -1043,11 +1043,10 @@
       currentActive = i;
       const c = creators[i];
       setBackground(c);
-      const parts = (c.name || '').trim().split(' ');
-      const last  = parts[parts.length - 1];
-      const first = parts.slice(0, -1).join(' ');
+      // Mobile : on n'affiche que le prénom (premier mot du nom).
+      const firstName = (c.name || '').trim().split(' ')[0];
       infoEl.innerHTML = `
-        <div class="mobile-creator-name">${first ? first + '<br>' : ''}${last}</div>
+        <div class="mobile-creator-name">${firstName}</div>
         <div class="mobile-creator-role">${c.role || ''}</div>
         <div class="mobile-tap-hint">tap to open</div>`;
     }
