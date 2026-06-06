@@ -480,7 +480,7 @@ body.lang-en span.en { display: inline; }
 .link-hover-logo {
   display: none;
   position: absolute;
-  left: var(--space-sm); /* aligne avec le padding-left des titres */
+  left: var(--space-md); /* décalé un peu plus à droite que le texte */
   top: 50%;
   transform: translateY(-50%);
   height: 0.55em;
