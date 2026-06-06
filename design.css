@@ -545,7 +545,7 @@ body.lang-en span.en { display: inline; }
   width: 16px; height: 16px;
   border-radius: 50%;
   background: var(--c-ink);
-  transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1),
+  transition: transform 0.45s cubic-bezier(0.34, 1.15, 0.64, 1),
               background 0.4s;
 }
 [data-theme="dark"] .gooey-thumb { transform: translateX(24px); }
