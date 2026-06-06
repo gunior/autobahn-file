@@ -87,9 +87,14 @@
       <span class="mobile-theme-icon" id="mobileThemeIcon">○</span>
     </button>` : '';
 
+  const menuLogoSrc = initialTheme === 'light' ? LOGO_IMAGE_MOBILE_LIGHT : LOGO_IMAGE_MOBILE_DARK;
+
   const mobileMenuEl = document.createElement('div');
   mobileMenuEl.id = 'mobileMenu';
   mobileMenuEl.innerHTML = `
+    <div class="menu-logo-top">
+      <img id="menuLogoImg" src="${menuLogoSrc}" alt="Autobahn" height="16" style="display:block">
+    </div>
     <div class="mobile-nav-links">${mobileMenuLinks}</div>
     <div class="mobile-menu-bottom">
       <div class="mobile-lang">
@@ -201,6 +206,8 @@
       const img = logoEl.querySelector('img');
       if (img) img.src = mobileLogoFor(next);
     }
+    const menuLogoImg = document.getElementById('menuLogoImg');
+    if (menuLogoImg) menuLogoImg.src = next === 'light' ? LOGO_IMAGE_MOBILE_LIGHT : LOGO_IMAGE_MOBILE_DARK;
   }
 
   document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);

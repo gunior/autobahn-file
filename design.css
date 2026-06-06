@@ -367,23 +367,18 @@ body.lang-en span.en { display: inline; }
 
 /* ============================================================
    HAMBURGER — toujours visible (desktop + mobile)
-   Cercle mix-blend-mode: difference → s'adapte à tous les fonds
-   (blanc sur fond sombre, noir sur fond clair) comme le logo.
+   Pas de fond : juste les deux barres, couleur qui suit le thème.
    ============================================================ */
 .nav-hamburger {
   display: flex;
-  background: #ffffff;
+  background: none;
   border: none;
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  mix-blend-mode: difference;
-  filter: none;
+  border-radius: 0;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0;
+  padding: 10px;
   position: fixed;
   right: var(--space-lg);
   top: calc(var(--nav-height) / 2);
@@ -392,17 +387,19 @@ body.lang-en span.en { display: inline; }
   pointer-events: all;
   transition: transform 0.2s ease;
 }
-.nav-hamburger:hover { transform: translateY(-50%) scale(1.08); }
+.nav-hamburger:hover { transform: translateY(-50%) scale(1.1); }
 .nav-hamburger span {
   display: block;
-  width: 16px;
-  height: 1.5px;
-  background: #000000;
+  width: 20px;
+  height: 2px;
+  background: var(--c-ink);
   transition: transform 0.35s cubic-bezier(0.77,0,0.175,1),
-              opacity   0.25s ease;
+              opacity   0.25s ease,
+              background 0.4s ease;
 }
-.nav-hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
-.nav-hamburger.open span:nth-child(2) { transform: translateY(-7.5px) rotate(-45deg); }
+/* Valeurs calculées pour h=2px, gap=6px : centre-à-centre = 8px */
+.nav-hamburger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { transform: translateY(-8px) rotate(-45deg); }
 
 /* ============================================================
    MENU MOBILE PLEIN ÉCRAN
@@ -430,6 +427,19 @@ body.lang-en span.en { display: inline; }
   pointer-events: all;
 }
 
+/* Logo centré en haut du menu overlay */
+.menu-logo-top {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.menu-logo-top img {
+  display: block;
+  height: 16px;
+  width: auto;
+}
+
 /* Liens en escalier — inspiré v2, typo et couleurs v1 */
 .mobile-nav-links {
   display: flex;
@@ -437,7 +447,7 @@ body.lang-en span.en { display: inline; }
   gap: 0;
   flex: 1;
   justify-content: center;
-  border-bottom: var(--border-weight) solid var(--c-border);
+  border-bottom: 1px dashed var(--c-slate);
 }
 .mobile-nav-links a {
   font-family: var(--f-display);
@@ -448,9 +458,9 @@ body.lang-en span.en { display: inline; }
   color: var(--c-ink);
   opacity: 0.3;
   text-decoration: none;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, background 0.18s, color 0.18s;
   display: block;
-  border-top: var(--border-weight) solid var(--c-border);
+  border-top: 1px dashed var(--c-slate);
   padding: 14px 0;
 }
 /* Décalage en escalier — ref v2 */
@@ -459,7 +469,12 @@ body.lang-en span.en { display: inline; }
 .mobile-nav-links a:nth-child(3) { padding-left: 30%; }
 .mobile-nav-links a:nth-child(4) { padding-left: 44%; }
 
-.mobile-nav-links a:hover,
+/* Hover : bande inversée (darkmode = fond blanc/typo noir, whitemode = inverse) */
+.mobile-nav-links a:hover {
+  opacity: 1;
+  background: var(--c-ink);
+  color: var(--c-bg);
+}
 .mobile-nav-links a.mobile-active { opacity: 1; }
 
 .mobile-menu-bottom {
