@@ -48,26 +48,17 @@
   if (!navEl) return;
 
   navEl.innerHTML = `
-  <div class="nav-links" id="navLinks">${linksHTML}</div>
-  <div class="nav-controls">
-    <div class="lang-switch">
-      <button class="lang-btn" id="btnEN" onclick="setLang('en')">EN</button>
-      <button class="lang-btn" id="btnFR" onclick="setLang('fr')">FR</button>
-    </div>
-    ${themeToggleHTML}
-  </div>
   <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
     <span></span><span></span>
   </button>`;
 
-  /* ── Sur mobile : nav transparente (logo + burger sont fixed indépendants) ── */
+  /* Nav toujours transparente — le burger et le logo sont fixed indépendants */
+  navEl.style.setProperty('background',              'transparent', 'important');
+  navEl.style.setProperty('backdrop-filter',         'none',        'important');
+  navEl.style.setProperty('-webkit-backdrop-filter', 'none',        'important');
+  navEl.style.setProperty('border-bottom',           'none',        'important');
+
   const isMobile = window.innerWidth <= 768;
-  if (isMobile) {
-    navEl.style.setProperty('background',           'transparent', 'important');
-    navEl.style.setProperty('backdrop-filter',      'none',        'important');
-    navEl.style.setProperty('-webkit-backdrop-filter', 'none',     'important');
-    navEl.style.setProperty('border-bottom',        'none',        'important');
-  }
   // Sur mobile, le logo dépend du thème : a-b en light, a-w en dark.
   // Sur desktop on garde l'asset unique + mix-blend-mode défini en CSS.
   const initialTheme = localStorage.getItem('autobahn-theme') || 'dark';

@@ -146,16 +146,9 @@ nav {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 410;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   height: var(--nav-height);
-  padding: 0 var(--space-lg);
-  background: var(--nav-bg);
-  backdrop-filter: var(--nav-blur);
-  -webkit-backdrop-filter: var(--nav-blur);
-  border-bottom: var(--border-weight) solid var(--c-border);
-  transition: var(--transition-theme);
+  background: transparent;
+  pointer-events: none;
 }
 
 .nav-logo {
@@ -373,30 +366,38 @@ body.lang-fr span.fr { display: inline; }
 body.lang-en span.en { display: inline; }
 
 /* ============================================================
-   HAMBURGER — caché sur desktop
+   HAMBURGER — toujours visible (desktop + mobile)
+   Cercle mix-blend-mode: difference → s'adapte à tous les fonds
+   (blanc sur fond sombre, noir sur fond clair) comme le logo.
    ============================================================ */
 .nav-hamburger {
-  display: none;
-  background: none;
+  display: flex;
+  background: #ffffff;
   border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  mix-blend-mode: difference;
+  filter: none;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px;
-  position: fixed; /* fixed = hors du stacking context du nav */
+  padding: 0;
+  position: fixed;
   right: var(--space-lg);
   top: calc(var(--nav-height) / 2);
   transform: translateY(-50%);
-  z-index: 520; /* au-dessus du menu mobile (500), du profil (400) → toujours cliquable */
-  color: #fff;
-  /* drop-shadow : rend les barres lisibles sur fond clair ET sombre */
-  filter: drop-shadow(0 0 4px rgba(0,0,0,0.9)) drop-shadow(0 0 2px rgba(0,0,0,0.9));
+  z-index: 520;
+  pointer-events: all;
+  transition: transform 0.2s ease;
 }
+.nav-hamburger:hover { transform: translateY(-50%) scale(1.08); }
 .nav-hamburger span {
   display: block;
-  width: 20px;
+  width: 16px;
   height: 1.5px;
-  background: currentColor;
+  background: #000000;
   transition: transform 0.35s cubic-bezier(0.77,0,0.175,1),
               opacity   0.25s ease;
 }
@@ -406,18 +407,20 @@ body.lang-en span.en { display: inline; }
 /* ============================================================
    MENU MOBILE PLEIN ÉCRAN
    ============================================================ */
+/* Menu overlay — fonctionne sur toutes les tailles (desktop + mobile) */
 #mobileMenu {
-  display: none; /* visible uniquement sur mobile via media query */
+  display: flex;
   position: fixed;
   inset: 0;
-  z-index: 500; /* au-dessus du nav-logo (420), de la page profil (400), du nav (410) */
+  z-index: 500;
   background: var(--c-bg);
   flex-direction: column;
   justify-content: center;
-  padding: 100px var(--space-lg) 60px;
+  padding: 80px var(--space-lg) 60px;
   opacity: 0;
   transform: translateY(-12px);
-  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94),
+              background 0.4s ease;
   pointer-events: none;
   overflow: hidden;
 }
@@ -427,30 +430,37 @@ body.lang-en span.en { display: inline; }
   pointer-events: all;
 }
 
+/* Liens en escalier — inspiré v2, typo et couleurs v1 */
 .mobile-nav-links {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
   flex: 1;
   justify-content: center;
+  border-bottom: var(--border-weight) solid var(--c-border);
 }
 .mobile-nav-links a {
   font-family: var(--f-display);
   font-weight: 300;
-  font-size: clamp(40px, 11vw, 72px);
-  line-height: 1.1;
+  font-size: clamp(36px, 8vw, 100px);
+  line-height: 1.15;
   letter-spacing: -0.03em;
   color: var(--c-ink);
-  opacity: 0.38;
+  opacity: 0.3;
   text-decoration: none;
-  transition: color 0.2s, opacity 0.2s;
+  transition: opacity 0.2s;
   display: block;
+  border-top: var(--border-weight) solid var(--c-border);
+  padding: 14px 0;
 }
+/* Décalage en escalier — ref v2 */
+.mobile-nav-links a:nth-child(1) { padding-left: 3%; }
+.mobile-nav-links a:nth-child(2) { padding-left: 16%; }
+.mobile-nav-links a:nth-child(3) { padding-left: 30%; }
+.mobile-nav-links a:nth-child(4) { padding-left: 44%; }
+
 .mobile-nav-links a:hover,
 .mobile-nav-links a.mobile-active { opacity: 1; }
-[data-theme="dark"] .mobile-nav-links a { color: var(--c-ink); opacity: 0.38; }
-[data-theme="dark"] .mobile-nav-links a:hover,
-[data-theme="dark"] .mobile-nav-links a.mobile-active { opacity: 1; }
 
 .mobile-menu-bottom {
   display: flex;
@@ -513,27 +523,9 @@ body.lang-en span.en { display: inline; }
     --nav-height: 60px;
   }
 
-  /* Nav — on garde logo à gauche + hamburger à droite uniquement */
-  nav { height: var(--nav-height); padding: 0 var(--space-lg); }
-  .nav-links   { display: none !important; }
-  .nav-controls { display: none !important; }
-  .nav-hamburger { display: flex; }
-
-  /* Logo mobile : on utilise les PNG dédiés (a-b en light, a-w en dark, swap
-     géré par nav.js). On annule donc le mix-blend et le filter du desktop. */
+  /* Logo mobile : PNG dédié sans mix-blend (géré par nav.js) */
   .nav-logo { mix-blend-mode: normal; }
   .nav-logo img { filter: none; }
-
-  /* Nav : fond et blur supprimés sur mobile (logo + burger sont fixed indépendants) */
-  nav {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    border-bottom: none !important;
-  }
-
-  /* Menu plein écran */
-  #mobileMenu { display: flex; }
 
   /* Page header */
   .page-header {
