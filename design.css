@@ -528,7 +528,7 @@ body.lang-en span.en { display: inline; }
   height: 26px;
   background: var(--c-surface);
   border: var(--border-weight) solid var(--c-border);
-  border-radius: 13px;
+  border-radius: 6px;
   position: relative;
   transition: background 0.3s, border-color 0.3s;
   flex-shrink: 0;
@@ -539,7 +539,7 @@ body.lang-en span.en { display: inline; }
   position: absolute;
   top: 4px; left: 4px;
   width: 16px; height: 16px;
-  border-radius: 50%;
+  border-radius: 3px;
   background: var(--c-slate);
   transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s;
 }
