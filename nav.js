@@ -47,10 +47,19 @@
   const navEl = document.querySelector('nav');
   if (!navEl) return;
 
-  navEl.innerHTML = `
-  <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
-    <span></span><span></span>
-  </button>`;
+  /* Nav reste vide et transparente.
+     Le hamburger est un enfant DIRECT de body → son z-index: 520 est dans
+     le contexte racine du document, pas dans celui de <nav> (position:fixed
+     crée toujours son propre stacking context, peu importe son z-index).
+     Ça garantit qu'il est au-dessus du menu overlay (z-index: 500). */
+  navEl.innerHTML = '';
+
+  const hamburgerEl = document.createElement('button');
+  hamburgerEl.className = 'nav-hamburger';
+  hamburgerEl.id = 'navHamburger';
+  hamburgerEl.setAttribute('aria-label', 'Menu');
+  hamburgerEl.innerHTML = '<span></span><span></span>';
+  document.body.appendChild(hamburgerEl);
 
   /* Nav toujours transparente — le burger et le logo sont fixed indépendants */
   navEl.style.setProperty('background',              'transparent', 'important');

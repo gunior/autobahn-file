@@ -469,6 +469,7 @@ body.lang-en span.en { display: inline; }
   display: block;
   padding: 14px 0;
   border-top: 1px dashed var(--c-slate);
+  position: relative; /* ancrage pour le logo en absolu */
 }
 
 /* Hover : bande inversée + texte remplacé par logo si disponible */
@@ -479,14 +480,19 @@ body.lang-en span.en { display: inline; }
 }
 .mobile-nav-links a.mobile-active { opacity: 1; }
 
-/* Logo hover (Lab) — caché par défaut, visible au survol */
+/* Logo hover (Lab) — absolu pour ne pas modifier la hauteur de l'onglet */
 .link-hover-logo {
   display: none;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   height: 0.55em;
   width: auto;
 }
-/* Uniquement pour les liens qui ont un logo de remplacement (Lab) */
-.mobile-nav-links a:has(.link-hover-logo):hover .link-text { display: none; }
+/* visibility:hidden au lieu de display:none → le texte reste dans le flux,
+   la hauteur de l'onglet ne change pas au hover */
+.mobile-nav-links a:has(.link-hover-logo):hover .link-text { visibility: hidden; }
 .mobile-nav-links a:hover .link-hover-logo { display: block; }
 
 .mobile-menu-bottom {
