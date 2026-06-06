@@ -108,7 +108,9 @@
   mobileMenuEl.id = 'mobileMenu';
   mobileMenuEl.innerHTML = `
     <div class="menu-logo-top">
-      <img id="menuLogoImg" src="${menuLogoSrc}" alt="Autobahn" height="26" style="display:block">
+      <a href="/" onclick="document.getElementById('mobileMenu').classList.remove('open');document.getElementById('navHamburger').classList.remove('open');document.body.style.overflow='';">
+        <img id="menuLogoImg" src="${menuLogoSrc}" alt="Autobahn" height="26" style="display:block">
+      </a>
     </div>
     <div class="mobile-nav-links">${mobileMenuLinks}</div>
     <div class="mobile-menu-bottom">
