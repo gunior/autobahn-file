@@ -400,12 +400,8 @@ body.lang-en span.en { display: inline; }
 /* Valeurs calculées pour h=2px, gap=6px : centre-à-centre = 8px */
 .nav-hamburger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
 .nav-hamburger.open span:nth-child(2) { transform: translateY(-8px) rotate(-45deg); }
-/* Quand ouvert : fond inversé pour rendre la croix très lisible */
-.nav-hamburger.open {
-  background: var(--c-ink);
-  border-radius: 4px;
-}
-.nav-hamburger.open span { background: var(--c-bg); }
+/* Quand ouvert : hamburger s'efface, le menu-close à l'intérieur prend le relais */
+.nav-hamburger.open { opacity: 0; pointer-events: none; }
 
 /* ============================================================
    MENU MOBILE PLEIN ÉCRAN
@@ -446,13 +442,42 @@ body.lang-en span.en { display: inline; }
   width: auto;
 }
 
-/* Grille 2×2 — répartition égale gauche/droite, typo v1 */
+/* Croix fermeture à l'intérieur de l'overlay */
+.menu-close {
+  position: absolute;
+  top: 18px;
+  right: var(--space-lg);
+  width: 40px;
+  height: 40px;
+  background: var(--c-ink);
+  border: none;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  padding: 0;
+  transition: transform 0.2s ease, background 0.4s ease;
+}
+.menu-close:hover { transform: scale(1.08); }
+.menu-close span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--c-bg);
+  position: absolute;
+  transition: background 0.4s ease;
+}
+.menu-close span:nth-child(1) { transform: rotate(45deg); }
+.menu-close span:nth-child(2) { transform: rotate(-45deg); }
+
+/* Liens verticaux — colonne unique, mêmes marges L/R */
 .mobile-nav-links {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 0;
   flex: 1;
-  align-content: center;
+  justify-content: center;
 }
 .mobile-nav-links a {
   font-family: var(--f-display);
@@ -465,25 +490,27 @@ body.lang-en span.en { display: inline; }
   text-decoration: none;
   transition: opacity 0.2s, background 0.18s, color 0.18s;
   display: block;
-  padding: 20px 0;
+  padding: 14px 0;
   border-top: 1px dashed var(--c-slate);
-  border-left: 1px dashed var(--c-slate);
 }
-/* Première ligne : pas de bordure top */
-.mobile-nav-links a:nth-child(1),
-.mobile-nav-links a:nth-child(2) { border-top: none; }
-/* Colonne gauche : pas de bordure left */
-.mobile-nav-links a:nth-child(odd)  { border-left: none; }
-/* Colonne droite : aligne le texte à gauche (avec un peu de marge) */
-.mobile-nav-links a:nth-child(even) { padding-left: var(--space-md); }
+.mobile-nav-links { border-bottom: 1px dashed var(--c-slate); }
 
-/* Hover : bande inversée (darkmode = fond clair/typo sombre, whitemode = inverse) */
+/* Hover : bande inversée + texte remplacé par logo si disponible */
 .mobile-nav-links a:hover {
   opacity: 1;
   background: var(--c-ink);
   color: var(--c-bg);
 }
 .mobile-nav-links a.mobile-active { opacity: 1; }
+
+/* Logo hover (Lab) — caché par défaut, visible au survol */
+.link-hover-logo {
+  display: none;
+  height: 0.55em;
+  width: auto;
+}
+.mobile-nav-links a:hover .link-text { display: none; }
+.mobile-nav-links a:hover .link-hover-logo { display: block; }
 
 .mobile-menu-bottom {
   display: flex;

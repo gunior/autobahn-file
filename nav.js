@@ -15,7 +15,7 @@
   /* URLs propres : Vercel cleanUrls sert /creators → creators.html, etc. */
   const LINKS = [
     { href: '/creators', en: 'Team',    fr: 'Tchim'   },
-    { href: '/lab',      en: 'Lab',     fr: 'Lab'     },
+    { href: '/lab',      en: 'Lab',     fr: 'Lab',    logoLight: './assets/Lab-b.png', logoDark: './assets/Lab-w.png' },
     { href: '/studio',   en: 'Studio',  fr: 'Studio'  },
     { href: '/contact',  en: 'Contact', fr: 'Contact' },
   ];
@@ -71,17 +71,27 @@
   logoEl.innerHTML = `<img src="${logoSrc}" alt="${LOGO_IMAGE_ALT}" height="${logoHeight}" style="display:block">`;
   document.body.prepend(logoEl);
 
-  /* ── Menu mobile plein écran ── */
+  /* ── Menu overlay ── */
   const mobileMenuLinks = LINKS.map(l => {
     const active = page === l.href ? 'mobile-active' : '';
+    /* Logo hover pour les items qui en ont un (Lab) */
+    const labLogoSrc = l.logoLight
+      ? (initialTheme === 'light' ? l.logoLight : l.logoDark)
+      : '';
+    const hoverLogo = l.logoLight
+      ? `<img class="link-hover-logo" src="${labLogoSrc}" alt="${l.en}">`
+      : '';
     return `<a href="${l.href}" class="${active}">
-      <span class="en">${l.en}</span>
-      <span class="fr">${l.fr}</span>
+      <span class="link-text">
+        <span class="en">${l.en}</span>
+        <span class="fr">${l.fr}</span>
+      </span>
+      ${hoverLogo}
     </a>`;
   }).join('');
 
-  const mobileThemeRow = showTheme ? `
-    <button class="mobile-theme-btn" id="mobileThemeToggle" aria-label="Toggle theme"></button>` : '';
+  /* Toggle toujours présent dans l'overlay, quelle que soit la page */
+  const mobileThemeRow = `<button class="mobile-theme-btn" id="mobileThemeToggle" aria-label="Toggle theme"></button>`;
 
   const menuLogoSrc = initialTheme === 'light' ? LOGO_IMAGE_MOBILE_LIGHT : LOGO_IMAGE_MOBILE_DARK;
 
@@ -91,6 +101,9 @@
     <div class="menu-logo-top">
       <img id="menuLogoImg" src="${menuLogoSrc}" alt="Autobahn" height="26" style="display:block">
     </div>
+    <button class="menu-close" id="menuCloseBtn" aria-label="Fermer le menu">
+      <span></span><span></span>
+    </button>
     <div class="mobile-nav-links">${mobileMenuLinks}</div>
     <div class="mobile-menu-bottom">
       <div class="mobile-lang">
@@ -128,6 +141,26 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeMenu();
   });
+
+  /* ── Bouton fermeture (×) dans l'overlay ── */
+  document.getElementById('menuCloseBtn').addEventListener('click', closeMenu);
+
+  /* ── Lab : swap logo au hover (image suit le fond inversé) ── */
+  const labLink = mobileMenuEl.querySelector('a[href="/lab"]');
+  if (labLink) {
+    const labLogo = labLink.querySelector('.link-hover-logo');
+    if (labLogo) {
+      labLink.addEventListener('mouseenter', () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        /* Sur hover le fond devient c-ink : clair en dark, sombre en light → logo opposé */
+        labLogo.src = isDark ? './assets/Lab-b.png' : './assets/Lab-w.png';
+      });
+      labLink.addEventListener('mouseleave', () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        labLogo.src = isDark ? './assets/Lab-w.png' : './assets/Lab-b.png';
+      });
+    }
+  }
 
   /* ──────────────────────────────────────────────────────────
      DARK MODE
