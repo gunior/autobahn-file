@@ -121,20 +121,6 @@
     </div>`;
   document.body.appendChild(mobileMenuEl);
 
-  /* ── Filtre SVG gooey pour le toggle thème (injecté une seule fois) ── */
-  if (!document.getElementById('gooey-filter-svg')) {
-    const gSvg = document.createElement('div');
-    gSvg.id = 'gooey-filter-svg';
-    gSvg.setAttribute('aria-hidden', 'true');
-    gSvg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
-    gSvg.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><defs>'
-      + '<filter id="gooey-toggle" x="-40%" y="-40%" width="180%" height="180%">'
-      + '<feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>'
-      + '<feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -11"/>'
-      + '</filter></defs></svg>';
-    document.body.appendChild(gSvg);
-  }
-
   /* ── Hamburger toggle ── */
   const hamburger  = document.getElementById('navHamburger');
   const mobileMenu = document.getElementById('mobileMenu');
@@ -254,11 +240,15 @@
     }
     const menuLogoImg = document.getElementById('menuLogoImg');
     if (menuLogoImg) menuLogoImg.src = next === 'light' ? LOGO_IMAGE_MOBILE_LIGHT : LOGO_IMAGE_MOBILE_DARK;
-    /* Étirement gooey : le thumb s'élargit au milieu du voyage puis revient */
+    /* Squish liquide : thumb → pill → cercle avec spring overshoot */
     const thumb = document.querySelector('.gooey-thumb');
     if (thumb) {
-      thumb.style.width = '26px';
-      setTimeout(() => { thumb.style.width = ''; }, 190);
+      thumb.style.width        = '24px';
+      thumb.style.borderRadius = '6px';
+      setTimeout(() => {
+        thumb.style.width        = '';
+        thumb.style.borderRadius = '';
+      }, 180);
     }
   }
 
