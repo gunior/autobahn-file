@@ -145,7 +145,7 @@ a, button, [role="button"], input, select, textarea, label {
 nav {
   position: fixed;
   top: 0; left: 0; right: 0;
-  z-index: 410;
+  z-index: 600; /* au-dessus du menu overlay (500) — stacking context fix */
   height: var(--nav-height);
   background: transparent;
   pointer-events: none;
@@ -400,8 +400,13 @@ body.lang-en span.en { display: inline; }
 /* Valeurs calculées pour h=2px, gap=6px : centre-à-centre = 8px */
 .nav-hamburger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
 .nav-hamburger.open span:nth-child(2) { transform: translateY(-8px) rotate(-45deg); }
-/* Quand ouvert : hamburger s'efface, le menu-close à l'intérieur prend le relais */
-.nav-hamburger.open { opacity: 0; pointer-events: none; }
+/* Quand ouvert : carré inversé pour rendre la croix clairement visible */
+.nav-hamburger.open {
+  background: var(--c-ink);
+  border-radius: 4px;
+  transition: background 0.25s ease, border-radius 0.25s ease, transform 0.2s ease;
+}
+.nav-hamburger.open span { background: var(--c-bg); }
 
 /* ============================================================
    MENU MOBILE PLEIN ÉCRAN
@@ -442,34 +447,6 @@ body.lang-en span.en { display: inline; }
   width: auto;
 }
 
-/* Croix fermeture à l'intérieur de l'overlay */
-.menu-close {
-  position: absolute;
-  top: 18px;
-  right: var(--space-lg);
-  width: 40px;
-  height: 40px;
-  background: var(--c-ink);
-  border: none;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  padding: 0;
-  transition: transform 0.2s ease, background 0.4s ease;
-}
-.menu-close:hover { transform: scale(1.08); }
-.menu-close span {
-  display: block;
-  width: 18px;
-  height: 2px;
-  background: var(--c-bg);
-  position: absolute;
-  transition: background 0.4s ease;
-}
-.menu-close span:nth-child(1) { transform: rotate(45deg); }
-.menu-close span:nth-child(2) { transform: rotate(-45deg); }
 
 /* Liens verticaux — colonne unique, mêmes marges L/R */
 .mobile-nav-links {
@@ -493,7 +470,6 @@ body.lang-en span.en { display: inline; }
   padding: 14px 0;
   border-top: 1px dashed var(--c-slate);
 }
-.mobile-nav-links { border-bottom: 1px dashed var(--c-slate); }
 
 /* Hover : bande inversée + texte remplacé par logo si disponible */
 .mobile-nav-links a:hover {
@@ -509,14 +485,14 @@ body.lang-en span.en { display: inline; }
   height: 0.55em;
   width: auto;
 }
-.mobile-nav-links a:hover .link-text { display: none; }
+/* Uniquement pour les liens qui ont un logo de remplacement (Lab) */
+.mobile-nav-links a:has(.link-hover-logo):hover .link-text { display: none; }
 .mobile-nav-links a:hover .link-hover-logo { display: block; }
 
 .mobile-menu-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: var(--border-weight) solid var(--c-border);
   padding-top: 24px;
   margin-top: 32px;
 }

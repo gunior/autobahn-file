@@ -101,9 +101,6 @@
     <div class="menu-logo-top">
       <img id="menuLogoImg" src="${menuLogoSrc}" alt="Autobahn" height="26" style="display:block">
     </div>
-    <button class="menu-close" id="menuCloseBtn" aria-label="Fermer le menu">
-      <span></span><span></span>
-    </button>
     <div class="mobile-nav-links">${mobileMenuLinks}</div>
     <div class="mobile-menu-bottom">
       <div class="mobile-lang">
@@ -141,9 +138,6 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeMenu();
   });
-
-  /* ── Bouton fermeture (×) dans l'overlay ── */
-  document.getElementById('menuCloseBtn').addEventListener('click', closeMenu);
 
   /* ── Lab : swap logo au hover (image suit le fond inversé) ── */
   const labLink = mobileMenuEl.querySelector('a[href="/lab"]');
