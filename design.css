@@ -397,16 +397,12 @@ body.lang-en span.en { display: inline; }
               opacity   0.25s ease,
               background 0.4s ease;
 }
-/* Valeurs calculées pour h=2px, gap=6px : centre-à-centre = 8px */
-.nav-hamburger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-.nav-hamburger.open span:nth-child(2) { transform: translateY(-8px) rotate(-45deg); }
-/* Quand ouvert : carré inversé pour rendre la croix clairement visible */
-.nav-hamburger.open {
-  background: var(--c-ink);
-  border-radius: 4px;
-  transition: background 0.25s ease, border-radius 0.25s ease, transform 0.2s ease;
-}
-.nav-hamburger.open span { background: var(--c-bg); }
+/* X symétrique : chaque barre se déplace vers le midpoint (4px = moitié de 8px).
+   translateY(±8px) déplaçait chaque barre vers la position de l'autre,
+   créant des bras inégaux depuis le point de croisement.
+   translateY(±4px) place les deux centres au même point → X parfait. */
+.nav-hamburger.open span:nth-child(1) { transform: translateY(4px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { transform: translateY(-4px) rotate(-45deg); }
 
 /* ============================================================
    MENU MOBILE PLEIN ÉCRAN
@@ -467,7 +463,7 @@ body.lang-en span.en { display: inline; }
   text-decoration: none;
   transition: opacity 0.2s, background 0.18s, color 0.18s;
   display: block;
-  padding: 14px 0;
+  padding: 14px 0 14px var(--space-sm);
   border-top: 1px dashed var(--c-slate);
   position: relative; /* ancrage pour le logo en absolu */
 }
@@ -484,7 +480,7 @@ body.lang-en span.en { display: inline; }
 .link-hover-logo {
   display: none;
   position: absolute;
-  left: 0;
+  left: var(--space-sm); /* aligne avec le padding-left des titres */
   top: 50%;
   transform: translateY(-50%);
   height: 0.55em;
