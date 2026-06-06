@@ -100,7 +100,7 @@
   }).join('');
 
   /* Toggle toujours présent dans l'overlay, quelle que soit la page */
-  const mobileThemeRow = `<button class="mobile-theme-btn" id="mobileThemeToggle" aria-label="Toggle theme"></button>`;
+  const mobileThemeRow = `<button class="mobile-theme-btn" id="mobileThemeToggle" aria-label="Toggle theme"><div class="gooey-inner"><div class="gooey-thumb"></div></div></button>`;
 
   const menuLogoSrc = initialTheme === 'light' ? LOGO_IMAGE_MOBILE_LIGHT : LOGO_IMAGE_MOBILE_DARK;
 
@@ -120,6 +120,20 @@
       ${mobileThemeRow}
     </div>`;
   document.body.appendChild(mobileMenuEl);
+
+  /* ── Filtre SVG gooey pour le toggle thème (injecté une seule fois) ── */
+  if (!document.getElementById('gooey-filter-svg')) {
+    const gSvg = document.createElement('div');
+    gSvg.id = 'gooey-filter-svg';
+    gSvg.setAttribute('aria-hidden', 'true');
+    gSvg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+    gSvg.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><defs>'
+      + '<filter id="gooey-toggle" x="-40%" y="-40%" width="180%" height="180%">'
+      + '<feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>'
+      + '<feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -11"/>'
+      + '</filter></defs></svg>';
+    document.body.appendChild(gSvg);
+  }
 
   /* ── Hamburger toggle ── */
   const hamburger  = document.getElementById('navHamburger');
@@ -240,6 +254,12 @@
     }
     const menuLogoImg = document.getElementById('menuLogoImg');
     if (menuLogoImg) menuLogoImg.src = next === 'light' ? LOGO_IMAGE_MOBILE_LIGHT : LOGO_IMAGE_MOBILE_DARK;
+    /* Étirement gooey : le thumb s'élargit au milieu du voyage puis revient */
+    const thumb = document.querySelector('.gooey-thumb');
+    if (thumb) {
+      thumb.style.width = '26px';
+      setTimeout(() => { thumb.style.width = ''; }, 190);
+    }
   }
 
   document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
