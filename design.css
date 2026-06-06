@@ -400,6 +400,12 @@ body.lang-en span.en { display: inline; }
 /* Valeurs calculées pour h=2px, gap=6px : centre-à-centre = 8px */
 .nav-hamburger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
 .nav-hamburger.open span:nth-child(2) { transform: translateY(-8px) rotate(-45deg); }
+/* Quand ouvert : fond inversé pour rendre la croix très lisible */
+.nav-hamburger.open {
+  background: var(--c-ink);
+  border-radius: 4px;
+}
+.nav-hamburger.open span { background: var(--c-bg); }
 
 /* ============================================================
    MENU MOBILE PLEIN ÉCRAN
@@ -436,18 +442,17 @@ body.lang-en span.en { display: inline; }
 }
 .menu-logo-top img {
   display: block;
-  height: 16px;
+  height: 26px;
   width: auto;
 }
 
-/* Liens en escalier — inspiré v2, typo et couleurs v1 */
+/* Grille 2×2 — répartition égale gauche/droite, typo v1 */
 .mobile-nav-links {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0;
   flex: 1;
-  justify-content: center;
-  border-bottom: 1px dashed var(--c-slate);
+  align-content: center;
 }
 .mobile-nav-links a {
   font-family: var(--f-display);
@@ -460,16 +465,19 @@ body.lang-en span.en { display: inline; }
   text-decoration: none;
   transition: opacity 0.2s, background 0.18s, color 0.18s;
   display: block;
+  padding: 20px 0;
   border-top: 1px dashed var(--c-slate);
-  padding: 14px 0;
+  border-left: 1px dashed var(--c-slate);
 }
-/* Décalage en escalier — ref v2 */
-.mobile-nav-links a:nth-child(1) { padding-left: 3%; }
-.mobile-nav-links a:nth-child(2) { padding-left: 16%; }
-.mobile-nav-links a:nth-child(3) { padding-left: 30%; }
-.mobile-nav-links a:nth-child(4) { padding-left: 44%; }
+/* Première ligne : pas de bordure top */
+.mobile-nav-links a:nth-child(1),
+.mobile-nav-links a:nth-child(2) { border-top: none; }
+/* Colonne gauche : pas de bordure left */
+.mobile-nav-links a:nth-child(odd)  { border-left: none; }
+/* Colonne droite : aligne le texte à gauche (avec un peu de marge) */
+.mobile-nav-links a:nth-child(even) { padding-left: var(--space-md); }
 
-/* Hover : bande inversée (darkmode = fond blanc/typo noir, whitemode = inverse) */
+/* Hover : bande inversée (darkmode = fond clair/typo sombre, whitemode = inverse) */
 .mobile-nav-links a:hover {
   opacity: 1;
   background: var(--c-ink);
@@ -509,21 +517,31 @@ body.lang-en span.en { display: inline; }
   color: var(--c-border);
 }
 
+/* Toggle dark/light — pill visuel intégré dans le menu */
 .mobile-theme-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: none;
-  border: none;
-  font-family: var(--f-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--c-ash);
-  transition: color 0.2s;
+  width: 48px;
+  height: 26px;
+  background: var(--c-surface);
+  border: var(--border-weight) solid var(--c-border);
+  border-radius: 13px;
+  position: relative;
+  transition: background 0.3s, border-color 0.3s;
+  flex-shrink: 0;
+  padding: 0;
 }
-.mobile-theme-btn:hover { color: var(--c-ink); }
-.mobile-theme-icon { font-size: 14px; }
+.mobile-theme-btn::after {
+  content: '';
+  position: absolute;
+  top: 4px; left: 4px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--c-slate);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.3s;
+}
+[data-theme="dark"] .mobile-theme-btn::after {
+  transform: translateX(22px);
+  background: var(--c-ash);
+}
 
 /* ============================================================
    RESPONSIVE — MOBILE (≤ 768px)
