@@ -100,7 +100,7 @@
   }).join('');
 
   /* Toggle toujours présent dans l'overlay, quelle que soit la page */
-  const mobileThemeRow = `<button class="mobile-theme-btn" id="mobileThemeToggle" aria-label="Toggle theme"><div class="gooey-inner"><div class="gooey-thumb"></div></div></button>`;
+  const mobileThemeRow = `<button class="mobile-theme-btn" id="mobileThemeToggle" aria-label="Toggle theme"><div class="gooey-thumb"></div></button>`;
 
   const menuLogoSrc = initialTheme === 'light' ? LOGO_IMAGE_MOBILE_LIGHT : LOGO_IMAGE_MOBILE_DARK;
 
@@ -240,15 +240,14 @@
     }
     const menuLogoImg = document.getElementById('menuLogoImg');
     if (menuLogoImg) menuLogoImg.src = next === 'light' ? LOGO_IMAGE_MOBILE_LIGHT : LOGO_IMAGE_MOBILE_DARK;
-    /* Squish liquide : thumb → pill → cercle avec spring overshoot */
+    /* Squish directionnel : keyframe différent selon le sens */
     const thumb = document.querySelector('.gooey-thumb');
     if (thumb) {
-      thumb.style.width        = '24px';
-      thumb.style.borderRadius = '6px';
-      setTimeout(() => {
-        thumb.style.width        = '';
-        thumb.style.borderRadius = '';
-      }, 180);
+      const cls = next === 'dark' ? 'to-right' : 'to-left';
+      thumb.classList.remove('to-right', 'to-left');
+      void thumb.offsetWidth; /* force reflow pour re-déclencher si clic rapide */
+      thumb.classList.add(cls);
+      setTimeout(() => thumb.classList.remove('to-right', 'to-left'), 460);
     }
   }
 
