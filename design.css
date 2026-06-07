@@ -357,10 +357,24 @@ footer {
 
 /* ============================================================
    OVERLAY DE TRANSITION DE PAGE
-   Deux éléments permanents (.pt-overlay), un par thème, toujours
-   dans le DOM. Animés par CSS @keyframes (from/to absolus).
-   Par défaut sous le viewport — reset garanti entre usages.
    ============================================================ */
+
+/* Couverture dès le 1er paint : le micro-script <head> pose data-pt
+   sur <html> avant toute autre chose. Ce ::before couvre l'écran
+   immédiatement, avant que nav.js (en bas de <body>) ne tourne.
+   Nav.js le retire une fois le .pt-exiting en place → zéro flash.  */
+html[data-pt="dark"]::before  {
+  content: ''; position: fixed; inset: 0; z-index: 9998;
+  background: #fff; pointer-events: none;
+}
+html[data-pt="light"]::before {
+  content: ''; position: fixed; inset: 0; z-index: 9998;
+  background: #000; pointer-events: none;
+}
+
+/* Deux overlays permanents (.pt-overlay), un par thème, toujours
+   dans le DOM. Animés par CSS @keyframes (from/to absolus).
+   Par défaut sous le viewport — reset garanti entre usages.    */
 .pt-overlay {
   position: fixed;
   inset: 0;

@@ -180,13 +180,16 @@
     setTimeout(() => { window.location.href = href; }, 560);
   }
 
-  /* Entrée (nouvelle page) : ajoute directement pt-exiting —
-     le from: translateY(0) du keyframe couvre l'écran immédiatement */
+  /* Entrée (nouvelle page) : le ::before CSS (posé par le micro-script head)
+     couvre déjà l'écran. On démarre pt-exiting (from:translateY(0) absolu),
+     puis on retire data-pt — les deux couvrent le même pixel au même moment,
+     aucun flash visible. */
   const transIncoming = sessionStorage.getItem('page-transition-theme');
   if (transIncoming) {
     sessionStorage.removeItem('page-transition-theme');
     const el = transIncoming === 'dark' ? ptDark : ptLight;
-    el.classList.add('pt-exiting');
+    el.classList.add('pt-exiting');                        /* overlay en place  */
+    document.documentElement.removeAttribute('data-pt');   /* retire ::before   */
   }
 
   /* ── Hamburger toggle ── */
