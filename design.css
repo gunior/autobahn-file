@@ -404,23 +404,32 @@ html[data-pt="light"]::before {
   animation: pt-wipe-out 520ms cubic-bezier(0.76,0,0.24,1) forwards;
 }
 
-/* Animation du logo via `top` (pas transform) : ne promeut pas sur un
-   compositor layer séparé → overflow:hidden clippe correctement.
-   Léger décalage vertical pour donner une sensation de profondeur. */
-@keyframes pt-logo-in  { from { top: -50px; } to { top: 0; } }
-@keyframes pt-logo-out { from { top: 0; }     to { top:  50px; } }
+/* Logo : fade uniquement — aucune animation de position.
+   Pourquoi pas de transform/top : le logo est toujours centré dans le volet.
+   Pendant l'entrée du volet, le logo serait visible dans la partie basse de
+   l'écran avant que le volet la couvre — c'est le "clip" que l'on voit.
+   Solution : le logo est invisible (opacity:0) pendant l'entrée du volet,
+   puis apparaît par un fondu quand le volet couvre presque tout l'écran.
+   Pas d'animation de transform → pas de compositor layer séparé → aucun bug. */
 
+@keyframes pt-logo-appear { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pt-logo-hide   { from { opacity: 1; } to { opacity: 0; } }
+
+/* Entrée : logo invisible le temps que le volet entre (300ms),
+   puis fondu en 220ms — le volet est déjà quasi plein écran à ce stade. */
 .pt-overlay.pt-entering .pt-logo {
-  animation: pt-logo-in  520ms cubic-bezier(0.76,0,0.24,1) forwards;
+  opacity: 0;
+  animation: pt-logo-appear 220ms ease 300ms forwards;
 }
+/* Sortie : logo disparaît immédiatement en 180ms,
+   le volet continue seul ensuite. */
 .pt-overlay.pt-exiting .pt-logo {
-  animation: pt-logo-out 520ms cubic-bezier(0.76,0,0.24,1) forwards;
+  animation: pt-logo-hide 180ms ease forwards;
 }
 
 .pt-overlay[data-overlay-theme="light"] { background: #000; }
 .pt-overlay[data-overlay-theme="dark"]  { background: #fff; }
 .pt-logo {
-  position: relative; /* requis pour que top fonctionne */
   width: 160px;
   height: auto;
   display: block;
