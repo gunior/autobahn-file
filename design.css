@@ -368,13 +368,9 @@ footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translateY(100%); /* garé sous le viewport par défaut */
   pointer-events: none;
-  transition: transform 0.52s cubic-bezier(0.76, 0, 0.24, 1);
-  will-change: transform;
-  /* Les états d'animation (entrée / sortie) sont gérés entièrement
-     via inline styles dans nav.js — pas de classes CSS — pour éviter
-     tout conflit de cascade entre usages successifs. */
+  /* transform et timing gérés exclusivement par Web Animations API
+     dans nav.js — aucune CSS transition, aucun état résiduel possible */
 }
 
 /* Light mode : fond noir + logo blanc (Asset8 est blanc) */

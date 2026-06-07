@@ -141,8 +141,19 @@
      importe le nombre d'utilisations consécutives.
   ──────────────────────────────────────────────────────────────────── */
 
+  /* ── Overlay de transition de page ──────────────────────────────────
+     Web Animations API (element.animate) — keyframes explicites, pas de
+     CSS transition, pas de reset de state, pas de GPU stale.
+     Nouvel élément DOM à chaque usage pour un état parfaitement vierge.
+  ──────────────────────────────────────────────────────────────────── */
+
+  const PT_TIMING = {
+    duration: 520,
+    easing: 'cubic-bezier(0.76, 0, 0.24, 1)',
+    fill: 'forwards'
+  };
+
   function makeOverlay(theme) {
-    /* Supprime tout overlay existant avant d'en créer un nouveau */
     document.querySelectorAll('#pageTransition').forEach(el => el.remove());
     const el = document.createElement('div');
     el.id = 'pageTransition';
@@ -151,48 +162,34 @@
     return el;
   }
 
-  /* Déclenchement sortant (clic sur lien ou logo) :
-     nouvel overlay depuis le bas → couvre l'écran → navigation.     */
+  /* Sortie de page : slide bas→haut puis navigation */
   function triggerPageTransition(href) {
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
     document.body.style.overflow = '';
-
     const overlay = makeOverlay(theme);
-    overlay.style.transform  = 'translateY(100%)'; /* positionné sous l'écran */
-    overlay.style.transition = 'none';             /* sans animation initiale  */
+    overlay.style.pointerEvents = 'all';
     document.body.appendChild(overlay);
-
-    /* Double rAF : le browser peint l'élément à translateY(100%) dans
-       le premier frame, puis démarre l'animation dans le second.
-       Inutile avec un élément neuf sur le 1er usage, indispensable si
-       la page a déjà reçu un overlay (ex. : arrivée via transition). */
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        overlay.style.removeProperty('transition');
-        overlay.style.transform    = 'translateY(0)';
-        overlay.style.pointerEvents = 'all';
-      });
-    });
-
+    overlay.animate(
+      [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }],
+      PT_TIMING
+    );
     sessionStorage.setItem('page-transition-theme', theme);
-    setTimeout(() => { window.location.href = href; }, 640);
+    setTimeout(() => { window.location.href = href; }, 560);
   }
 
-  /* Arrivée entrante (nouvelle page après transition) :
-     nouvel overlay couvrant l'écran → sort vers le haut.            */
+  /* Entrée sur nouvelle page : overlay couvre → slide vers le haut */
   const transIncoming = sessionStorage.getItem('page-transition-theme');
   if (transIncoming) {
     sessionStorage.removeItem('page-transition-theme');
     const inOverlay = makeOverlay(transIncoming);
-    inOverlay.style.transform  = 'translateY(0)';  /* couvre immédiatement    */
-    inOverlay.style.transition = 'none';
     document.body.appendChild(inOverlay);
+    /* 1 rAF pour s'assurer que l'overlay est peint à translateY(0)
+       (sa position WAAPI de départ) avant de lancer le slide-out    */
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        inOverlay.style.removeProperty('transition');
-        inOverlay.style.transform    = 'translateY(-100%)'; /* sort vers le haut */
-        inOverlay.style.pointerEvents = 'none';
-      });
+      inOverlay.animate(
+        [{ transform: 'translateY(0)' }, { transform: 'translateY(-100%)' }],
+        PT_TIMING
+      );
     });
   }
 
