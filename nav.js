@@ -205,12 +205,10 @@
   if (_ptIncoming) {
     sessionStorage.removeItem('page-transition-theme');
     var _ptEl = _ptMake(_ptIncoming);
-    _ptEl.style.transform = 'translateY(0)'; /* fallback garanti : si l'anim
-       prend 1 frame de retard, l'inline style couvre déjà l'écran.
-       Dès que l'animation démarre, elle passe au-dessus dans la cascade CSS
-       (animations > inline) → le volet glisse normalement.
-       Après fill:forwards (translateY(-100%)), l'anim reste prioritaire. */
-    void _ptEl.offsetHeight;                  /* force layout → layer GPU créé à translateY(0) */
+    _ptEl.style.clipPath = 'inset(0% 0% 0% 0%)'; /* volet plein écran avant l'animation :
+       garantit qu'il couvre l'écran même si le navigateur tarde 1 frame à
+       appliquer le keyframe "from" de pt-clip-out. */
+    void _ptEl.offsetHeight;                       /* force layout → layer GPU créé avec ce clip */
     _ptEl.classList.add('pt-exiting');
     document.documentElement.removeAttribute('data-pt');
   }
