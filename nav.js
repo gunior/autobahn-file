@@ -200,6 +200,18 @@
       e.preventDefault();
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
       transitionEl.setAttribute('data-overlay-theme', currentTheme);
+
+      /* Si pt-exit est encore là (usage précédent), on le retire SANS animation
+         pour repositionner l'overlay sous le viewport avant de relancer l'entrée.
+         Sans ce reset, pt-exit écrase pt-enter (ordre CSS) et le volet reste
+         coincé à translateY(-100%) — seule la fin de l'anim est visible. */
+      if (transitionEl.classList.contains('pt-exit')) {
+        transitionEl.style.transition = 'none';
+        transitionEl.classList.remove('pt-exit');
+        void transitionEl.offsetWidth; /* force reflow → overlay snappe à translateY(100%) */
+        transitionEl.style.removeProperty('transition');
+      }
+
       transitionEl.classList.add('pt-enter');
       /* Le flag transmet la couleur d'overlay à la page suivante */
       sessionStorage.setItem('page-transition-theme', currentTheme);
