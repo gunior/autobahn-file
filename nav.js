@@ -87,23 +87,17 @@
   logoEl.innerHTML = `<img src="${logoSrc}" alt="${LOGO_IMAGE_ALT}" height="${logoHeight}" style="display:block">`;
   document.body.prepend(logoEl);
 
-  /* ── Menu overlay ── */
+  /* ── Menu overlay — structure freshman.tv ── */
   const mobileMenuLinks = LINKS.map(l => {
-    const active = page === l.href ? 'mobile-active' : '';
-    /* Logo hover pour les items qui en ont un (Lab) */
-    const labLogoSrc = l.logoLight
-      ? (initialTheme === 'light' ? l.logoLight : l.logoDark)
-      : '';
-    const hoverLogo = l.logoLight
-      ? `<img class="link-hover-logo" src="${labLogoSrc}" alt="${l.en}">`
-      : '';
-    return `<a href="${l.href}" class="${active}">
-      <span class="link-text">
-        <span class="en">${l.en}</span>
-        <span class="fr">${l.fr}</span>
-      </span>
-      ${hoverLogo}
-    </a>`;
+    const active = page === l.href ? 'menu-active' : '';
+    return `<div class="menu-item ${active}">
+      <div class="menu-item-content">
+        <a href="${l.href}">
+          <span class="en">${l.en}</span>
+          <span class="fr">${l.fr}</span>
+        </a>
+      </div>
+    </div>`;
   }).join('');
 
   /* Toggle toujours présent dans l'overlay, quelle que soit la page */
@@ -116,16 +110,22 @@
   mobileMenuEl.innerHTML = `
     <div class="menu-logo-top">
       <a href="/">
-        <img id="menuLogoImg" src="${menuLogoSrc}" alt="Autobahn" height="26" style="display:block">
+        <img id="menuLogoImg" src="${menuLogoSrc}" alt="Autobahn" height="22" style="display:block">
       </a>
     </div>
-    <div class="mobile-nav-links">${mobileMenuLinks}</div>
-    <div class="mobile-menu-bottom">
+    <nav class="menu-items" aria-label="Navigation principale">
+      ${mobileMenuLinks}
+    </nav>
+    <div class="menu-footer">
       <div class="mobile-lang">
         <button class="mobile-lang-btn" id="mBtnEN" onclick="setLang('en')">EN</button>
         <span class="mobile-lang-sep">/</span>
         <button class="mobile-lang-btn" id="mBtnFR" onclick="setLang('fr')">FR</button>
       </div>
+      <a class="menu-footer-legal" href="/mentions-legales">
+        <span class="en">Legal notices</span>
+        <span class="fr">Mentions légales</span>
+      </a>
       ${mobileThemeRow}
     </div>`;
   document.body.appendChild(mobileMenuEl);
@@ -175,9 +175,13 @@
   /* Entrée (page sortante) ─────────────────────────────────────────
      Retire TOUS les .pt-overlay présents (exit précédent inclus)
      avant de créer l'overlay d'entrée. Layer GPU garanti vierge
-     quel que soit le nombre de navigations précédentes.           */
+     quel que soit le nombre de navigations précédentes.
+     closeMenu() appelé en premier : évite que le menu reste en état
+     open + overflow:hidden pendant le délai de navigation (fix Lab). */
   function triggerPageTransition(href) {
     var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    /* Fermer le menu proprement (retire overflow:hidden sur body + class open) */
+    if (typeof closeMenu === 'function') closeMenu();
     document.body.style.overflow = '';
     document.querySelectorAll('.pt-overlay').forEach(function(o) { o.remove(); });
     var el = _ptMake(theme);
@@ -256,23 +260,6 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeMenu();
   });
-
-  /* ── Lab : swap logo au hover (image suit le fond inversé) ── */
-  const labLink = mobileMenuEl.querySelector('a[href="/lab"]');
-  if (labLink) {
-    const labLogo = labLink.querySelector('.link-hover-logo');
-    if (labLogo) {
-      labLink.addEventListener('mouseenter', () => {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        /* Sur hover le fond devient c-ink : clair en dark, sombre en light → logo opposé */
-        labLogo.src = isDark ? './assets/Lab-b.png' : './assets/Lab-w.png';
-      });
-      labLink.addEventListener('mouseleave', () => {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        labLogo.src = isDark ? './assets/Lab-w.png' : './assets/Lab-b.png';
-      });
-    }
-  }
 
   /* ──────────────────────────────────────────────────────────
      DARK MODE

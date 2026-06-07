@@ -473,100 +473,152 @@ body.lang-en span.en { display: inline; }
 .nav-hamburger.open span:nth-child(2) { transform: translateY(-4px) rotate(-45deg); }
 
 /* ============================================================
-   MENU MOBILE PLEIN ÉCRAN
+   MENU OVERLAY — STYLE FRESHMAN.TV
+   Volet plein écran, liens en escalier (staircase), hover avec
+   fond inversé qui monte de bas en haut (max-height trick).
    ============================================================ */
-/* Menu overlay — fonctionne sur toutes les tailles (desktop + mobile) */
+
 #mobileMenu {
-  display: flex;
   position: fixed;
   inset: 0;
   z-index: 500;
+  overflow: hidden;
   background: var(--c-bg);
+  display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 80px var(--space-lg) 60px;
+  padding: 0 var(--space-lg);
+  /* Ouverture : simple fondu */
   opacity: 0;
-  transform: translateY(-12px);
-  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94),
-              background 0.4s ease;
   pointer-events: none;
-  overflow: hidden;
+  transition: opacity 0.42s cubic-bezier(0.76, 0, 0.24, 1),
+              background 0.4s ease;
 }
 #mobileMenu.open {
   opacity: 1;
-  transform: translateY(0);
   pointer-events: all;
 }
 
-/* Logo centré en haut du menu overlay */
+/* ── Logo centré en haut ── */
 .menu-logo-top {
   position: absolute;
   top: 28px;
   left: 50%;
   transform: translateX(-50%);
+  z-index: 2;
 }
 .menu-logo-top img {
   display: block;
-  height: 26px;
+  height: 22px;
   width: auto;
 }
 
-
-/* Liens verticaux — colonne unique, mêmes marges L/R */
-.mobile-nav-links {
+/* ── Staircase nav — colonne de liens en escalier ── */
+.menu-items {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  flex: 1;
-  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
 }
-.mobile-nav-links a {
+
+/* Chaque item : hauteur fixe, position relative pour le fond hover et le contenu absolu */
+.menu-item {
+  position: relative;
+  height: clamp(58px, 10vh, 108px);
+  border-top: 1px solid var(--c-border);
+  transition: border-color 0.4s;
+}
+.menu-item:last-child { border-bottom: 1px solid var(--c-border); }
+
+/* Fond inversé qui monte de bas en haut au hover (freshman.tv pattern) */
+.menu-item::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  /* sort des deux côtés de la zone paddée pour couvrir toute la largeur */
+  left: calc(var(--space-lg) * -1);
+  width: calc(100% + var(--space-lg) * 2);
+  height: calc(100% + 2px);
+  max-height: 0;
+  background: var(--c-ink);
+  z-index: 0;
+  transition: max-height 0.32s cubic-bezier(0.165, 0.84, 0.44, 1),
+              background 0.4s;
+}
+@media (hover: hover) {
+  .menu-item:hover::before { max-height: calc(100% + 2px); }
+}
+
+/* Contenu positionné en absolu → permet le décalage horizontal staircase */
+.menu-item-content {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+/* Escalier gauche → droite pour 4 items (Team, Lab, Studio, Contact) */
+.menu-item:nth-child(1) .menu-item-content { left: 0%;  }
+.menu-item:nth-child(2) .menu-item-content { left: 14%; }
+.menu-item:nth-child(3) .menu-item-content { left: 34%; }
+.menu-item:nth-child(4) .menu-item-content { left: 54%; }
+
+/* Lien */
+.menu-item-content a {
   font-family: var(--f-display);
   font-weight: 300;
-  font-size: clamp(36px, 8vw, 100px);
-  line-height: 1.15;
-  letter-spacing: -0.03em;
-  color: var(--c-ink);
-  opacity: 0.3;
+  font-size: clamp(46px, 8vw, 96px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
   text-decoration: none;
-  transition: opacity 0.2s, background 0.18s, color 0.18s;
-  display: block;
-  padding: 14px 0 14px var(--space-sm);
-  border-top: 1px dashed var(--c-slate);
-  position: relative; /* ancrage pour le logo en absolu */
+  color: var(--c-ink);
+  transition: color 0.32s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+@media (hover: hover) {
+  .menu-item:hover .menu-item-content a { color: var(--c-bg); }
+}
+/* Page courante : légèrement effacée comme freshman.tv */
+.menu-item.menu-active .menu-item-content a { opacity: 0.35; }
+
+/* Mobile : escalier resserré pour éviter tout débordement */
+@media (max-width: 768px) {
+  .menu-item:nth-child(1) .menu-item-content { left: 0%;  }
+  .menu-item:nth-child(2) .menu-item-content { left: 7%;  }
+  .menu-item:nth-child(3) .menu-item-content { left: 14%; }
+  .menu-item:nth-child(4) .menu-item-content { left: 21%; }
 }
 
-/* Hover : bande inversée + texte remplacé par logo si disponible */
-.mobile-nav-links a:hover {
-  opacity: 1;
-  background: var(--c-ink);
-  color: var(--c-bg);
-}
-.mobile-nav-links a.mobile-active { opacity: 1; }
-
-/* Logo hover (Lab) — absolu pour ne pas modifier la hauteur de l'onglet */
-.link-hover-logo {
-  display: none;
+/* ── Footer menu : langue | mentions légales | thème ── */
+.menu-footer {
   position: absolute;
-  left: var(--space-md); /* décalé un peu plus à droite que le texte */
-  top: 50%;
-  transform: translateY(-50%);
-  height: 0.55em;
-  width: auto;
-}
-/* visibility:hidden au lieu de display:none → le texte reste dans le flux,
-   la hauteur de l'onglet ne change pas au hover */
-.mobile-nav-links a:has(.link-hover-logo):hover .link-text { visibility: hidden; }
-.mobile-nav-links a:hover .link-hover-logo { display: block; }
-
-.mobile-menu-bottom {
+  bottom: 28px;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 24px;
-  margin-top: 32px;
+  padding: 0 var(--space-lg);
+  z-index: 2;
 }
 
+.menu-footer-legal {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-ash);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.menu-footer-legal:hover { color: var(--c-ink); }
+
+/* Langue */
 .mobile-lang {
   display: flex;
   align-items: center;
@@ -582,6 +634,7 @@ body.lang-en span.en { display: inline; }
   border: none;
   padding: 0;
   transition: color 0.2s;
+  cursor: url('./assets/cursor-hand-hover.png') 9 0, auto;
 }
 .mobile-lang-btn.active { color: var(--c-ink); }
 .mobile-lang-sep {
