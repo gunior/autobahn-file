@@ -404,6 +404,17 @@ html[data-pt="light"]::before {
   animation: pt-wipe-out 520ms cubic-bezier(0.76,0,0.24,1) forwards;
 }
 
+/* Entrée : logo masqué — le volet monte depuis le bas et sans ce masque
+   le logo serait visible dans la partie basse de l'écran pendant l'animation.
+   Aucune animation de fondu : on ne navigue qu'une fois le volet fermé (560ms),
+   donc le logo n'a pas besoin d'apparaître côté page sortante. */
+.pt-overlay.pt-entering .pt-logo {
+  opacity: 0;
+}
+/* Sortie : aucune règle → opacity:1 par défaut.
+   Le logo reste visible et sort naturellement vers le haut avec le volet.
+   Pas de disparition, pas d'animation séparée. */
+
 .pt-overlay[data-overlay-theme="light"] { background: #000; }
 .pt-overlay[data-overlay-theme="dark"]  { background: #fff; }
 .pt-logo {
