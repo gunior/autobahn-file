@@ -212,6 +212,11 @@
         transitionEl.style.removeProperty('transition');
       }
 
+      /* Libère le scroll-lock du menu : body.overflow='hidden' se propage
+         au viewport dans certains moteurs et peut clipper un élément fixé
+         en train d'entrer depuis le bas de l'écran pendant l'animation. */
+      document.body.style.overflow = '';
+
       transitionEl.classList.add('pt-enter');
       /* Le flag transmet la couleur d'overlay à la page suivante */
       sessionStorage.setItem('page-transition-theme', currentTheme);

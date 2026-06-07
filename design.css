@@ -371,6 +371,9 @@ footer {
   transform: translateY(100%); /* garé sous le viewport par défaut */
   pointer-events: none;
   transition: transform 0.52s cubic-bezier(0.76, 0, 0.24, 1);
+  will-change: transform;      /* pré-promeut sur couche GPU dès le départ —
+                                  évite le frame vide lors de la promotion
+                                  au milieu d'une animation */
 }
 /* Entrée : glisse du bas vers le haut (couvre l'écran) */
 #pageTransition.pt-enter {
