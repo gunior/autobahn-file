@@ -172,24 +172,26 @@
   var ptLight = buildPTOverlay('light', PT_LOGO_DARK);   /* Asset8-w.png : logo blanc sur fond noir  */
   var ptDark  = buildPTOverlay('dark',  PT_LOGO_LIGHT);  /* Asset8-b.png : logo sombre sur fond blanc */
 
-  /* Sortie : hard-reset de toute animation en cours, puis pt-entering */
+  /* Sortie (page sortante) : overlay NEUF à chaque appel.
+     Pourquoi : ptLight/ptDark conservent leur état GPU après l'animation
+     de sortie (fill:forwards + will-change sur le logo = layer gelé).
+     Un élément frais garantit un layer vierge quelle que soit l'itération.
+     Les overlays temporaires sont retirés avant d'en créer un nouveau.    */
   function triggerPageTransition(href) {
-    const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    var theme = document.documentElement.getAttribute('data-theme') || 'dark';
     document.body.style.overflow = '';
-    const el = theme === 'dark' ? ptDark : ptLight;
 
-    /* Stoppe toute animation CSS en cours (y compris fill: forwards),
-       force un reflow → élément revient au CSS par défaut translateY(100%),
-       puis relance depuis le from keyframe absolu — même comportement
-       à la 1ère comme à la 10ème utilisation                            */
-    el.style.animation = 'none';
-    el.classList.remove('pt-entering', 'pt-exiting');
-    void el.offsetWidth;
-    el.style.removeProperty('animation');
+    /* Supprime les éventuels overlays temporaires d'un appel précédent */
+    document.querySelectorAll('.pt-overlay[data-pt-temp]').forEach(function(old) { old.remove(); });
+
+    /* Overlay frais : le logo correspondant au thème courant */
+    var logoSrc = theme === 'dark' ? PT_LOGO_LIGHT : PT_LOGO_DARK;
+    var el = buildPTOverlay(theme, logoSrc);
+    el.setAttribute('data-pt-temp', '');
     el.classList.add('pt-entering');
 
     sessionStorage.setItem('page-transition-theme', theme);
-    setTimeout(() => { window.location.href = href; }, 560);
+    setTimeout(function() { window.location.href = href; }, 560);
   }
 
   /* Entrée (nouvelle page) : le ::before CSS (posé par le micro-script head)
