@@ -132,68 +132,66 @@
 
   /* ── Overlay de transition de page ──────────────────────────────────
      Volet noir (light mode) ou blanc (dark mode) qui glisse du bas vers
-     le haut au clic sur un lien du menu ou le logo nav, puis se retire
-     vers le haut sur la nouvelle page. Logo Asset8.png centré.
+     le haut au clic sur un lien / logo, puis se retire vers le haut sur
+     la nouvelle page. Logo Asset8.png centré.
 
-     Tout l'état d'animation est géré via inline styles (pas de classes
-     CSS) pour éviter tout problème de cascade / état résiduel.
+     Principe fondamental : on crée un NOUVEL élément DOM à chaque
+     déclenchement. Un élément neuf n'a aucun historique GPU — aucun
+     état en cache, aucun compositor stale, aucun glitch possible peu
+     importe le nombre d'utilisations consécutives.
   ──────────────────────────────────────────────────────────────────── */
-  const transitionEl = document.createElement('div');
-  transitionEl.id = 'pageTransition';
-  transitionEl.innerHTML = '<img class="pt-logo" src="./assets/Asset8.png" alt="Autobahn">';
 
-  /* Déclenche l'animation d'entrée (bas→haut) et navigue vers href.
-     Utilisé aussi bien depuis le menu que depuis le logo. */
+  function makeOverlay(theme) {
+    /* Supprime tout overlay existant avant d'en créer un nouveau */
+    document.querySelectorAll('#pageTransition').forEach(el => el.remove());
+    const el = document.createElement('div');
+    el.id = 'pageTransition';
+    el.setAttribute('data-overlay-theme', theme);
+    el.innerHTML = '<img class="pt-logo" src="./assets/Asset8.png" alt="Autobahn">';
+    return el;
+  }
+
+  /* Déclenchement sortant (clic sur lien ou logo) :
+     nouvel overlay depuis le bas → couvre l'écran → navigation.     */
   function triggerPageTransition(href) {
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
-    transitionEl.setAttribute('data-overlay-theme', theme);
-    document.body.style.overflow = ''; /* libère scroll-lock */
+    document.body.style.overflow = '';
 
-    /* Snap instantané sous le viewport (no transition).
-       On utilise le double-rAF : offsetWidth force un recalcul CSS côté CPU,
-       mais le compositor GPU a encore la valeur en cache de l'animation
-       précédente. Sans deux frames de séparation il repart de là, causant
-       le clip d'une frame. Avec double-rAF :
-         frame 1 → compositor commit la position translateY(100%)
-         frame 2 → compositor démarre la nouvelle animation depuis 100%→0   */
-    transitionEl.style.transition    = 'none';
-    transitionEl.style.transform     = 'translateY(100%)';
-    transitionEl.style.pointerEvents = 'none';
+    const overlay = makeOverlay(theme);
+    overlay.style.transform  = 'translateY(100%)'; /* positionné sous l'écran */
+    overlay.style.transition = 'none';             /* sans animation initiale  */
+    document.body.appendChild(overlay);
 
+    /* Double rAF : le browser peint l'élément à translateY(100%) dans
+       le premier frame, puis démarre l'animation dans le second.
+       Inutile avec un élément neuf sur le 1er usage, indispensable si
+       la page a déjà reçu un overlay (ex. : arrivée via transition). */
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        transitionEl.style.removeProperty('transition');
-        transitionEl.style.transform     = 'translateY(0)';
-        transitionEl.style.pointerEvents = 'all';
+        overlay.style.removeProperty('transition');
+        overlay.style.transform    = 'translateY(0)';
+        overlay.style.pointerEvents = 'all';
       });
     });
 
     sessionStorage.setItem('page-transition-theme', theme);
-    /* 640ms = ~32ms (double rAF) + 520ms (anim) + 88ms marge */
     setTimeout(() => { window.location.href = href; }, 640);
   }
 
-  /* Si on arrive depuis une transition (flag sessionStorage) :
-     couvre l'écran immédiatement puis glisse vers le haut. */
+  /* Arrivée entrante (nouvelle page après transition) :
+     nouvel overlay couvrant l'écran → sort vers le haut.            */
   const transIncoming = sessionStorage.getItem('page-transition-theme');
   if (transIncoming) {
-    transitionEl.setAttribute('data-overlay-theme', transIncoming);
-    transitionEl.style.transition = 'none';
-    transitionEl.style.transform  = 'translateY(0)';
     sessionStorage.removeItem('page-transition-theme');
-  }
-  document.body.appendChild(transitionEl);
-
-  if (transIncoming) {
-    /* Double-rAF : même raison que dans triggerPageTransition.
-       L'élément vient d'être appendé à translateY(0) sans transition.
-       On attend que le compositor ait commité cette position avant de
-       lancer le slide-out vers le haut. */
+    const inOverlay = makeOverlay(transIncoming);
+    inOverlay.style.transform  = 'translateY(0)';  /* couvre immédiatement    */
+    inOverlay.style.transition = 'none';
+    document.body.appendChild(inOverlay);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        transitionEl.style.removeProperty('transition');
-        transitionEl.style.transform     = 'translateY(-100%)';
-        transitionEl.style.pointerEvents = 'none';
+        inOverlay.style.removeProperty('transition');
+        inOverlay.style.transform    = 'translateY(-100%)'; /* sort vers le haut */
+        inOverlay.style.pointerEvents = 'none';
       });
     });
   }
