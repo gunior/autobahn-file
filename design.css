@@ -371,19 +371,10 @@ footer {
   transform: translateY(100%); /* garé sous le viewport par défaut */
   pointer-events: none;
   transition: transform 0.52s cubic-bezier(0.76, 0, 0.24, 1);
-  will-change: transform;      /* pré-promeut sur couche GPU dès le départ —
-                                  évite le frame vide lors de la promotion
-                                  au milieu d'une animation */
-}
-/* Entrée : glisse du bas vers le haut (couvre l'écran) */
-#pageTransition.pt-enter {
-  transform: translateY(0);
-  pointer-events: all;
-}
-/* Sortie : glisse de l'écran vers le haut */
-#pageTransition.pt-exit {
-  transform: translateY(-100%);
-  pointer-events: none;
+  will-change: transform;
+  /* Les états d'animation (entrée / sortie) sont gérés entièrement
+     via inline styles dans nav.js — pas de classes CSS — pour éviter
+     tout conflit de cascade entre usages successifs. */
 }
 
 /* Light mode : fond noir + logo blanc (Asset8 est blanc) */
@@ -436,10 +427,11 @@ body.lang-en span.en { display: inline; }
   display: block;
   width: 20px;
   height: 2px;
-  background: var(--c-ink);
+  background: white;
+  mix-blend-mode: difference; /* même effet que le logo nav : s'inverse
+                                 automatiquement selon le fond */
   transition: transform 0.35s cubic-bezier(0.77,0,0.175,1),
-              opacity   0.25s ease,
-              background 0.4s ease;
+              opacity   0.25s ease;
 }
 /* X symétrique : chaque barre se déplace vers le midpoint (4px = moitié de 8px).
    translateY(±8px) déplaçait chaque barre vers la position de l'autre,

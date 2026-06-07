@@ -132,38 +132,49 @@
 
   /* ── Overlay de transition de page ──────────────────────────────────
      Volet noir (light mode) ou blanc (dark mode) qui glisse du bas vers
-     le haut au clic sur un lien du menu, puis se retire vers le haut
-     sur la nouvelle page. Logo Asset8.png centré pendant l'animation.
+     le haut au clic sur un lien du menu ou le logo nav, puis se retire
+     vers le haut sur la nouvelle page. Logo Asset8.png centré.
+
+     Tout l'état d'animation est géré via inline styles (pas de classes
+     CSS) pour éviter tout problème de cascade / état résiduel.
   ──────────────────────────────────────────────────────────────────── */
   const transitionEl = document.createElement('div');
   transitionEl.id = 'pageTransition';
   transitionEl.innerHTML = '<img class="pt-logo" src="./assets/Asset8.png" alt="Autobahn">';
 
-  /* Si on arrive ici depuis une transition (flag sessionStorage) :
-     on positionne l'overlay couvrant l'écran SANS animation, puis on
-     le fait glisser vers le haut pour révéler la page. */
+  /* Déclenche l'animation d'entrée (bas→haut) et navigue vers href.
+     Utilisé aussi bien depuis le menu que depuis le logo. */
+  function triggerPageTransition(href) {
+    const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    transitionEl.setAttribute('data-overlay-theme', theme);
+    document.body.style.overflow = ''; /* libère scroll-lock (peut clipper éléments fixed) */
+    /* Repositionne instantanément sous le viewport sans déclencher la transition */
+    transitionEl.style.transition   = 'none';
+    transitionEl.style.transform    = 'translateY(100%)';
+    transitionEl.style.pointerEvents = 'all';
+    void transitionEl.offsetWidth;  /* force reflow → peint à translateY(100%) */
+    transitionEl.style.removeProperty('transition'); /* rétablit la transition CSS */
+    transitionEl.style.transform = 'translateY(0)';  /* anime vers le centre */
+    sessionStorage.setItem('page-transition-theme', theme);
+    setTimeout(() => { window.location.href = href; }, 580);
+  }
+
+  /* Si on arrive depuis une transition (flag sessionStorage) :
+     couvre l'écran immédiatement puis glisse vers le haut. */
   const transIncoming = sessionStorage.getItem('page-transition-theme');
   if (transIncoming) {
     transitionEl.setAttribute('data-overlay-theme', transIncoming);
-    /* Positionne immédiatement à translateY(0) sans transition */
     transitionEl.style.transition = 'none';
     transitionEl.style.transform  = 'translateY(0)';
-    transitionEl.style.pointerEvents = 'none';
     sessionStorage.removeItem('page-transition-theme');
   }
   document.body.appendChild(transitionEl);
 
   if (transIncoming) {
-    /* Force un reflow pour que les styles inline soient peints avant
-       de retirer la transition=none et lancer l'animation de sortie */
-    void transitionEl.offsetWidth;
-    transitionEl.style.removeProperty('transition');
-    transitionEl.style.removeProperty('transform');
-    transitionEl.style.removeProperty('pointer-events');
-    transitionEl.classList.add('pt-exit');
-    /* On ne retire PAS pt-exit : l'overlay reste garé au-dessus du viewport
-       (translateY(-100%), invisible). Le retirer déclencherait un retour
-       animé vers translateY(100%) visible à l'écran — c'est le bug. */
+    void transitionEl.offsetWidth; /* force reflow → peint couvrant l'écran */
+    transitionEl.style.removeProperty('transition'); /* rétablit la transition CSS */
+    transitionEl.style.transform    = 'translateY(-100%)'; /* sort vers le haut */
+    transitionEl.style.pointerEvents = 'none';
   }
 
   /* ── Hamburger toggle ── */
@@ -192,36 +203,18 @@
     a.addEventListener('click', function (e) {
       const href = this.getAttribute('href');
       if (!href) { closeMenu(); return; }
-
-      /* Normalise l'href pour comparaison (retire .html, trailing slash) */
       const target = href.replace(/\.html$/, '').replace(/\/$/, '') || '/';
       if (target === page) { closeMenu(); return; }
-
       e.preventDefault();
-      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      transitionEl.setAttribute('data-overlay-theme', currentTheme);
-
-      /* Si pt-exit est encore là (usage précédent), on le retire SANS animation
-         pour repositionner l'overlay sous le viewport avant de relancer l'entrée.
-         Sans ce reset, pt-exit écrase pt-enter (ordre CSS) et le volet reste
-         coincé à translateY(-100%) — seule la fin de l'anim est visible. */
-      if (transitionEl.classList.contains('pt-exit')) {
-        transitionEl.style.transition = 'none';
-        transitionEl.classList.remove('pt-exit');
-        void transitionEl.offsetWidth; /* force reflow → overlay snappe à translateY(100%) */
-        transitionEl.style.removeProperty('transition');
-      }
-
-      /* Libère le scroll-lock du menu : body.overflow='hidden' se propage
-         au viewport dans certains moteurs et peut clipper un élément fixé
-         en train d'entrer depuis le bas de l'écran pendant l'animation. */
-      document.body.style.overflow = '';
-
-      transitionEl.classList.add('pt-enter');
-      /* Le flag transmet la couleur d'overlay à la page suivante */
-      sessionStorage.setItem('page-transition-theme', currentTheme);
-      setTimeout(() => { window.location.href = href; }, 580);
+      triggerPageTransition(href);
     });
+  });
+
+  /* Logo nav (haut gauche) → transition vers l'accueil */
+  logoEl.addEventListener('click', function (e) {
+    if (page === '/') return; /* déjà sur l'accueil, comportement normal */
+    e.preventDefault();
+    triggerPageTransition('/');
   });
 
   document.addEventListener('keydown', e => {
