@@ -358,8 +358,8 @@ footer {
 /* ============================================================
    OVERLAY DE TRANSITION DE PAGE
    Deux éléments permanents (.pt-overlay), un par thème, toujours
-   dans le DOM. Timeline WAAPI : 0→520ms entrée, 520→1040ms sortie.
-   Seek + play selon le contexte — aucun create/destroy.
+   dans le DOM. Animés par CSS @keyframes (from/to absolus).
+   Par défaut sous le viewport — reset garanti entre usages.
    ============================================================ */
 .pt-overlay {
   position: fixed;
@@ -369,8 +369,26 @@ footer {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  will-change: transform; /* GPU layer pré-créé dès le chargement */
+  transform: translateY(100%); /* garé sous le viewport */
 }
+
+@keyframes pt-wipe-in {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes pt-wipe-out {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-100%); }
+}
+
+.pt-overlay.pt-entering {
+  animation: pt-wipe-in 520ms cubic-bezier(0.76,0,0.24,1) forwards;
+  pointer-events: all;
+}
+.pt-overlay.pt-exiting {
+  animation: pt-wipe-out 520ms cubic-bezier(0.76,0,0.24,1) forwards;
+}
+
 .pt-overlay[data-overlay-theme="light"] { background: #000; }
 .pt-overlay[data-overlay-theme="dark"]  { background: #fff; }
 .pt-overlay[data-overlay-theme="dark"] .pt-logo { filter: invert(1); }

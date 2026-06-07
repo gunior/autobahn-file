@@ -142,54 +142,51 @@
   ──────────────────────────────────────────────────────────────────── */
 
   /* ── Overlay de transition de page ──────────────────────────────────
-     Deux éléments permanents (un par thème), appendés une seule fois,
-     jamais détruits. Une animation WAAPI par élément : timeline unique
-     0 → 520ms (entrée) → 1040ms (sortie). On seek + play, c'est tout.
-
-     Pas de create/destroy, pas de CSS transition, pas de state résiduel.
-     Les deux GPU layers sont pré-créés depuis le chargement de la page.
+     Deux éléments permanents (un par thème), toujours dans le DOM.
+     Animés via CSS @keyframes avec from/to absolus — pas de WAAPI seek,
+     pas de CSS transition, pas d'état calculé depuis le courant.
+     Le from: d'un @keyframes est une valeur absolue définie en CSS :
+     aucune ambiguïté possible quel que soit l'état GPU précédent.
   ──────────────────────────────────────────────────────────────────── */
-  const PT_KF = [
-    { transform: 'translateY(100%)', offset: 0,   easing: 'cubic-bezier(0.76,0,0.24,1)' },
-    { transform: 'translateY(0)',    offset: 0.5,  easing: 'cubic-bezier(0.76,0,0.24,1)' },
-    { transform: 'translateY(-100%)', offset: 1 }
-  ];
-  const PT_DURATION = 1040; /* 520ms entrée + 520ms sortie */
-  const PT_MID      = 520;  /* point de pause = overlay couvrant l'écran */
-
   function buildPTOverlay(themeAttr) {
     const el = document.createElement('div');
     el.className = 'pt-overlay';
     el.setAttribute('data-overlay-theme', themeAttr);
     el.innerHTML = '<img class="pt-logo" src="./assets/Asset8.png" alt="Autobahn">';
     document.body.appendChild(el);
-    const anim = el.animate(PT_KF, { duration: PT_DURATION, fill: 'both' });
-    anim.pause();
-    anim.currentTime = 0; /* garé au début → translateY(100%), hors écran */
-    return { el, anim };
+    return el;
   }
 
   const ptLight = buildPTOverlay('light');
   const ptDark  = buildPTOverlay('dark');
 
-  /* Sortie : seek au début → play jusqu'au milieu → navigate */
+  /* Sortie : hard-reset de toute animation en cours, puis pt-entering */
   function triggerPageTransition(href) {
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
     document.body.style.overflow = '';
-    const { anim } = theme === 'dark' ? ptDark : ptLight;
-    anim.currentTime = 0;
-    anim.play();
+    const el = theme === 'dark' ? ptDark : ptLight;
+
+    /* Stoppe toute animation CSS en cours (y compris fill: forwards),
+       force un reflow → élément revient au CSS par défaut translateY(100%),
+       puis relance depuis le from keyframe absolu — même comportement
+       à la 1ère comme à la 10ème utilisation                            */
+    el.style.animation = 'none';
+    el.classList.remove('pt-entering', 'pt-exiting');
+    void el.offsetWidth;
+    el.style.removeProperty('animation');
+    el.classList.add('pt-entering');
+
     sessionStorage.setItem('page-transition-theme', theme);
-    setTimeout(() => { window.location.href = href; }, PT_MID);
+    setTimeout(() => { window.location.href = href; }, 560);
   }
 
-  /* Entrée (nouvelle page) : seek au milieu → play jusqu'à la fin */
+  /* Entrée (nouvelle page) : ajoute directement pt-exiting —
+     le from: translateY(0) du keyframe couvre l'écran immédiatement */
   const transIncoming = sessionStorage.getItem('page-transition-theme');
   if (transIncoming) {
     sessionStorage.removeItem('page-transition-theme');
-    const { anim } = transIncoming === 'dark' ? ptDark : ptLight;
-    anim.currentTime = PT_MID; /* l'overlay couvre déjà l'écran */
-    anim.play();              /* slide vers le haut et sort      */
+    const el = transIncoming === 'dark' ? ptDark : ptLight;
+    el.classList.add('pt-exiting');
   }
 
   /* ── Hamburger toggle ── */
