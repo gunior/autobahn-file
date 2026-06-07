@@ -357,11 +357,11 @@ footer {
 
 /* ============================================================
    OVERLAY DE TRANSITION DE PAGE
-   Volet plein écran qui glisse du bas vers le haut au clic
-   sur un lien du menu burger, puis sort par le haut sur la
-   page de destination. Logo Asset8.png centré.
+   Deux éléments permanents (.pt-overlay), un par thème, toujours
+   dans le DOM. Timeline WAAPI : 0→520ms entrée, 520→1040ms sortie.
+   Seek + play selon le contexte — aucun create/destroy.
    ============================================================ */
-#pageTransition {
+.pt-overlay {
   position: fixed;
   inset: 0;
   z-index: 9000;
@@ -369,17 +369,11 @@ footer {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  /* transform et timing gérés exclusivement par Web Animations API
-     dans nav.js — aucune CSS transition, aucun état résiduel possible */
+  will-change: transform; /* GPU layer pré-créé dès le chargement */
 }
-
-/* Light mode : fond noir + logo blanc (Asset8 est blanc) */
-#pageTransition[data-overlay-theme="light"] { background: #000; }
-
-/* Dark mode : fond blanc + logo noir (inversion de Asset8) */
-#pageTransition[data-overlay-theme="dark"]  { background: #fff; }
-#pageTransition[data-overlay-theme="dark"] .pt-logo { filter: invert(1); }
-
+.pt-overlay[data-overlay-theme="light"] { background: #000; }
+.pt-overlay[data-overlay-theme="dark"]  { background: #fff; }
+.pt-overlay[data-overlay-theme="dark"] .pt-logo { filter: invert(1); }
 .pt-logo {
   width: 160px;
   height: auto;

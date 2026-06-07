@@ -142,55 +142,54 @@
   ──────────────────────────────────────────────────────────────────── */
 
   /* ── Overlay de transition de page ──────────────────────────────────
-     Web Animations API (element.animate) — keyframes explicites, pas de
-     CSS transition, pas de reset de state, pas de GPU stale.
-     Nouvel élément DOM à chaque usage pour un état parfaitement vierge.
+     Deux éléments permanents (un par thème), appendés une seule fois,
+     jamais détruits. Une animation WAAPI par élément : timeline unique
+     0 → 520ms (entrée) → 1040ms (sortie). On seek + play, c'est tout.
+
+     Pas de create/destroy, pas de CSS transition, pas de state résiduel.
+     Les deux GPU layers sont pré-créés depuis le chargement de la page.
   ──────────────────────────────────────────────────────────────────── */
+  const PT_KF = [
+    { transform: 'translateY(100%)', offset: 0,   easing: 'cubic-bezier(0.76,0,0.24,1)' },
+    { transform: 'translateY(0)',    offset: 0.5,  easing: 'cubic-bezier(0.76,0,0.24,1)' },
+    { transform: 'translateY(-100%)', offset: 1 }
+  ];
+  const PT_DURATION = 1040; /* 520ms entrée + 520ms sortie */
+  const PT_MID      = 520;  /* point de pause = overlay couvrant l'écran */
 
-  const PT_TIMING = {
-    duration: 520,
-    easing: 'cubic-bezier(0.76, 0, 0.24, 1)',
-    fill: 'forwards'
-  };
-
-  function makeOverlay(theme) {
-    document.querySelectorAll('#pageTransition').forEach(el => el.remove());
+  function buildPTOverlay(themeAttr) {
     const el = document.createElement('div');
-    el.id = 'pageTransition';
-    el.setAttribute('data-overlay-theme', theme);
+    el.className = 'pt-overlay';
+    el.setAttribute('data-overlay-theme', themeAttr);
     el.innerHTML = '<img class="pt-logo" src="./assets/Asset8.png" alt="Autobahn">';
-    return el;
+    document.body.appendChild(el);
+    const anim = el.animate(PT_KF, { duration: PT_DURATION, fill: 'both' });
+    anim.pause();
+    anim.currentTime = 0; /* garé au début → translateY(100%), hors écran */
+    return { el, anim };
   }
 
-  /* Sortie de page : slide bas→haut puis navigation */
+  const ptLight = buildPTOverlay('light');
+  const ptDark  = buildPTOverlay('dark');
+
+  /* Sortie : seek au début → play jusqu'au milieu → navigate */
   function triggerPageTransition(href) {
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
     document.body.style.overflow = '';
-    const overlay = makeOverlay(theme);
-    overlay.style.pointerEvents = 'all';
-    document.body.appendChild(overlay);
-    overlay.animate(
-      [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }],
-      PT_TIMING
-    );
+    const { anim } = theme === 'dark' ? ptDark : ptLight;
+    anim.currentTime = 0;
+    anim.play();
     sessionStorage.setItem('page-transition-theme', theme);
-    setTimeout(() => { window.location.href = href; }, 560);
+    setTimeout(() => { window.location.href = href; }, PT_MID);
   }
 
-  /* Entrée sur nouvelle page : overlay couvre → slide vers le haut */
+  /* Entrée (nouvelle page) : seek au milieu → play jusqu'à la fin */
   const transIncoming = sessionStorage.getItem('page-transition-theme');
   if (transIncoming) {
     sessionStorage.removeItem('page-transition-theme');
-    const inOverlay = makeOverlay(transIncoming);
-    document.body.appendChild(inOverlay);
-    /* 1 rAF pour s'assurer que l'overlay est peint à translateY(0)
-       (sa position WAAPI de départ) avant de lancer le slide-out    */
-    requestAnimationFrame(() => {
-      inOverlay.animate(
-        [{ transform: 'translateY(0)' }, { transform: 'translateY(-100%)' }],
-        PT_TIMING
-      );
-    });
+    const { anim } = transIncoming === 'dark' ? ptDark : ptLight;
+    anim.currentTime = PT_MID; /* l'overlay couvre déjà l'écran */
+    anim.play();              /* slide vers le haut et sort      */
   }
 
   /* ── Hamburger toggle ── */
