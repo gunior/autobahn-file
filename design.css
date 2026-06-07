@@ -432,7 +432,10 @@ html[data-pt="light"]::before {
   width: 160px;
   height: auto;
   display: block;
-  will-change: transform;
+  /* Pas de will-change : le logo reste sur le même layer que l'overlay.
+     overflow:hidden fonctionne correctement entre layers du même compositeur.
+     will-change créerait un layer indépendant → clipping non garanti + logo
+     visible en dehors des bords du volet sur certaines pages. */
 }
 
 /* ============================================================

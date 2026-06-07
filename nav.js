@@ -187,13 +187,30 @@
   }
 
   /* Sortie (page entrante) ─────────────────────────────────────────
-     Le ::before CSS (micro-script <head>) couvre l'écran.
-     On crée l'overlay de sortie, on ajoute pt-exiting, on retire
-     data-pt : même pixel couvert dans le même frame → zéro flash. */
+     Le ::before CSS (micro-script <head>) couvre l'écran pendant le load.
+     Problème possible : l'animation pt-wipe-out démarre avec
+       from { translateY(0) }
+     mais le CSS par défaut de .pt-overlay est translateY(100%).
+     Sur certaines pages, le navigateur prend 1 frame pour appliquer le
+     'from' de l'animation → l'overlay reste 1 frame à translateY(100%)
+     alors que data-pt est déjà supprimé → flash de contenu.
+
+     Fix en deux étapes :
+       1. Positionner l'overlay à translateY(0) via inline style
+       2. Forcer un layout (void offsetHeight) → le compositor layer est
+          créé AVEC cet état, pas avec la valeur par défaut translateY(100%)
+       3. Ajouter pt-exiting → l'animation démarre depuis un layer déjà
+          au bon endroit, aucun flash quelle que soit la page.            */
   var _ptIncoming = sessionStorage.getItem('page-transition-theme');
   if (_ptIncoming) {
     sessionStorage.removeItem('page-transition-theme');
     var _ptEl = _ptMake(_ptIncoming);
+    _ptEl.style.transform = 'translateY(0)'; /* fallback garanti : si l'anim
+       prend 1 frame de retard, l'inline style couvre déjà l'écran.
+       Dès que l'animation démarre, elle passe au-dessus dans la cascade CSS
+       (animations > inline) → le volet glisse normalement.
+       Après fill:forwards (translateY(-100%)), l'anim reste prioritaire. */
+    void _ptEl.offsetHeight;                  /* force layout → layer GPU créé à translateY(0) */
     _ptEl.classList.add('pt-exiting');
     document.documentElement.removeAttribute('data-pt');
   }
