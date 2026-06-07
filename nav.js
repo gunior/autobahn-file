@@ -20,6 +20,12 @@
     { href: '/contact',  en: 'Contact', fr: 'Contact' },
   ];
 
+  /* ── PRÉCHARGEMENT — logos hover (évite le délai au premier survol) ── */
+  LINKS.forEach(l => {
+    if (l.logoLight) { new Image().src = l.logoLight; }
+    if (l.logoDark)  { new Image().src = l.logoDark;  }
+  });
+
   /* ── PAGES SANS DARK TOGGLE (fond fixe) ─────────────────── */
   const NO_THEME_TOGGLE = ['/studio', '/', '/creators'];
 
