@@ -113,9 +113,9 @@
         <img id="menuLogoImg" src="${menuLogoSrc}" alt="Autobahn" height="22" style="display:block">
       </a>
     </div>
-    <nav class="menu-items" aria-label="Navigation principale">
+    <div class="menu-items">
       ${mobileMenuLinks}
-    </nav>
+    </div>
     <div class="menu-footer">
       <div class="mobile-lang">
         <button class="mobile-lang-btn" id="mBtnEN" onclick="setLang('en')">EN</button>
