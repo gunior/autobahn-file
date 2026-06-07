@@ -91,12 +91,10 @@
   const mobileMenuLinks = LINKS.map(l => {
     const active = page === l.href ? 'menu-active' : '';
     return `<div class="menu-item ${active}">
-      <div class="menu-item-content">
-        <a href="${l.href}">
-          <span class="en">${l.en}</span>
-          <span class="fr">${l.fr}</span>
-        </a>
-      </div>
+      <a href="${l.href}" class="menu-item-link">
+        <span class="en">${l.en}</span>
+        <span class="fr">${l.fr}</span>
+      </a>
     </div>`;
   }).join('');
 

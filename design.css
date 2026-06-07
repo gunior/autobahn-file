@@ -471,6 +471,12 @@ body.lang-en span.en { display: inline; }
    translateY(±4px) place les deux centres au même point → X parfait. */
 .nav-hamburger.open span:nth-child(1) { transform: translateY(4px) rotate(45deg); }
 .nav-hamburger.open span:nth-child(2) { transform: translateY(-4px) rotate(-45deg); }
+/* Menu ouvert : on quitte mix-blend-mode (stacking context isolé = blend inopérant sur fond
+   du menu). On passe à var(--c-ink) qui est visible sur n'importe quel fond (light ET dark). */
+.nav-hamburger.open span {
+  background: var(--c-ink);
+  mix-blend-mode: normal;
+}
 
 /* ============================================================
    MENU OVERLAY — STYLE FRESHMAN.TV
@@ -551,47 +557,45 @@ body.lang-en span.en { display: inline; }
   .menu-item:hover::before { max-height: calc(100% + 2px); }
 }
 
-/* Contenu positionné en absolu → permet le décalage horizontal staircase */
-.menu-item-content {
+/* Lien = toute la zone cliquable de la ligne.
+   position:absolute inset:0 → couvre 100% × 100% du menu-item.
+   Le décalage staircase est appliqué via padding-left (% relatif à la largeur
+   du containing block = menu-item = 100vw − 2×--space-lg). */
+.menu-item-link {
   position: absolute;
-  top: 0;
-  height: 100%;
+  inset: 0;
   display: flex;
   align-items: center;
   white-space: nowrap;
   z-index: 1;
-}
-
-/* Escalier gauche → droite pour 4 items (Team, Lab, Studio, Contact) */
-.menu-item:nth-child(1) .menu-item-content { left: 0%;  }
-.menu-item:nth-child(2) .menu-item-content { left: 14%; }
-.menu-item:nth-child(3) .menu-item-content { left: 34%; }
-.menu-item:nth-child(4) .menu-item-content { left: 54%; }
-
-/* Lien */
-.menu-item-content a {
+  text-decoration: none;
   font-family: var(--f-display);
   font-weight: 300;
   font-size: clamp(46px, 8vw, 96px);
   line-height: 1;
   letter-spacing: -0.04em;
   text-transform: uppercase;
-  text-decoration: none;
   color: var(--c-ink);
   transition: color 0.32s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 @media (hover: hover) {
-  .menu-item:hover .menu-item-content a { color: var(--c-bg); }
+  .menu-item:hover .menu-item-link { color: var(--c-bg); }
 }
-/* Page courante : légèrement effacée comme freshman.tv */
-.menu-item.menu-active .menu-item-content a { opacity: 0.35; }
+/* Page courante : légèrement effacée */
+.menu-item.menu-active .menu-item-link { opacity: 0.35; }
+
+/* Escalier gauche → droite — desktop */
+.menu-item:nth-child(1) .menu-item-link { padding-left: 0;   }
+.menu-item:nth-child(2) .menu-item-link { padding-left: 14%; }
+.menu-item:nth-child(3) .menu-item-link { padding-left: 34%; }
+.menu-item:nth-child(4) .menu-item-link { padding-left: 54%; }
 
 /* Mobile : escalier resserré pour éviter tout débordement */
 @media (max-width: 768px) {
-  .menu-item:nth-child(1) .menu-item-content { left: 0%;  }
-  .menu-item:nth-child(2) .menu-item-content { left: 7%;  }
-  .menu-item:nth-child(3) .menu-item-content { left: 14%; }
-  .menu-item:nth-child(4) .menu-item-content { left: 21%; }
+  .menu-item:nth-child(1) .menu-item-link { padding-left: 0%;  }
+  .menu-item:nth-child(2) .menu-item-link { padding-left: 7%;  }
+  .menu-item:nth-child(3) .menu-item-link { padding-left: 14%; }
+  .menu-item:nth-child(4) .menu-item-link { padding-left: 21%; }
 }
 
 /* ── Footer menu : langue | mentions légales | thème ── */
@@ -608,9 +612,10 @@ body.lang-en span.en { display: inline; }
 }
 
 .menu-footer-legal {
-  font-family: var(--f-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-family: var(--f-display);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--c-ash);
   text-decoration: none;
@@ -625,9 +630,10 @@ body.lang-en span.en { display: inline; }
   gap: 10px;
 }
 .mobile-lang-btn {
-  font-family: var(--f-mono);
+  font-family: var(--f-display);
+  font-weight: 300;
   font-size: 11px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--c-ash);
   background: none;
@@ -638,7 +644,8 @@ body.lang-en span.en { display: inline; }
 }
 .mobile-lang-btn.active { color: var(--c-ink); }
 .mobile-lang-sep {
-  font-family: var(--f-mono);
+  font-family: var(--f-display);
+  font-weight: 300;
   font-size: 11px;
   color: var(--c-border);
 }
