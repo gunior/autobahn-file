@@ -169,8 +169,8 @@
     return el;
   }
 
-  var ptLight = buildPTOverlay('light', PT_LOGO_LIGHT);
-  var ptDark  = buildPTOverlay('dark',  PT_LOGO_DARK);
+  var ptLight = buildPTOverlay('light', PT_LOGO_DARK);   /* Asset8-w.png : logo blanc sur fond noir  */
+  var ptDark  = buildPTOverlay('dark',  PT_LOGO_LIGHT);  /* Asset8-b.png : logo sombre sur fond blanc */
 
   /* Sortie : hard-reset de toute animation en cours, puis pt-entering */
   function triggerPageTransition(href) {
