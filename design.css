@@ -411,6 +411,10 @@ html[data-pt="light"]::before {
   height: auto;
   display: block;
 }
+/* Le logo n'est visible qu'à l'entrée (wipe-in, sur l'ancienne page).
+   À la sortie (wipe-out, sur la nouvelle page) seul le fond coloré
+   remonte — élimine tout flash ou clip du logo au démarrage de l'anim. */
+.pt-overlay.pt-exiting .pt-logo { visibility: hidden; }
 
 /* ============================================================
    GESTION BILINGUE (FR / EN)
