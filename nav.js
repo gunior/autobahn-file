@@ -147,16 +147,30 @@
   function triggerPageTransition(href) {
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
     transitionEl.setAttribute('data-overlay-theme', theme);
-    document.body.style.overflow = ''; /* libère scroll-lock (peut clipper éléments fixed) */
-    /* Repositionne instantanément sous le viewport sans déclencher la transition */
-    transitionEl.style.transition   = 'none';
-    transitionEl.style.transform    = 'translateY(100%)';
-    transitionEl.style.pointerEvents = 'all';
-    void transitionEl.offsetWidth;  /* force reflow → peint à translateY(100%) */
-    transitionEl.style.removeProperty('transition'); /* rétablit la transition CSS */
-    transitionEl.style.transform = 'translateY(0)';  /* anime vers le centre */
+    document.body.style.overflow = ''; /* libère scroll-lock */
+
+    /* Snap instantané sous le viewport (no transition).
+       On utilise le double-rAF : offsetWidth force un recalcul CSS côté CPU,
+       mais le compositor GPU a encore la valeur en cache de l'animation
+       précédente. Sans deux frames de séparation il repart de là, causant
+       le clip d'une frame. Avec double-rAF :
+         frame 1 → compositor commit la position translateY(100%)
+         frame 2 → compositor démarre la nouvelle animation depuis 100%→0   */
+    transitionEl.style.transition    = 'none';
+    transitionEl.style.transform     = 'translateY(100%)';
+    transitionEl.style.pointerEvents = 'none';
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        transitionEl.style.removeProperty('transition');
+        transitionEl.style.transform     = 'translateY(0)';
+        transitionEl.style.pointerEvents = 'all';
+      });
+    });
+
     sessionStorage.setItem('page-transition-theme', theme);
-    setTimeout(() => { window.location.href = href; }, 580);
+    /* 640ms = ~32ms (double rAF) + 520ms (anim) + 88ms marge */
+    setTimeout(() => { window.location.href = href; }, 640);
   }
 
   /* Si on arrive depuis une transition (flag sessionStorage) :
@@ -171,10 +185,17 @@
   document.body.appendChild(transitionEl);
 
   if (transIncoming) {
-    void transitionEl.offsetWidth; /* force reflow → peint couvrant l'écran */
-    transitionEl.style.removeProperty('transition'); /* rétablit la transition CSS */
-    transitionEl.style.transform    = 'translateY(-100%)'; /* sort vers le haut */
-    transitionEl.style.pointerEvents = 'none';
+    /* Double-rAF : même raison que dans triggerPageTransition.
+       L'élément vient d'être appendé à translateY(0) sans transition.
+       On attend que le compositor ait commité cette position avant de
+       lancer le slide-out vers le haut. */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        transitionEl.style.removeProperty('transition');
+        transitionEl.style.transform     = 'translateY(-100%)';
+        transitionEl.style.pointerEvents = 'none';
+      });
+    });
   }
 
   /* ── Hamburger toggle ── */
