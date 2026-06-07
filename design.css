@@ -356,6 +356,47 @@ footer {
 }
 
 /* ============================================================
+   OVERLAY DE TRANSITION DE PAGE
+   Volet plein écran qui glisse du bas vers le haut au clic
+   sur un lien du menu burger, puis sort par le haut sur la
+   page de destination. Logo Asset8.png centré.
+   ============================================================ */
+#pageTransition {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(100%); /* garé sous le viewport par défaut */
+  pointer-events: none;
+  transition: transform 0.52s cubic-bezier(0.76, 0, 0.24, 1);
+}
+/* Entrée : glisse du bas vers le haut (couvre l'écran) */
+#pageTransition.pt-enter {
+  transform: translateY(0);
+  pointer-events: all;
+}
+/* Sortie : glisse de l'écran vers le haut */
+#pageTransition.pt-exit {
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+/* Light mode : fond noir + logo blanc (Asset8 est blanc) */
+#pageTransition[data-overlay-theme="light"] { background: #000; }
+
+/* Dark mode : fond blanc + logo noir (inversion de Asset8) */
+#pageTransition[data-overlay-theme="dark"]  { background: #fff; }
+#pageTransition[data-overlay-theme="dark"] .pt-logo { filter: invert(1); }
+
+.pt-logo {
+  width: 160px;
+  height: auto;
+  display: block;
+}
+
+/* ============================================================
    GESTION BILINGUE (FR / EN)
    ============================================================ */
 .fr, .en          { display: none; }

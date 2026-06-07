@@ -20,11 +20,12 @@
     { href: '/contact',  en: 'Contact', fr: 'Contact' },
   ];
 
-  /* ── PRÉCHARGEMENT — logos hover (évite le délai au premier survol) ── */
+  /* ── PRÉCHARGEMENT — logos hover + overlay transition ───────────── */
   LINKS.forEach(l => {
     if (l.logoLight) { new Image().src = l.logoLight; }
     if (l.logoDark)  { new Image().src = l.logoDark;  }
   });
+  new Image().src = './assets/Asset8.png'; // logo de l'overlay de transition
 
   /* ── PAGES SANS DARK TOGGLE (fond fixe) ─────────────────── */
   const NO_THEME_TOGGLE = ['/studio', '/', '/creators'];
@@ -114,7 +115,7 @@
   mobileMenuEl.id = 'mobileMenu';
   mobileMenuEl.innerHTML = `
     <div class="menu-logo-top">
-      <a href="/" onclick="document.getElementById('mobileMenu').classList.remove('open');document.getElementById('navHamburger').classList.remove('open');document.body.style.overflow='';">
+      <a href="/">
         <img id="menuLogoImg" src="${menuLogoSrc}" alt="Autobahn" height="26" style="display:block">
       </a>
     </div>
@@ -128,6 +129,40 @@
       ${mobileThemeRow}
     </div>`;
   document.body.appendChild(mobileMenuEl);
+
+  /* ── Overlay de transition de page ──────────────────────────────────
+     Volet noir (light mode) ou blanc (dark mode) qui glisse du bas vers
+     le haut au clic sur un lien du menu, puis se retire vers le haut
+     sur la nouvelle page. Logo Asset8.png centré pendant l'animation.
+  ──────────────────────────────────────────────────────────────────── */
+  const transitionEl = document.createElement('div');
+  transitionEl.id = 'pageTransition';
+  transitionEl.innerHTML = '<img class="pt-logo" src="./assets/Asset8.png" alt="Autobahn">';
+
+  /* Si on arrive ici depuis une transition (flag sessionStorage) :
+     on positionne l'overlay couvrant l'écran SANS animation, puis on
+     le fait glisser vers le haut pour révéler la page. */
+  const transIncoming = sessionStorage.getItem('page-transition-theme');
+  if (transIncoming) {
+    transitionEl.setAttribute('data-overlay-theme', transIncoming);
+    /* Positionne immédiatement à translateY(0) sans transition */
+    transitionEl.style.transition = 'none';
+    transitionEl.style.transform  = 'translateY(0)';
+    transitionEl.style.pointerEvents = 'none';
+    sessionStorage.removeItem('page-transition-theme');
+  }
+  document.body.appendChild(transitionEl);
+
+  if (transIncoming) {
+    /* Force un reflow pour que les styles inline soient peints avant
+       de retirer la transition=none et lancer l'animation de sortie */
+    void transitionEl.offsetWidth;
+    transitionEl.style.removeProperty('transition');
+    transitionEl.style.removeProperty('transform');
+    transitionEl.style.removeProperty('pointer-events');
+    transitionEl.classList.add('pt-exit');
+    setTimeout(() => transitionEl.classList.remove('pt-exit'), 600);
+  }
 
   /* ── Hamburger toggle ── */
   const hamburger  = document.getElementById('navHamburger');
@@ -148,8 +183,26 @@
     mobileMenu.classList.contains('open') ? closeMenu() : openMenu();
   });
 
+  /* Gestion des clics sur les liens du menu :
+     - Même page → ferme simplement le menu
+     - Page différente → lance l'animation de transition puis navigue */
   mobileMenuEl.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', closeMenu);
+    a.addEventListener('click', function (e) {
+      const href = this.getAttribute('href');
+      if (!href) { closeMenu(); return; }
+
+      /* Normalise l'href pour comparaison (retire .html, trailing slash) */
+      const target = href.replace(/\.html$/, '').replace(/\/$/, '') || '/';
+      if (target === page) { closeMenu(); return; }
+
+      e.preventDefault();
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      transitionEl.setAttribute('data-overlay-theme', currentTheme);
+      transitionEl.classList.add('pt-enter');
+      /* Le flag transmet la couleur d'overlay à la page suivante */
+      sessionStorage.setItem('page-transition-theme', currentTheme);
+      setTimeout(() => { window.location.href = href; }, 580);
+    });
   });
 
   document.addEventListener('keydown', e => {
