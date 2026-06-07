@@ -161,7 +161,9 @@
     transitionEl.style.removeProperty('transform');
     transitionEl.style.removeProperty('pointer-events');
     transitionEl.classList.add('pt-exit');
-    setTimeout(() => transitionEl.classList.remove('pt-exit'), 600);
+    /* On ne retire PAS pt-exit : l'overlay reste garé au-dessus du viewport
+       (translateY(-100%), invisible). Le retirer déclencherait un retour
+       animé vers translateY(100%) visible à l'écran — c'est le bug. */
   }
 
   /* ── Hamburger toggle ── */
