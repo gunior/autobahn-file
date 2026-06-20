@@ -478,17 +478,19 @@
     }
     #bgVideoReflect {
       position: absolute;
-      left: 0; top: 0;
+      left: 0;
+      /* Décale vers le haut pour couvrir le viewport entier (comme #bgVideo) */
+      top: calc(var(--floor3d-y) - 100vh);
       width: 100%;
       height: 100vh;
       object-fit: cover;
-      transform-origin: top center;
+      /* Pivot = la ligne du sol en coordonnées de l'élément :
+         l'élément commence à (floor3d-y - 100vh) depuis le haut du wrap,
+         donc la ligne du sol est à y = 100vh - floor3d-y dans l'élément. */
+      transform-origin: center calc(100vh - var(--floor3d-y));
       transform: scaleY(-1);
-      filter: blur(12px);
-      opacity: 0;
-      transition: opacity 1s ease;
+      filter: blur(14px);
     }
-    #bgVideoReflect.visible { opacity: 1; }
     #bgReflectDim {
       position: absolute;
       inset: 0;
@@ -857,7 +859,6 @@
     bgVideoReflect.innerHTML = '';
     bgVideoReflect.removeAttribute('src');
     bgVideoReflect.load();
-    bgVideoReflect.classList.remove('visible');
   }
 
   /* Affiche heroPhoto en fond statique (utilisé en co lente + créateurs sans showreel)
@@ -928,11 +929,9 @@
       }).catch(() => {});
       bgVideo.oncanplaythrough = () => bgVideo.classList.add('visible');
       if (bgVideo.readyState >= 3) bgVideo.classList.add('visible');
-      // Miroir : même sources, lecture indépendante
+      // Miroir : même sources, lecture indépendante (pas de gestion d'opacité)
       bgVideoReflect.load();
       bgVideoReflect.play().catch(() => {});
-      bgVideoReflect.oncanplaythrough = () => bgVideoReflect.classList.add('visible');
-      if (bgVideoReflect.readyState >= 3) bgVideoReflect.classList.add('visible');
       return;
     }
 
