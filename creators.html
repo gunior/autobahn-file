@@ -1724,7 +1724,8 @@ setBackground(list[dwActiveIdx]);
         ? `<img src="${c.photo}" alt="${c.name}" loading="lazy">`
         : `<div class="cf3d-initial">${initial}</div>`;
 
-      const faceHTML = `<div class="cf3d-face" style="background:${bg};">${faceInner}</div>`;
+      const faceBg  = c.photo ? 'transparent' : bg;
+      const faceHTML = `<div class="cf3d-face" style="background:${faceBg};">${faceInner}</div>`;
 
       card.innerHTML = `
         ${faceHTML}
@@ -1734,6 +1735,12 @@ setBackground(list[dwActiveIdx]);
         </div>
         <div class="cf3d-mirror" aria-hidden="true">${faceHTML}</div>
       `;
+
+      card.addEventListener('click', () => {
+        if (wasDragged) return;
+        if (i !== current) { setCurrent(i); return; }
+        window.location.href = `./creators/${key}/`;
+      });
 
       track.appendChild(card);
     });
@@ -1806,42 +1813,32 @@ setBackground(list[dwActiveIdx]);
       }
     });
 
-    /* Drag + clic */
+    /* Drag — window listeners pour suivre le pointeur hors du stage */
     const stage = document.getElementById('cf3dStage');
-    let dragStartX = null, dragStartIdx = 0, clickCard = null;
-    stage.addEventListener('pointerdown', e => {
-      dragStartX   = e.clientX;
-      dragStartIdx = current;
-      clickCard    = e.target?.closest('.cf3d-card') || null;
-      stage.setPointerCapture(e.pointerId);
-    });
-    stage.addEventListener('pointermove', e => {
+    let dragStartX = null, dragStartIdx = 0, wasDragged = false;
+
+    function onWindowMove(e) {
       if (dragStartX == null) return;
       const dx = e.clientX - dragStartX;
-      if (Math.abs(dx) > 5) clickCard = null; // drag → annule le clic
+      if (Math.abs(dx) > 5) wasDragged = true;
       const step   = window.innerWidth / 14;
       const delta  = -Math.round(dx / step);
       const target = dragStartIdx + delta;
       if (target !== current) setCurrent(target);
-    });
-    stage.addEventListener('pointerup', e => {
-      if (clickCard !== null) {
-        const idx = parseInt(clickCard.dataset.index);
-        if (!isNaN(idx)) {
-          if (idx !== current) {
-            setCurrent(idx);
-          } else {
-            const c  = creators[idx];
-            const fn = (c.name || '').trim().split(' ').pop();
-            const k  = fn.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-            window.location.href = `./creators/${k}/`;
-          }
-        }
-      }
+    }
+    function onWindowUp() {
       dragStartX = null;
-      clickCard  = null;
+      window.removeEventListener('pointermove', onWindowMove);
+      window.removeEventListener('pointerup',   onWindowUp);
+    }
+
+    stage.addEventListener('pointerdown', e => {
+      dragStartX   = e.clientX;
+      dragStartIdx = current;
+      wasDragged   = false;
+      window.addEventListener('pointermove', onWindowMove);
+      window.addEventListener('pointerup',   onWindowUp);
     });
-    stage.addEventListener('pointercancel', () => { dragStartX = null; clickCard = null; });
 
     /* Wheel (scoped à la zone basse des cartes) */
     let wheelLock = 0;
