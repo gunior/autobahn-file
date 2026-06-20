@@ -403,6 +403,8 @@
       width: 100%; height: 100%;
       object-fit: cover;
       display: block;
+      opacity: 0;
+      transition: opacity 0.45s ease;
     }
     .cf3d-face::after {
       content: '';
@@ -1721,7 +1723,7 @@ setBackground(list[dwActiveIdx]);
       card.style.setProperty('--bg3d', bg);
 
       const faceInner = c.photo
-        ? `<img src="${c.photo}" alt="${c.name}" loading="lazy">`
+        ? `<img src="${c.photo}" alt="${c.name}" loading="eager">`
         : `<div class="cf3d-initial">${initial}</div>`;
 
       const faceBg  = c.photo ? 'transparent' : bg;
@@ -1735,6 +1737,16 @@ setBackground(list[dwActiveIdx]);
         </div>
         <div class="cf3d-mirror" aria-hidden="true">${faceHTML}</div>
       `;
+
+      // Fondu à la fin du chargement de la photo de face
+      if (c.photo) {
+        const img = card.querySelector('.cf3d-face img');
+        if (img) {
+          const reveal = () => { img.style.opacity = '1'; };
+          if (img.complete && img.naturalWidth > 0) reveal();
+          else img.addEventListener('load', reveal);
+        }
+      }
 
       card.addEventListener('click', () => {
         if (wasDragged) return;
@@ -1864,13 +1876,10 @@ setBackground(list[dwActiveIdx]);
     .then(creators => {
       _creators = creators; // accessible au listener popstate
 
-      // Précharge toutes les heroPhotos en parallèle dès le chargement de la page
-      // pour que le hover affiche l'image instantanément (pas de délai de fetch)
+      // Précharge photos de profil + heroPhotos dès que creators.json est dispo
       creators.forEach(c => {
-        if (c.heroPhoto) {
-          const pre = new Image();
-          pre.src = c.heroPhoto;
-        }
+        if (c.photo)     { const p = new Image(); p.src = c.photo; }
+        if (c.heroPhoto) { const p = new Image(); p.src = c.heroPhoto; }
       });
 
       /* ── Ouverture directe si un hash est présent dans l'URL ──
