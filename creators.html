@@ -337,8 +337,7 @@
   @media (min-width: 769px) {
     .coverflow-wrap, #portraitsTitle, .page-subtitle { display: none !important; }
 
-    /* Fond flou sur desktop — même ambiance que le miroir des cartes */
-    #bgVideo, #bgImage { filter: blur(calc(6 * var(--u))); }
+    /* Le blur reste uniquement dans la zone miroir (#bgVideoReflect) */
 
     /* Scène 3D — fixed, couvre tout le viewport */
     .cf3d-stage {
@@ -427,26 +426,30 @@
       bottom: 0; left: 0; right: 0;
       height: var(--card3d-lh);
       padding-top: calc(8 * var(--u));
-      font-family: var(--f-mono);
       color: var(--c-cream-cf);
       text-align: center;
-      text-transform: uppercase;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.35s ease 0.15s;
     }
     .cf3d-card.is-current .cf3d-label { opacity: 1; }
     .cf3d-label .l-name {
-      font-size: calc(14 * var(--u));
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: calc(13 * var(--u));
       line-height: 1.05;
-      letter-spacing: 0.02em;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
     }
     .cf3d-label .l-role {
-      margin-top: calc(4 * var(--u));
-      font-size: calc(10 * var(--u));
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      margin-top: calc(3 * var(--u));
+      font-size: calc(9 * var(--u));
       line-height: 1.1;
-      letter-spacing: 0.04em;
-      opacity: 0.7;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.6;
     }
 
     /* Reflet — retourné verticalement, s'étend loin sous la carte */
@@ -926,15 +929,30 @@
         bgVideoReflect.appendChild(el.cloneNode(true));
       });
       bgVideo.load();
-      bgVideo.onloadedmetadata = () => { bgVideo.currentTime = randomTime(bgVideo); };
+      bgVideoReflect.load();
+      bgVideo.onloadedmetadata = () => {
+        const t = randomTime(bgVideo);
+        bgVideo.currentTime = t;
+        bgVideoReflect.currentTime = t;
+      };
       bgVideo.play().then(() => {
-        if (bgVideo.duration) bgVideo.currentTime = randomTime(bgVideo);
+        if (bgVideo.duration) {
+          const t = randomTime(bgVideo);
+          bgVideo.currentTime = t;
+          bgVideoReflect.currentTime = t;
+        }
       }).catch(() => {});
       bgVideo.oncanplaythrough = () => bgVideo.classList.add('visible');
       if (bgVideo.readyState >= 3) bgVideo.classList.add('visible');
-      // Miroir : même sources, lecture indépendante (pas de gestion d'opacité)
-      bgVideoReflect.load();
       bgVideoReflect.play().catch(() => {});
+      // Resync périodique si les deux vidéos dérivent
+      bgVideo.addEventListener('timeupdate', function syncReflect() {
+        if (bgVideo._syncTarget !== currentSrc) { bgVideo.removeEventListener('timeupdate', syncReflect); return; }
+        if (Math.abs(bgVideoReflect.currentTime - bgVideo.currentTime) > 0.5) {
+          bgVideoReflect.currentTime = bgVideo.currentTime;
+        }
+      });
+      bgVideo._syncTarget = key;
       return;
     }
 
