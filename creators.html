@@ -466,11 +466,38 @@
       height: var(--card3d-ph);
       box-shadow: none;
     }
+
+    /* ── Zone miroir showreel sous la ligne du sol ── */
+    #bgReflectWrap {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: var(--floor3d-y);
+      z-index: 4;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    #bgVideoReflect {
+      position: absolute;
+      left: 0; bottom: 0;
+      width: 100%;
+      height: 100vh;
+      object-fit: cover;
+      transform: scaleX(-1);
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+    #bgVideoReflect.visible { opacity: 1; }
+    #bgReflectDim {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+    }
   }
 
-  /* Cache le coverflow 3D sur mobile */
+  /* Cache le coverflow 3D et le miroir sur mobile */
   @media (max-width: 768px) {
     .cf3d-stage { display: none !important; }
+    #bgReflectWrap { display: none !important; }
   }
   .wheel-stage-v {
     position: fixed; inset: 0; z-index: 6;
@@ -643,6 +670,13 @@
 
   <video id="bgVideo" autoplay muted loop playsinline></video>
   <div id="bgImage"></div>
+
+  <!-- Miroir showreel sous la ligne du sol (desktop uniquement) -->
+  <div id="bgReflectWrap">
+    <video id="bgVideoReflect" muted playsinline loop></video>
+    <div id="bgReflectDim"></div>
+  </div>
+
   <div id="vignette"></div>
   <nav></nav>
 
@@ -797,8 +831,9 @@
   }
 
   /* ── FOND — vidéo (random trimmed) ou image fixe selon le creator ── */
-  const bgVideo = document.getElementById('bgVideo');
-  const bgImage = document.getElementById('bgImage');
+  const bgVideo        = document.getElementById('bgVideo');
+  const bgImage        = document.getElementById('bgImage');
+  const bgVideoReflect = document.getElementById('bgVideoReflect');
   let currentSrc = '', hideTimer = null;
   const TRIM_START = 5, TRIM_END = 5;
 
@@ -816,6 +851,11 @@
     bgVideo.removeAttribute('src');
     bgVideo.removeAttribute('poster');
     bgVideo.load();
+    bgVideoReflect.pause();
+    bgVideoReflect.innerHTML = '';
+    bgVideoReflect.removeAttribute('src');
+    bgVideoReflect.load();
+    bgVideoReflect.classList.remove('visible');
   }
 
   /* Affiche heroPhoto en fond statique (utilisé en co lente + créateurs sans showreel)
@@ -877,6 +917,7 @@
         const el = document.createElement('source');
         el.src = s.src; el.type = s.type;
         bgVideo.appendChild(el);
+        bgVideoReflect.appendChild(el.cloneNode(true));
       });
       bgVideo.load();
       bgVideo.onloadedmetadata = () => { bgVideo.currentTime = randomTime(bgVideo); };
@@ -885,6 +926,11 @@
       }).catch(() => {});
       bgVideo.oncanplaythrough = () => bgVideo.classList.add('visible');
       if (bgVideo.readyState >= 3) bgVideo.classList.add('visible');
+      // Miroir : même sources, lecture indépendante
+      bgVideoReflect.load();
+      bgVideoReflect.play().catch(() => {});
+      bgVideoReflect.oncanplaythrough = () => bgVideoReflect.classList.add('visible');
+      if (bgVideoReflect.readyState >= 3) bgVideoReflect.classList.add('visible');
       return;
     }
 
