@@ -316,6 +316,11 @@
       .replace(/[^a-z0-9-]/g, '');
   }
 
+  /* URL courte publique (ex: /johan) : dernier mot du nom */
+  function firstNameSlug(name) {
+    return nameToSlug((name || '').trim().split(/\s+/).pop());
+  }
+
   /* ─ Construction des cartes ─ */
   function buildWheel(list) {
     creators = list;
@@ -460,7 +465,7 @@
   /* ─ Click sur carte ─ */
   function onCardClick(i) {
     if (i === activeIdx) {
-      const slug = nameToSlug(creators[i].name);
+      const slug = firstNameSlug(creators[i].name);
       const el   = cardEls[i];
 
       /* 1. Zoom léger sur la carte active */
@@ -473,7 +478,7 @@
 
       /* 3. Navigue après la transition */
       setTimeout(() => {
-        window.location.href = '/creators#' + slug;
+        window.location.href = '/' + slug;
       }, 420);
     } else {
       /* Chemin le plus court (infini) vers la carte cliquée */

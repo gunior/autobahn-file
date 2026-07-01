@@ -4,6 +4,19 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/cms/(.*)", "destination": "/404" }
+    { "source": "/cms/(.*)", "destination": "/404" },
+    { "source": "/guillaume", "destination": "/creators" },
+    { "source": "/antonin", "destination": "/creators" },
+    { "source": "/victor", "destination": "/creators" },
+    { "source": "/marine", "destination": "/creators" },
+    { "source": "/oceane", "destination": "/creators" },
+    { "source": "/johan", "destination": "/creators" },
+    { "source": "/simon", "destination": "/creators" },
+    { "source": "/clement", "destination": "/creators" },
+    { "source": "/delphy", "destination": "/creators" },
+    { "source": "/romain", "destination": "/creators" },
+    { "source": "/alexandre", "destination": "/creators" },
+    { "source": "/antoine", "destination": "/creators" },
+    { "source": "/patrick", "destination": "/creators" }
   ]
 }

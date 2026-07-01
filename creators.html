@@ -995,6 +995,11 @@
       .replace(/[^a-z0-9-]/g, '');
   }
 
+  /* URL courte publique (ex: /johan) : dernier mot du nom, comme profileName */
+  function firstNameSlug(name) {
+    return nameToSlug((name || '').trim().split(/\s+/).pop());
+  }
+
   function getBio(c) {
     const isFr = document.body.classList.contains('lang-fr');
     return (isFr && c.bioFr) ? c.bioFr : (c.bio || '');
@@ -1148,10 +1153,11 @@
        Comme ça un seul "back" referme toute la pile profil et revient à /creators. */
     if (!fromPopstate) {
       const slug = nameToSlug(c.name);
+      const shortSlug = firstNameSlug(c.name);
       if (history.state?.creator) {
-        history.replaceState({ creator: slug }, '', '#' + slug);
+        history.replaceState({ creator: slug }, '', '/' + shortSlug);
       } else {
-        history.pushState({ creator: slug }, '', '#' + slug);
+        history.pushState({ creator: slug }, '', '/' + shortSlug);
       }
     }
 
@@ -1882,17 +1888,22 @@ setBackground(list[dwActiveIdx]);
         if (c.heroPhoto) { const p = new Image(); p.src = c.heroPhoto; }
       });
 
-      /* ── Ouverture directe si un hash est présent dans l'URL ──
-         On utilise replaceState pour positionner l'état du profil sur l'entrée
-         courante (pas de pushState supplémentaire), comme ça un click "back"
-         referme tout de suite le profil au lieu de laisser une URL fantôme. */
+      /* ── Ouverture directe si l'URL pointe vers un profil ──
+         Chemin court public (/johan, via rewrite Vercel) ou ancien hash
+         (#petit-johan, pour les liens déjà partagés) : les deux sont
+         canonisés vers le chemin court via replaceState (pas de pushState
+         supplémentaire), comme ça un click "back" referme tout de suite le
+         profil au lieu de laisser une URL fantôme. */
       const hashSlug = window.location.hash.slice(1);
-      if (hashSlug) {
-        const target = creators.find(c => nameToSlug(c.name) === hashSlug);
-        if (target) {
-          history.replaceState({ creator: hashSlug }, '', '#' + hashSlug);
-          openProfile(target, true); // skip pushState (URL déjà bonne)
-        }
+      const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '');
+      const target = hashSlug
+        ? creators.find(c => nameToSlug(c.name) === hashSlug)
+        : (pathSlug && pathSlug !== 'creators')
+          ? creators.find(c => firstNameSlug(c.name) === pathSlug)
+          : null;
+      if (target) {
+        history.replaceState({ creator: nameToSlug(target.name) }, '', '/' + firstNameSlug(target.name));
+        openProfile(target, true); // skip pushState (URL déjà bonne)
       }
 
       if (window.innerWidth <= 768) {
