@@ -137,7 +137,7 @@ body {
 }
 
 a, button, [role="button"], input, select, textarea, label {
-  cursor: url('./assets/cursor-hand-hover.png') 9 0, auto;
+  cursor: url('./assets/cursor-hand.png') 9 0, auto;
 }
 /* ============================================================
    NAVIGATION (commune à toutes les pages)
@@ -640,7 +640,7 @@ body.lang-en span.en { display: inline; }
   border: none;
   padding: 0;
   transition: color 0.2s;
-  cursor: url('./assets/cursor-hand-hover.png') 9 0, auto;
+  cursor: url('./assets/cursor-hand.png') 9 0, auto;
 }
 .mobile-lang-btn.active { color: var(--c-ink); }
 .mobile-lang-sep {
